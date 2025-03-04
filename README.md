@@ -17,13 +17,51 @@ https://roadmap.sh/devops
 --devops principles 
 
 
-## 01: Visual Studio Code for workplace engineers 
+## 01: Visual Studio Code for workplace engineers
 
---general extensions
+--what and why ?
 
---language extensions
+### Visual Studio Code Extension Market Place
 
---themes
+- [Visual Studio Code Extension Market Place](https://marketplace.visualstudio.com/)
+
+### General Extensions
+
+General plist manipulation (used in macOS and iPad/iOS configuration profiles)
+
+- [Binary Plist](https://marketplace.visualstudio.com/items?itemName=dnicolson.binary-plist)
+- [GitHub Codespaces](https://marketplace.visualstudio.com/items?itemName=GitHub.codespaces)
+- [GitHub Pull Requests and Issues](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github)
+- [gitignore](https://marketplace.visualstudio.com/items?itemName=codezombiech.gitignore)
+- [Git Graph](https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph)
+- [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
+- [pre-commit](https://marketplace.visualstudio.com/items?itemName=elagil.pre-commit-helper)
+
+- [TODO Highlight](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight)
+- [VSNotes](https://marketplace.visualstudio.com/items?itemName=patricklee.vsnotes)
+- [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)
+
+### Language Extentions
+
+- [AppleScript](https://marketplace.visualstudio.com/items?itemName=idleberg.applescript)
+- [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
+- [docs-yaml](https://marketplace.visualstudio.com/items?itemName=docsmsft.docs-yaml)
+- [Edit CSV](https://marketplace.visualstudio.com/items?itemName=janisdd.vscode-edit-csv)
+- [HashiCorp Terraform](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
+- [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
+- [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Shebang Language Associator](https://marketplace.visualstudio.com/items?itemName=davidhewitt.shebang-language-associator)
+- [ShellCheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)
+- [XML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-xml) - XML Language Support
+- [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) - YAML Language Support
+
+### Linting Extensions
+
+### Themes
+
+- [Nord](https://marketplace.visualstudio.com/items?itemName=arcticicestudio.nord-visual-studio-code)
+- [One Dark Pro](https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme)
 
 --workspaces
 
