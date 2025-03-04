@@ -1,75 +1,229 @@
-# Template
+# terraform-training-jamfpro
 
-This repository serves as a **Default Template Repository** according official [GitHub Contributing Guidelines][ProjectSetup] for healthy contributions. It brings you clean default Templates for several areas:
+This repository serves as a **terraform training repository** for workplace engineers new to using terraform for management of Jamf Pro instances. The content within this repo aims to provide a learning path taking someone with little to no experience on a journey whereby at the end, the engineer feels empowered to use DevOps tools and practises within their team at a profient level.
 
-- [Azure DevOps Pull Requests](.azuredevops/PULL_REQUEST_TEMPLATE.md) ([`.azuredevops\PULL_REQUEST_TEMPLATE.md`](`.azuredevops\PULL_REQUEST_TEMPLATE.md`))
-- [Azure Pipelines](.pipelines/pipeline.yml) ([`.pipelines/pipeline.yml`](`.pipelines/pipeline.yml`))
-- [GitHub Workflows](.github/workflows/)
-  - [Super Linter](.github/workflows/linter.yml) ([`.github/workflows/linter.yml`](`.github/workflows/linter.yml`))
-  - [Sample Workflows](.github/workflows/workflow.yml) ([`.github/workflows/workflow.yml`](`.github/workflows/workflow.yml`))
-- [GitHub Pull Requests](.github/PULL_REQUEST_TEMPLATE.md) ([`.github/PULL_REQUEST_TEMPLATE.md`](`.github/PULL_REQUEST_TEMPLATE.md`))
-- [GitHub Issues](.github/ISSUE_TEMPLATE/)
-  - [Feature Requests](.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md) ([`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`](`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`))
-  - [Bug Reports](.github/ISSUE_TEMPLATE/BUG_REPORT.md) ([`.github/ISSUE_TEMPLATE/BUG_REPORT.md`](`.github/ISSUE_TEMPLATE/BUG_REPORT.md`))
-- [Codeowners](.github/CODEOWNERS) ([`.github/CODEOWNERS`](`.github/CODEOWNERS`)) _adjust usernames once cloned_
-- [Wiki and Documentation](docs/) ([`docs/`](`docs/`))
-- [gitignore](.gitignore) ([`.gitignore`](.gitignore))
-- [gitattributes](.gitattributes) ([`.gitattributes`](.gitattributes))
-- [Changelog](CHANGELOG.md) ([`CHANGELOG.md`](`CHANGELOG.md`))
-- [Code of Conduct](CODE_OF_CONDUCT.md) ([`CODE_OF_CONDUCT.md`](`CODE_OF_CONDUCT.md`))
-- [Contribution](CONTRIBUTING.md) ([`CONTRIBUTING.md`](`CONTRIBUTING.md`))
-- [License](LICENSE) ([`LICENSE`](`LICENSE`)) _adjust projectname once cloned_
-- [Readme](README.md) ([`README.md`](`README.md`))
-- [Security](SECURITY.md) ([`SECURITY.md`](`SECURITY.md`))
+This training does not seek to reinvent the wheel, so where it's senisble links will be provided to other publically available training materials. However, using DevOps practises with workplace teams is a relatively new concept and there are distinctions between IaC (infrastructure as code) and CaC (configuration-as-code) using IaC principles. To that end, rather than direct people to training that IaC targetted, this repo will house material, exercises and hackathons relevant to the workplace domain and it's nuances.
+
+## 00: DevOps Training path for workplace engineers
+
+### learning path diagram
+
+https://roadmap.sh/devops
+
+--devops culture
+
+--problem statements
+
+--devops principles 
 
 
-## Status
+## 01: Visual Studio Code for workplace engineers 
 
-[![Super Linter](<https://github.com/segraef/Template/actions/workflows/linter.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/linter.yml>)
+--general extensions
 
-[![Sample Workflow](<https://github.com/segraef/Template/actions/workflows/workflow.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/workflow.yml>)
+--language extensions
 
-## Creating a repository from a template
+--themes
 
-You can [generate](https://github.com/segraef/Template/generate) a new repository with the same directory structure and files as an existing repository. More details can be found [here][CreateFromTemplate].
+--workspaces
 
-## Reporting Issues and Feedback
+--settings sync
 
-### Issues and Bugs
+--github
 
-If you find any bugs, please file an issue in the [GitHub Issues][GitHubIssues] page. Please fill out the provided template with the appropriate information.
+--shortcuts and keybindings https://code.visualstudio.com/docs/getstarted/keybindings
 
-If you are taking the time to mention a problem, even a seemingly minor one, it is greatly appreciated, and a totally valid contribution to this project. **Thank you!**
+Challenges:
 
-## Feedback
+--build dev environment
 
-If there is a feature you would like to see in here, please file an issue or feature request in the [GitHub Issues][GitHubIssues] page to provide direct feedback.
 
-## Contribution
+https://github.com/smithjw/vs-code-mac-admins?tab=readme-ov-file
 
-If you would like to become an active contributor to this repository or project, please follow the instructions provided in [`CONTRIBUTING.md`][Contributing].
 
-## Learn More
+## 02: Terminal for Workplace Engineers
 
-* [GitHub Documentation][GitHubDocs]
-* [Azure DevOps Documentation][AzureDevOpsDocs]
-* [Microsoft Azure Documentation][MicrosoftAzureDocs]
+--picking a terminal
 
-<!-- References -->
+--customization
 
-<!-- Local -->
-[ProjectSetup]: <https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions>
-[CreateFromTemplate]: <https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/creating-a-repository-from-a-template>
-[GitHubDocs]: <https://docs.github.com/>
-[AzureDevOpsDocs]: <https://docs.microsoft.com/en-us/azure/devops/?view=azure-devops>
-[GitHubIssues]: <https://github.com/segraef/Template/issues>
-[Contributing]: CONTRIBUTING.md
 
-<!-- External -->
-[Az]: <https://img.shields.io/powershellgallery/v/Az.svg?style=flat-square&label=Az>
-[AzGallery]: <https://www.powershellgallery.com/packages/Az/>
-[PowerShellCore]: <https://github.com/PowerShell/PowerShell/releases/latest>
+https://scrimba.com/articles/web-developer-terminal/
 
-<!-- Docs -->
-[MicrosoftAzureDocs]: <https://docs.microsoft.com/en-us/azure/>
-[PowerShellDocs]: <https://docs.microsoft.com/en-us/powershell/>
+
+## 03: VCS for Workplace Engineers
+
+
+https://www.freecodecamp.org/news/learn-git-through-gamification/
+
+
+--push
+
+--merge
+
+--conflicts
+
+Challenges:
+
+
+## 04: GitHub Actions for Workplace Engineers
+
+--runners
+
+--events
+
+--jobs
+
+--yaml
+
+--act - Run your GitHub Actions locally 🚀
+
+--reuseable workflows - https://docs.github.com/en/actions
+
+--repo templates
+
+--dependancy management 
+
+Challenges:
+
+https://learn.microsoft.com/en-us/training/paths/github-actions/
+
+https://youtu.be/Tz7FsunBbfQ?si=6ULhdjUdK9obKsFb
+
+--Questions:
+
+
+https://github.com/nektos/act
+
+
+## 05: GitOps for Workplace Engineers
+
+--Branching strategies
+
+--gitlab flow (terraform)
+
+--pr approvals
+
+Challenges:
+
+--Questions:
+
+
+## 06: Versioning and release strategy for workplace
+
+Engineers 
+
+--semvar
+
+--conventional commits
+
+--release please
+
+
+## 07: Containers for workplace Engineers 
+
+https://roadmap.sh/docker
+
+--docker base images
+
+Challenges:
+
+--Questions:
+
+
+## 08: Secrets Management for Workplace Engineers
+
+--machine identity 
+
+--hashivault
+
+--breakglass accounts
+
+https://developer.hashicorp.com/vault/tutorials/get-started 
+
+Challenges:
+
+--Questions:
+
+
+## 09: Terraform for Workplace Engineers
+
+--Learning path 
+
+https://roadmap.sh/terraform
+
+--usecases
+
+https://github.com/collabnix/terraform/blob/master/getting-started/use-cases.md
+
+--declarative vs. imperitive 
+
+--local install
+
+https://github.com/collabnix/terraform/tree/master/beginners/os
+
+--commands
+
+--providers
+
+--resources
+
+https://github.com/collabnix/terraform/blob/master/beginners/resources/Terraform_Resources.md
+
+--workspaces 
+
+--data sources
+
+--modules
+
+--provisioners
+
+--state and state locking
+
+--taint and untaint
+
+--secrets management
+
+--hcl syntax and language features 
+
+https://github.com/zealvora/terraform-beginner-to-advanced-resource/tree/master/Section%202%20-%20Read%2C%20Generate%2C%20Modify%20Congiruations
+
+https://github.com/sidpalas/devops-directive-terraform-course/tree/main/05-language-features
+
+--naming conventions
+
+https://www.terraform-best-practices.com/naming
+
+--using locals
+
+--using variables
+
+--code quality and repo structure 
+
+https://developer.hashicorp.com/terraform/language/style
+
+http://www.marktinderholt.com/terraform/2024/12/04/six-terraform-formatting-tips.html 
+
+--best practice 
+
+https://www.terraform-best-practices.com/
+
+--further reading 
+
+https://github.com/shuaibiyy/awesome-tf
+
+--Challenges:
+
+
+--Questions
+
+https://www.datacamp.com/blog/terraform-interview-questions
+
+
+## 10: SaaS Platform Monitoring for workplace Engineers 
+
+--open telemetry 
+
+--inbuilt incident reporting
+
+--log management 
