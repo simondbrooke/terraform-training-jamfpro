@@ -14,7 +14,7 @@ https://roadmap.sh/devops
 
 --problem statements
 
---devops principles 
+--devops principles
 
 
 ## 01: Visual Studio Code for workplace engineers
@@ -27,8 +27,6 @@ https://roadmap.sh/devops
 
 ### General Extensions
 
-General plist manipulation (used in macOS and iPad/iOS configuration profiles)
-
 - [Binary Plist](https://marketplace.visualstudio.com/items?itemName=dnicolson.binary-plist)
 - [GitHub Codespaces](https://marketplace.visualstudio.com/items?itemName=GitHub.codespaces)
 - [GitHub Pull Requests and Issues](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github)
@@ -36,7 +34,6 @@ General plist manipulation (used in macOS and iPad/iOS configuration profiles)
 - [Git Graph](https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph)
 - [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 - [pre-commit](https://marketplace.visualstudio.com/items?itemName=elagil.pre-commit-helper)
-
 - [TODO Highlight](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight)
 - [VSNotes](https://marketplace.visualstudio.com/items?itemName=patricklee.vsnotes)
 - [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)
@@ -47,6 +44,7 @@ General plist manipulation (used in macOS and iPad/iOS configuration profiles)
 - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
 - [docs-yaml](https://marketplace.visualstudio.com/items?itemName=docsmsft.docs-yaml)
 - [Edit CSV](https://marketplace.visualstudio.com/items?itemName=janisdd.vscode-edit-csv)
+- [Go](https://marketplace.visualstudio.com/items?itemName=golang.Go) - Go(Lang) Language Support
 - [HashiCorp Terraform](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
 - [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
 - [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
@@ -60,8 +58,13 @@ General plist manipulation (used in macOS and iPad/iOS configuration profiles)
 
 ### Themes
 
+themes for VS code are an entirely personal perference, here are some optional suggestions.
+
 - [Nord](https://marketplace.visualstudio.com/items?itemName=arcticicestudio.nord-visual-studio-code)
 - [One Dark Pro](https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme)
+- [GitHub Theme](https://marketplace.visualstudio.com/items?itemName=GitHub.github-vscode-theme)
+- [Slack Theme](https://marketplace.visualstudio.com/items?itemName=felipe-mendes.slack-theme)
+- [Dracula Theme](https://marketplace.visualstudio.com/items?itemName=dracula-theme.theme-dracula)
 
 --workspaces
 
