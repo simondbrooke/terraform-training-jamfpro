@@ -22,6 +22,60 @@ By the end of this module, you will be able to:
 
 ## 🚨 Understanding Terraform Error Types
 
+**Terraform Error Classification Overview:**
+```mermaid
+graph TD
+    subgraph "🚨 Terraform Errors"
+        ERROR[Terraform Error Occurred]
+    end
+    
+    subgraph "📝 Language Errors"
+        LANG[Language Errors<br/>🟢 Easy to Fix<br/>Minutes to resolve]
+        LANG_CAUSES[Common Causes:<br/>• Invalid HCL syntax<br/>• Missing brackets/quotes<br/>• Malformed expressions]
+        LANG_TOOLS[Resolution Tools:<br/>• terraform validate<br/>• terraform fmt<br/>• terraform version]
+    end
+    
+    subgraph "🔄 State Errors" 
+        STATE[State Errors<br/>🟢 Easy to Fix<br/>Minutes to Hours]
+        STATE_CAUSES[Common Causes:<br/>• Resources modified externally<br/>• State file corruption<br/>• Configuration drift]
+        STATE_TOOLS[Resolution Tools:<br/>• terraform refresh<br/>• terraform import<br/>• terraform replace]
+    end
+    
+    subgraph "🔧 Core Errors"
+        CORE[Core Errors<br/>🔴 Hard to Fix<br/>Days to Weeks]
+        CORE_CAUSES[Common Causes:<br/>• Terraform core bugs<br/>• Memory issues<br/>• Plugin communication failures]
+        CORE_TOOLS[Resolution Tools:<br/>• TF_LOG=DEBUG<br/>• Crash log analysis<br/>• GitHub issues]
+    end
+    
+    subgraph "🔌 Provider Errors"
+        PROVIDER[Provider Errors<br/>🔴 Hard to Fix<br/>Days to Weeks]
+        PROVIDER_CAUSES[Common Causes:<br/>• Provider API changes<br/>• Authentication issues<br/>• Rate limiting]
+        PROVIDER_TOOLS[Resolution Tools:<br/>• Provider logging<br/>• Credential verification<br/>• GitHub issues]
+    end
+    
+    %% Error classification flow
+    ERROR --> LANG
+    ERROR --> STATE
+    ERROR --> CORE
+    ERROR --> PROVIDER
+    
+    %% Internal relationships
+    LANG --> LANG_CAUSES
+    LANG --> LANG_TOOLS
+    STATE --> STATE_CAUSES
+    STATE --> STATE_TOOLS
+    CORE --> CORE_CAUSES
+    CORE --> CORE_TOOLS
+    PROVIDER --> PROVIDER_CAUSES
+    PROVIDER --> PROVIDER_TOOLS
+    
+    style LANG fill:#e8f5e8
+    style STATE fill:#e8f5e8
+    style CORE fill:#ffebee
+    style PROVIDER fill:#ffebee
+    style ERROR fill:#f3e5f5
+```
+
 Terraform errors can be classified into **four distinct categories**, each requiring different troubleshooting approaches:
 
 ### 1. 📝 **Language Errors** (Easy to Fix)
@@ -204,6 +258,80 @@ An argument named "deprecated_argument" is not expected here.
 | **Core** | 🔴 Hard | `TF_LOG`, GitHub issues | Days to Weeks | Terraform panics, crashes |
 | **Provider** | 🔴 Hard | Provider logs, GitHub issues | Days to Weeks | API changes, auth issues |
 
+## 🔍 Troubleshooting Decision Tree
+
+**Systematic Error Resolution Workflow:**
+```mermaid
+flowchart TD
+    START[Terraform Error Occurred] --> IDENTIFY{Identify Error Type}
+    
+    IDENTIFY -->|Syntax/Configuration Issues| LANG[📝 Language Error]
+    IDENTIFY -->|Resource State Issues| STATE[🔄 State Error]  
+    IDENTIFY -->|Terraform Crashes| CORE[🔧 Core Error]
+    IDENTIFY -->|Provider API Issues| PROVIDER[🔌 Provider Error]
+    
+    %% Language Error Path
+    LANG --> LANG_VALIDATE[Run terraform validate]
+    LANG_VALIDATE --> LANG_VALID{Valid?}
+    LANG_VALID -->|No| LANG_FIX[Fix syntax errors<br/>Check brackets, quotes, commas]
+    LANG_FIX --> LANG_FORMAT[Run terraform fmt]
+    LANG_FORMAT --> LANG_VALIDATE
+    LANG_VALID -->|Yes| SUCCESS[✅ Error Resolved]
+    
+    %% State Error Path
+    STATE --> STATE_REFRESH[Run terraform refresh]
+    STATE_REFRESH --> STATE_PLAN[Run terraform plan]
+    STATE_PLAN --> STATE_DRIFT{State Drift Detected?}
+    STATE_DRIFT -->|Yes| STATE_CHOICE{Choose Action}
+    STATE_CHOICE -->|Update Config| STATE_UPDATE[Update configuration to match]
+    STATE_CHOICE -->|Replace Resource| STATE_REPLACE[terraform apply -replace]
+    STATE_CHOICE -->|Import Resource| STATE_IMPORT[terraform import]
+    STATE_UPDATE --> SUCCESS
+    STATE_REPLACE --> SUCCESS
+    STATE_IMPORT --> SUCCESS
+    STATE_DRIFT -->|No| SUCCESS
+    
+    %% Core Error Path
+    CORE --> CORE_LOG[Enable TF_LOG=DEBUG]
+    CORE_LOG --> CORE_REPRODUCE[Reproduce the error]
+    CORE_REPRODUCE --> CORE_CRASH{Crash Log Generated?}
+    CORE_CRASH -->|Yes| CORE_ANALYZE[Analyze crash.log<br/>Extract panic message]
+    CORE_CRASH -->|No| CORE_GITHUB[Search GitHub Issues]
+    CORE_ANALYZE --> CORE_GITHUB
+    CORE_GITHUB --> CORE_FOUND{Known Issue?}
+    CORE_FOUND -->|Yes| CORE_WORKAROUND[Apply workaround<br/>or upgrade/downgrade]
+    CORE_FOUND -->|No| CORE_REPORT[Create GitHub Issue<br/>Include debug logs]
+    CORE_WORKAROUND --> SUCCESS
+    CORE_REPORT --> WAIT[⏳ Wait for Fix]
+    
+    %% Provider Error Path
+    PROVIDER --> PROVIDER_AUTH[Check credentials<br/>and permissions]
+    PROVIDER_AUTH --> PROVIDER_LOG[Enable provider logging<br/>TF_LOG_PROVIDER=TRACE]
+    PROVIDER_LOG --> PROVIDER_REPRODUCE[Reproduce the error]
+    PROVIDER_REPRODUCE --> PROVIDER_API{API Issue?}
+    PROVIDER_API -->|Rate Limiting| PROVIDER_RETRY[Implement retry logic<br/>or wait]
+    PROVIDER_API -->|Auth Error| PROVIDER_CREDS[Fix credentials<br/>or permissions]
+    PROVIDER_API -->|API Change| PROVIDER_VERSION[Check provider version<br/>compatibility]
+    PROVIDER_API -->|Unknown| PROVIDER_GITHUB[Search Provider GitHub Issues]
+    PROVIDER_RETRY --> SUCCESS
+    PROVIDER_CREDS --> SUCCESS
+    PROVIDER_VERSION --> PROVIDER_UPDATE[Update provider version]
+    PROVIDER_UPDATE --> SUCCESS
+    PROVIDER_GITHUB --> PROVIDER_FOUND{Known Issue?}
+    PROVIDER_FOUND -->|Yes| PROVIDER_WORKAROUND[Apply workaround]
+    PROVIDER_FOUND -->|No| PROVIDER_REPORT[Create Provider GitHub Issue]
+    PROVIDER_WORKAROUND --> SUCCESS
+    PROVIDER_REPORT --> WAIT
+    
+    style START fill:#f3e5f5
+    style SUCCESS fill:#e8f5e8
+    style WAIT fill:#fff3e0
+    style LANG fill:#e8f5e8
+    style STATE fill:#e8f5e8
+    style CORE fill:#ffebee
+    style PROVIDER fill:#ffebee
+```
+
 ---
 
 ## 🔍 Terraform Debugging with TF_LOG
@@ -211,6 +339,72 @@ An argument named "deprecated_argument" is not expected here.
 Terraform provides comprehensive logging capabilities through environment variables for detailed debugging.
 
 ### 🎚️ **TF_LOG Levels**
+
+**Terraform Logging Architecture:**
+```mermaid
+graph TB
+    subgraph "Logging Configuration"
+        TF_LOG[TF_LOG Environment Variable<br/>Controls Overall Logging]
+        TF_LOG_PATH[TF_LOG_PATH<br/>Custom Log File Location]
+    end
+    
+    subgraph "Logging Levels (Most to Least Verbose)"
+        TRACE[TRACE<br/>🔍 Most Detailed<br/>All operations, API calls, state changes]
+        DEBUG[DEBUG<br/>🐛 Debugging Info<br/>Resource operations, provider calls]
+        INFO[INFO<br/>ℹ️ General Messages<br/>Plan/apply progress, resource counts]
+        WARN[WARN<br/>⚠️ Warnings Only<br/>Deprecation notices, potential issues]
+        ERROR[ERROR<br/>❌ Errors Only<br/>Failures and critical issues]
+        JSON[JSON<br/>📄 JSON Format<br/>Structured trace-level logs]
+    end
+    
+    subgraph "Targeted Logging"
+        CORE_LOG[TF_LOG_CORE<br/>Terraform Core Operations<br/>State management, planning]
+        PROVIDER_LOG[TF_LOG_PROVIDER<br/>Provider Operations<br/>API calls, resource CRUD]
+    end
+    
+    subgraph "Log Destinations"
+        STDOUT[Standard Output<br/>Terminal/Console]
+        FILE[Log Files<br/>Custom path via TF_LOG_PATH]
+        BOTH[Both Destinations<br/>Console + File]
+    end
+    
+    subgraph "Use Cases"
+        DEVELOPMENT[Development<br/>DEBUG/INFO level<br/>Quick feedback]
+        TROUBLESHOOTING[Troubleshooting<br/>TRACE level<br/>Maximum detail]
+        PRODUCTION[Production<br/>WARN/ERROR level<br/>Issues only]
+        AUTOMATION[CI/CD<br/>JSON format<br/>Structured parsing]
+    end
+    
+    %% Configuration relationships
+    TF_LOG --> TRACE
+    TF_LOG --> DEBUG
+    TF_LOG --> INFO
+    TF_LOG --> WARN
+    TF_LOG --> ERROR
+    TF_LOG --> JSON
+    
+    %% Targeted logging
+    TF_LOG --> CORE_LOG
+    TF_LOG --> PROVIDER_LOG
+    
+    %% Output destinations
+    TRACE --> STDOUT
+    DEBUG --> FILE
+    JSON --> BOTH
+    TF_LOG_PATH --> FILE
+    
+    %% Use case mapping
+    DEBUG --> DEVELOPMENT
+    TRACE --> TROUBLESHOOTING
+    ERROR --> PRODUCTION
+    JSON --> AUTOMATION
+    
+    style TRACE fill:#ffebee
+    style DEBUG fill:#fff3e0
+    style INFO fill:#e3f2fd
+    style JSON fill:#f3e5f5
+    style TROUBLESHOOTING fill:#ffebee
+```
 
 ```bash
 # Available logging levels (from most to least verbose)
@@ -281,6 +475,76 @@ fi
 
 ## 💻 **Exercise 16.1**: Complete Troubleshooting Workflow
 **Duration**: 25 minutes
+
+**Comprehensive Debugging Environment Setup:**
+```mermaid
+graph TB
+    subgraph "🔧 Debugging Environment"
+        SETUP[Setup Debugging Environment<br/>Create directories, scripts, utilities]
+    end
+    
+    subgraph "📝 Language Error Practice"
+        LANG_CREATE[Create Intentional Errors<br/>Missing brackets, invalid syntax]
+        LANG_VALIDATE[Practice Validation<br/>terraform validate, fmt]
+        LANG_FIX[Fix Errors Step by Step<br/>Iterative debugging process]
+    end
+    
+    subgraph "🔄 State Error Simulation"
+        STATE_DRIFT[Simulate State Drift<br/>Manual resource changes]
+        STATE_DETECT[Detect Drift<br/>terraform plan, refresh]
+        STATE_RESOLVE[Resolve Drift<br/>import, replace, update]
+    end
+    
+    subgraph "🔍 Advanced Debugging"
+        ADV_LOG[Configure Comprehensive Logging<br/>TF_LOG, TF_LOG_CORE, TF_LOG_PROVIDER]
+        ADV_CAPTURE[Capture Debug Output<br/>Timestamped log files]
+        ADV_ANALYZE[Analyze Log Patterns<br/>Extract relevant information]
+    end
+    
+    subgraph "📋 Issue Reporting"
+        TEMPLATE[Create GitHub Issue Template<br/>Standardized reporting format]
+        REPRODUCE[Minimal Reproduction Case<br/>Isolated test scenario]
+        DOCUMENT[Document Environment<br/>Versions, OS, configuration]
+    end
+    
+    subgraph "🔄 Error Recovery Testing"
+        RECOVERY[Test Recovery Scenarios<br/>All four error types]
+        AUTOMATION[Automated Recovery Scripts<br/>Reusable debugging tools]
+        VALIDATION[Validate Recovery Process<br/>End-to-end testing]
+    end
+    
+    %% Workflow progression
+    SETUP --> LANG_CREATE
+    LANG_CREATE --> LANG_VALIDATE
+    LANG_VALIDATE --> LANG_FIX
+    
+    LANG_FIX --> STATE_DRIFT
+    STATE_DRIFT --> STATE_DETECT
+    STATE_DETECT --> STATE_RESOLVE
+    
+    STATE_RESOLVE --> ADV_LOG
+    ADV_LOG --> ADV_CAPTURE
+    ADV_CAPTURE --> ADV_ANALYZE
+    
+    ADV_ANALYZE --> TEMPLATE
+    TEMPLATE --> REPRODUCE
+    REPRODUCE --> DOCUMENT
+    
+    DOCUMENT --> RECOVERY
+    RECOVERY --> AUTOMATION
+    AUTOMATION --> VALIDATION
+    
+    %% Parallel processes
+    LANG_FIX -.-> ADV_LOG
+    STATE_RESOLVE -.-> TEMPLATE
+    ADV_ANALYZE -.-> RECOVERY
+    
+    style SETUP fill:#e3f2fd
+    style LANG_FIX fill:#e8f5e8
+    style STATE_RESOLVE fill:#e8f5e8
+    style ADV_ANALYZE fill:#fff3e0
+    style VALIDATION fill:#f3e5f5
+```
 
 Practice comprehensive Terraform troubleshooting with realistic scenarios covering all error types.
 
