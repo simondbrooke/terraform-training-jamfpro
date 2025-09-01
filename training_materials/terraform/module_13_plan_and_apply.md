@@ -21,6 +21,43 @@ By the end of this module, you will be able to:
 
 ## 📋 terraform plan - Execution Planning
 
+**Complete Terraform Plan Process Flow:**
+```mermaid
+flowchart TD
+    START["🚀 terraform plan"] --> INIT_CHECK{Terraform Initialized?}
+    
+    INIT_CHECK -->|No| NEED_INIT["❌ Run terraform init first"]
+    INIT_CHECK -->|Yes| LOAD_CONFIG["📋 Load Configuration<br/>• Parse .tf files<br/>• Load variables<br/>• Validate syntax"]
+    
+    LOAD_CONFIG --> REFRESH["🔄 Refresh State<br/>• Query current resources<br/>• Update state file<br/>• Detect external changes"]
+    
+    REFRESH --> CALCULATE_DIFF["⚖️ Calculate Differences<br/>• Compare desired vs current<br/>• Identify required actions<br/>• Build dependency graph"]
+    
+    CALCULATE_DIFF --> PLAN_ACTIONS{Plan Contains Changes?}
+    
+    PLAN_ACTIONS -->|No Changes| NO_CHANGES["✅ No Changes Required<br/>Exit Code: 0<br/>Infrastructure matches config"]
+    PLAN_ACTIONS -->|Changes Found| SHOW_PLAN["📊 Display Execution Plan<br/>• Show resource actions<br/>• List affected resources<br/>• Display change summary"]
+    
+    SHOW_PLAN --> SAVE_OPTION{Save Plan?}
+    
+    SAVE_OPTION -->|Yes| SAVE_PLAN["💾 Save Plan File<br/>terraform plan -out=planfile<br/>• Binary format<br/>• Contains exact changes"]
+    SAVE_OPTION -->|No| PLAN_COMPLETE["📋 Plan Complete<br/>Exit Code: 2<br/>Ready for apply"]
+    
+    SAVE_PLAN --> PLAN_COMPLETE
+    
+    %% Error handling
+    LOAD_CONFIG -->|Syntax Error| CONFIG_ERROR["❌ Configuration Error<br/>Exit Code: 1<br/>Fix syntax issues"]
+    REFRESH -->|Provider Error| PROVIDER_ERROR["❌ Provider Error<br/>Exit Code: 1<br/>Check credentials/connectivity"]
+    CALCULATE_DIFF -->|Validation Error| VALIDATION_ERROR["❌ Validation Error<br/>Exit Code: 1<br/>Fix resource constraints"]
+    
+    style START fill:#e3f2fd
+    style NO_CHANGES fill:#e8f5e8
+    style PLAN_COMPLETE fill:#fff3e0
+    style CONFIG_ERROR fill:#ffebee
+    style PROVIDER_ERROR fill:#ffebee
+    style VALIDATION_ERROR fill:#ffebee
+```
+
 The `terraform plan` command creates an **execution plan** showing what actions Terraform will take to achieve the desired state defined in your configuration.
 
 ### 🔧 Basic terraform plan Usage
@@ -110,6 +147,54 @@ Plan: 1 to add, 0 to change, 0 to destroy.
 
 ### 🎯 Plan Action Symbols
 
+**Plan Action Symbols and Resource States:**
+```mermaid
+graph TB
+    subgraph "📊 Plan Action Symbols"
+        CREATE["+ CREATE<br/>New resource will be created<br/>No existing state"]
+        UPDATE["~ UPDATE<br/>Resource modified in-place<br/>Preserves resource identity"]
+        DESTROY["- DESTROY<br/>Resource will be deleted<br/>Removes from state"]
+        REPLACE["+/- REPLACE<br/>Destroy then recreate<br/>Changes require replacement"]
+        READ["<= READ<br/>Data source query<br/>No state modification"]
+    end
+    
+    subgraph "🔄 Resource Lifecycle States"
+        NOT_EXISTS["Resource Does Not Exist<br/>• No cloud resource<br/>• No state entry"]
+        EXISTS_MANAGED["Resource Exists (Managed)<br/>• Cloud resource exists<br/>• Tracked in state<br/>• Matches configuration"]
+        EXISTS_DRIFT["Resource Exists (Drift)<br/>• Cloud resource exists<br/>• Tracked in state<br/>• Differs from configuration"]
+        EXISTS_UNMANAGED["Resource Exists (Unmanaged)<br/>• Cloud resource exists<br/>• Not in state<br/>• Needs import"]
+    end
+    
+    subgraph "⚡ Action Triggers"
+        ATTR_CHANGE["Attribute Changes<br/>• Instance type<br/>• Security groups<br/>• Tags"]
+        FORCE_REPLACE["Force Replacement<br/>• AMI change<br/>• Subnet change<br/>• Name change"]
+        CONFIG_REMOVE["Configuration Removal<br/>• Resource deleted from .tf<br/>• Count reduced<br/>• Conditional false"]
+        NEW_RESOURCE["New Configuration<br/>• Resource added to .tf<br/>• Count increased<br/>• Conditional true"]
+    end
+    
+    %% State to Action mappings
+    NOT_EXISTS --> CREATE
+    EXISTS_MANAGED --> UPDATE
+    EXISTS_DRIFT --> UPDATE
+    EXISTS_UNMANAGED --> CREATE
+    
+    %% Action triggers
+    ATTR_CHANGE --> UPDATE
+    FORCE_REPLACE --> REPLACE
+    CONFIG_REMOVE --> DESTROY
+    NEW_RESOURCE --> CREATE
+    
+    %% Special cases
+    EXISTS_MANAGED -->|Force Replace| REPLACE
+    EXISTS_DRIFT -->|Cannot Update| REPLACE
+    
+    style CREATE fill:#e8f5e8
+    style UPDATE fill:#fff3e0
+    style DESTROY fill:#ffebee
+    style REPLACE fill:#f3e5f5
+    style READ fill:#e3f2fd
+```
+
 **📝 Action Symbols Explained:**
 - **`+`** - **Create**: New resource will be created
 - **`~`** - **Update**: Resource will be modified in-place
@@ -177,6 +262,67 @@ fi
 ---
 
 ## ⚡ terraform apply - Executing Changes
+
+**Complete Terraform Apply Process Flow:**
+```mermaid
+flowchart TD
+    START["⚡ terraform apply"] --> PLAN_SOURCE{Plan Source?}
+    
+    PLAN_SOURCE -->|Saved Plan| LOAD_PLAN["💾 Load Saved Plan<br/>• Read plan file<br/>• Skip planning phase<br/>• No approval needed"]
+    PLAN_SOURCE -->|No Saved Plan| GENERATE_PLAN["📋 Generate New Plan<br/>• Run planning process<br/>• Calculate changes<br/>• Show proposed actions"]
+    
+    GENERATE_PLAN --> SHOW_CHANGES["📊 Display Proposed Changes<br/>• Resource actions<br/>• Change summary<br/>• Impact analysis"]
+    
+    SHOW_CHANGES --> APPROVAL{Approval Required?}
+    
+    APPROVAL -->|Auto-Approve| SKIP_APPROVAL["⚡ Skip Approval<br/>-auto-approve flag<br/>Proceed directly"]
+    APPROVAL -->|Manual Approval| REQUEST_APPROVAL["🔐 Request Approval<br/>Enter a value: "]
+    
+    REQUEST_APPROVAL --> USER_INPUT{User Input?}
+    USER_INPUT -->|'yes'| APPROVED["✅ Changes Approved"]
+    USER_INPUT -->|Other| CANCELLED["❌ Apply Cancelled<br/>No changes made"]
+    
+    LOAD_PLAN --> APPROVED
+    SKIP_APPROVAL --> APPROVED
+    
+    APPROVED --> ACQUIRE_LOCK["🔒 Acquire State Lock<br/>• Prevent concurrent runs<br/>• Ensure consistency<br/>• Set lock timeout"]
+    
+    ACQUIRE_LOCK --> LOCK_SUCCESS{Lock Acquired?}
+    
+    LOCK_SUCCESS -->|No| LOCK_FAILED["❌ Lock Failed<br/>Another apply running<br/>Wait or force unlock"]
+    LOCK_SUCCESS -->|Yes| EXECUTE_CHANGES["⚡ Execute Changes<br/>• Create resources<br/>• Update resources<br/>• Destroy resources"]
+    
+    EXECUTE_CHANGES --> PARALLEL_EXEC["🔄 Parallel Execution<br/>• Respect dependencies<br/>• Handle parallelism<br/>• Monitor progress"]
+    
+    PARALLEL_EXEC --> RESOURCE_STATUS{Resource Operations}
+    
+    RESOURCE_STATUS -->|Success| UPDATE_STATE["📝 Update State File<br/>• Record new state<br/>• Update metadata<br/>• Save changes"]
+    RESOURCE_STATUS -->|Partial Failure| PARTIAL_STATE["⚠️ Partial State Update<br/>• Save successful changes<br/>• Mark failed resources<br/>• Maintain consistency"]
+    RESOURCE_STATUS -->|Complete Failure| ROLLBACK["🔄 Rollback Attempt<br/>• Undo partial changes<br/>• Restore previous state<br/>• Report errors"]
+    
+    UPDATE_STATE --> RELEASE_LOCK["🔓 Release State Lock<br/>• Free for other operations<br/>• Clean up lock file"]
+    PARTIAL_STATE --> RELEASE_LOCK
+    ROLLBACK --> RELEASE_LOCK
+    
+    RELEASE_LOCK --> SHOW_RESULTS["📊 Show Results<br/>• Resources changed<br/>• Output values<br/>• Summary statistics"]
+    
+    SHOW_RESULTS --> SUCCESS["✅ Apply Complete"]
+    
+    %% Error paths
+    EXECUTE_CHANGES -->|Provider Error| PROVIDER_FAIL["❌ Provider Error<br/>API failures<br/>Permission issues"]
+    PARALLEL_EXEC -->|Resource Error| RESOURCE_FAIL["❌ Resource Error<br/>Invalid configuration<br/>Dependency issues"]
+    
+    PROVIDER_FAIL --> PARTIAL_STATE
+    RESOURCE_FAIL --> PARTIAL_STATE
+    
+    style START fill:#e3f2fd
+    style SUCCESS fill:#e8f5e8
+    style CANCELLED fill:#ffebee
+    style LOCK_FAILED fill:#ffebee
+    style PROVIDER_FAIL fill:#ffebee
+    style RESOURCE_FAIL fill:#ffebee
+    style APPROVED fill:#e8f5e8
+```
 
 The `terraform apply` command **executes the actions** proposed in a Terraform plan to reach the desired state.
 
@@ -283,6 +429,74 @@ terraform apply -replace=aws_instance.web[0]
 
 ## 💾 Saved Plans - Controlled Deployments
 
+**Saved Plans Workflow and Security:**
+```mermaid
+flowchart TD
+    subgraph "📋 Plan Creation Phase"
+        CREATE_PLAN["terraform plan -out=planfile<br/>• Generate execution plan<br/>• Save to binary format<br/>• Include all variables"]
+        PLAN_REVIEW["terraform show planfile<br/>• Human-readable format<br/>• Review proposed changes<br/>• Generate summary"]
+        PLAN_ANALYSIS["Plan Analysis<br/>• Security impact<br/>• Cost implications<br/>• Risk assessment"]
+    end
+    
+    subgraph "🔐 Security & Storage"
+        SENSITIVE_CHECK["🔍 Sensitive Data Check<br/>• Scan for secrets<br/>• Identify sensitive values<br/>• Mask in outputs"]
+        ENCRYPTION["🔒 Plan Encryption<br/>• GPG encryption<br/>• KMS encryption<br/>• Secure storage"]
+        ACCESS_CONTROL["👥 Access Control<br/>• File permissions (600)<br/>• Role-based access<br/>• Audit logging"]
+    end
+    
+    subgraph "✅ Approval Process"
+        SUBMIT_APPROVAL["📤 Submit for Approval<br/>• Git commit<br/>• Ticket creation<br/>• Review request"]
+        STAKEHOLDER_REVIEW["👥 Stakeholder Review<br/>• Security team<br/>• Operations team<br/>• Business approval"]
+        APPROVAL_DECISION{Approval Decision}
+    end
+    
+    subgraph "⚡ Execution Phase"
+        PLAN_VALIDATION["🔍 Plan Validation<br/>• Verify plan integrity<br/>• Check expiration<br/>• Validate environment"]
+        EXECUTE_PLAN["terraform apply planfile<br/>• No additional approval<br/>• Exact plan execution<br/>• Consistent deployment"]
+        EXECUTION_MONITORING["📊 Monitor Execution<br/>• Track progress<br/>• Handle failures<br/>• Log activities"]
+    end
+    
+    subgraph "🧹 Cleanup & Audit"
+        CLEANUP_PLANS["🗑️ Cleanup Plan Files<br/>• Remove temporary files<br/>• Secure deletion<br/>• Retention policy"]
+        AUDIT_TRAIL["📋 Audit Trail<br/>• Execution logs<br/>• Change records<br/>• Compliance reporting"]
+        POST_VALIDATION["✅ Post-Apply Validation<br/>• Verify deployment<br/>• Test functionality<br/>• Update documentation"]
+    end
+    
+    %% Flow connections
+    CREATE_PLAN --> PLAN_REVIEW
+    PLAN_REVIEW --> PLAN_ANALYSIS
+    PLAN_ANALYSIS --> SENSITIVE_CHECK
+    
+    SENSITIVE_CHECK --> ENCRYPTION
+    ENCRYPTION --> ACCESS_CONTROL
+    ACCESS_CONTROL --> SUBMIT_APPROVAL
+    
+    SUBMIT_APPROVAL --> STAKEHOLDER_REVIEW
+    STAKEHOLDER_REVIEW --> APPROVAL_DECISION
+    
+    APPROVAL_DECISION -->|Approved| PLAN_VALIDATION
+    APPROVAL_DECISION -->|Rejected| CLEANUP_PLANS
+    APPROVAL_DECISION -->|Changes Requested| CREATE_PLAN
+    
+    PLAN_VALIDATION --> EXECUTE_PLAN
+    EXECUTE_PLAN --> EXECUTION_MONITORING
+    EXECUTION_MONITORING --> POST_VALIDATION
+    
+    POST_VALIDATION --> AUDIT_TRAIL
+    AUDIT_TRAIL --> CLEANUP_PLANS
+    
+    %% Security considerations
+    SENSITIVE_CHECK -.-> ENCRYPTION
+    ACCESS_CONTROL -.-> AUDIT_TRAIL
+    EXECUTION_MONITORING -.-> AUDIT_TRAIL
+    
+    style CREATE_PLAN fill:#e3f2fd
+    style APPROVAL_DECISION fill:#fff3e0
+    style EXECUTE_PLAN fill:#e8f5e8
+    style CLEANUP_PLANS fill:#ffebee
+    style ENCRYPTION fill:#f3e5f5
+```
+
 **Saved plans** allow you to **separate planning from execution**, enabling better **change control** and **approval workflows**.
 
 ### 🔧 Creating and Using Saved Plans
@@ -356,6 +570,74 @@ aws s3 cp production.tfplan s3://secure-terraform-plans/ --sse aws:kms
 ---
 
 ## 🔄 Plan and Apply Workflows
+
+**Development vs Production Workflows:**
+```mermaid
+graph TB
+    subgraph "🛠️ Development Workflow"
+        DEV_START["👨‍💻 Developer Workflow"]
+        DEV_EDIT["📝 Edit Configuration<br/>• Quick iterations<br/>• Local testing<br/>• Immediate feedback"]
+        DEV_PLAN["📋 terraform plan<br/>• Interactive review<br/>• No saved plans<br/>• Quick validation"]
+        DEV_APPLY["⚡ terraform apply<br/>• Manual approval<br/>• Direct execution<br/>• Fast iteration"]
+        DEV_TEST["🧪 Test & Iterate<br/>• Functional testing<br/>• Quick fixes<br/>• Continuous improvement"]
+    end
+    
+    subgraph "🏢 Production Workflow"
+        PROD_START["🏢 Production Workflow"]
+        PROD_PLAN["📋 Create Saved Plan<br/>• terraform plan -out=plan<br/>• Comprehensive review<br/>• Security scanning"]
+        PROD_REVIEW["👥 Multi-Stage Review<br/>• Security team<br/>• Operations team<br/>• Change approval board"]
+        PROD_APPROVE["✅ Formal Approval<br/>• Documented approval<br/>• Risk assessment<br/>• Rollback planning"]
+        PROD_SCHEDULE["📅 Scheduled Deployment<br/>• Maintenance window<br/>• Resource coordination<br/>• Stakeholder notification"]
+        PROD_APPLY["⚡ terraform apply plan<br/>• No additional approval<br/>• Exact plan execution<br/>• Monitoring & logging"]
+        PROD_VALIDATE["🔍 Post-Deploy Validation<br/>• Health checks<br/>• Performance validation<br/>• Rollback readiness"]
+    end
+    
+    subgraph "🤖 CI/CD Integration"
+        CICD_START["🤖 CI/CD Pipeline"]
+        CICD_TRIGGER["🔄 Trigger Events<br/>• Git push<br/>• Pull request<br/>• Scheduled runs"]
+        CICD_VALIDATE["✅ Validation Stage<br/>• terraform fmt -check<br/>• terraform validate<br/>• Security scanning"]
+        CICD_PLAN["📋 Plan Stage<br/>• Generate plan<br/>• Save as artifact<br/>• Comment on PR"]
+        CICD_APPROVE["👥 Manual Gate<br/>• Human approval<br/>• Environment promotion<br/>• Release gate"]
+        CICD_DEPLOY["🚀 Deploy Stage<br/>• Download plan artifact<br/>• terraform apply<br/>• Update status"]
+        CICD_NOTIFY["📢 Notifications<br/>• Slack/Teams<br/>• Email alerts<br/>• Status updates"]
+    end
+    
+    %% Development flow
+    DEV_START --> DEV_EDIT
+    DEV_EDIT --> DEV_PLAN
+    DEV_PLAN --> DEV_APPLY
+    DEV_APPLY --> DEV_TEST
+    DEV_TEST --> DEV_EDIT
+    
+    %% Production flow
+    PROD_START --> PROD_PLAN
+    PROD_PLAN --> PROD_REVIEW
+    PROD_REVIEW --> PROD_APPROVE
+    PROD_APPROVE --> PROD_SCHEDULE
+    PROD_SCHEDULE --> PROD_APPLY
+    PROD_APPLY --> PROD_VALIDATE
+    
+    %% CI/CD flow
+    CICD_START --> CICD_TRIGGER
+    CICD_TRIGGER --> CICD_VALIDATE
+    CICD_VALIDATE --> CICD_PLAN
+    CICD_PLAN --> CICD_APPROVE
+    CICD_APPROVE --> CICD_DEPLOY
+    CICD_DEPLOY --> CICD_NOTIFY
+    
+    %% Cross-workflow relationships
+    DEV_TEST -.->|Promote to Prod| PROD_START
+    PROD_VALIDATE -.->|Feedback| DEV_START
+    CICD_PLAN -.->|Automated| PROD_REVIEW
+    CICD_DEPLOY -.->|Production| PROD_APPLY
+    
+    style DEV_START fill:#e8f5e8
+    style PROD_START fill:#fff3e0
+    style CICD_START fill:#e3f2fd
+    style DEV_APPLY fill:#e8f5e8
+    style PROD_APPLY fill:#fff3e0
+    style CICD_DEPLOY fill:#e3f2fd
+```
 
 ### 🎯 Development Workflow
 
@@ -565,6 +847,89 @@ jobs:
 
 ## 💻 **Exercise 13.1**: Complete Plan and Apply Workflow
 **Duration**: 25 minutes
+
+**Complete Plan and Apply Lab Workflow:**
+```mermaid
+flowchart TD
+    subgraph "🏗️ Lab Setup"
+        SETUP["Setup Project<br/>mkdir terraform-plan-apply-demo<br/>Create configuration files"]
+        CONFIG_FILES["Create Configuration<br/>• main.tf (infrastructure)<br/>• user_data.sh (bootstrap)<br/>• *.tfvars (variables)"]
+        INIT["Initialize Project<br/>terraform init<br/>Download providers"]
+    end
+    
+    subgraph "📋 Basic Plan & Apply"
+        VALIDATE["Validate Configuration<br/>terraform fmt<br/>terraform validate"]
+        BASIC_PLAN["Basic Planning<br/>terraform plan<br/>Review proposed changes"]
+        BASIC_APPLY["Apply Changes<br/>terraform apply<br/>Interactive approval"]
+        TEST_BASIC["Test Infrastructure<br/>Verify deployment<br/>Check outputs"]
+    end
+    
+    subgraph "💾 Saved Plans Practice"
+        CREATE_SAVED["Create Saved Plan<br/>terraform plan -out=plan.tfplan<br/>Production variables"]
+        REVIEW_SAVED["Review Saved Plan<br/>terraform show plan.tfplan<br/>Generate summary"]
+        APPLY_SAVED["Apply Saved Plan<br/>terraform apply plan.tfplan<br/>No additional approval"]
+        VERIFY_SAVED["Verify Execution<br/>Check infrastructure<br/>Compare with plan"]
+    end
+    
+    subgraph "🔍 Plan Analysis"
+        EXIT_CODES["Test Exit Codes<br/>terraform plan -detailed-exitcode<br/>Understand return values"]
+        TARGETING["Practice Targeting<br/>terraform plan -target=resource<br/>Selective planning"]
+        JSON_OUTPUT["JSON Analysis<br/>terraform plan -json<br/>Parse with jq"]
+        DESTROY_PLAN["Destruction Planning<br/>terraform plan -destroy<br/>Cleanup preparation"]
+    end
+    
+    subgraph "🔄 Workflow Automation"
+        APPROVAL_SCRIPT["Create Approval Script<br/>deploy.sh<br/>Automated workflow"]
+        TEST_WORKFLOW["Test Workflow<br/>./deploy.sh env<br/>End-to-end process"]
+        CHANGE_MANAGEMENT["Change Management<br/>Modify configuration<br/>Plan and apply changes"]
+        VALIDATION["Post-Change Validation<br/>terraform output<br/>Infrastructure testing"]
+    end
+    
+    subgraph "🧹 Cleanup"
+        PLAN_DESTROY["Plan Destruction<br/>terraform plan -destroy<br/>Review cleanup plan"]
+        EXECUTE_DESTROY["Execute Cleanup<br/>terraform destroy<br/>Remove infrastructure"]
+        VERIFY_CLEANUP["Verify Cleanup<br/>Check cloud console<br/>Confirm removal"]
+    end
+    
+    %% Lab progression
+    SETUP --> CONFIG_FILES
+    CONFIG_FILES --> INIT
+    INIT --> VALIDATE
+    
+    VALIDATE --> BASIC_PLAN
+    BASIC_PLAN --> BASIC_APPLY
+    BASIC_APPLY --> TEST_BASIC
+    
+    TEST_BASIC --> CREATE_SAVED
+    CREATE_SAVED --> REVIEW_SAVED
+    REVIEW_SAVED --> APPLY_SAVED
+    APPLY_SAVED --> VERIFY_SAVED
+    
+    VERIFY_SAVED --> EXIT_CODES
+    EXIT_CODES --> TARGETING
+    TARGETING --> JSON_OUTPUT
+    JSON_OUTPUT --> DESTROY_PLAN
+    
+    DESTROY_PLAN --> APPROVAL_SCRIPT
+    APPROVAL_SCRIPT --> TEST_WORKFLOW
+    TEST_WORKFLOW --> CHANGE_MANAGEMENT
+    CHANGE_MANAGEMENT --> VALIDATION
+    
+    VALIDATION --> PLAN_DESTROY
+    PLAN_DESTROY --> EXECUTE_DESTROY
+    EXECUTE_DESTROY --> VERIFY_CLEANUP
+    
+    %% Parallel learning paths
+    BASIC_APPLY -.-> CREATE_SAVED
+    REVIEW_SAVED -.-> EXIT_CODES
+    TEST_WORKFLOW -.-> PLAN_DESTROY
+    
+    style SETUP fill:#e3f2fd
+    style BASIC_APPLY fill:#e8f5e8
+    style APPLY_SAVED fill:#fff3e0
+    style TEST_WORKFLOW fill:#f3e5f5
+    style VERIFY_CLEANUP fill:#ffebee
+```
 
 Let's practice the complete plan and apply workflow with saved plans and approval processes.
 
