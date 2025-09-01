@@ -15,13 +15,14 @@ By the end of this module, you will be able to:
 
 #### 🔍 Workflow Overview
 
-Understanding Terraform workflows is crucial for successful infrastructure management. The transcript emphasizes that different team sizes and organizational needs require different approaches. As the instructor notes:
+Understanding Terraform workflows is crucial for successful infrastructure management. 
 
-> *"I'm not saying that I think these are perfectly presented but I think that I have to cover them because they are in the exam and I you do learn something here"*
+> *"It's worth emphasizing that different team sizes and organizational needs require different approaches and will influence which workflow is appropriate for terraform adoption. Key influencing"*
 
 There are three primary workflow patterns:
+
 - **👤 Individual Practitioner**: Solo development with local operations
-- **👥 Team Without Cloud**: Collaborative development using traditional CI/CD
+- **👥 Team Without TF Cloud**: Collaborative development using traditional CI/CD
 - **☁️ Team With Terraform Cloud**: Streamlined collaborative development
 
 Each workflow has specific trade-offs between simplicity, collaboration capabilities, and operational overhead.
