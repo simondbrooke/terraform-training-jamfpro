@@ -673,22 +673,22 @@ variable "enable_nat_gateway" {
 ```mermaid
 graph TD
     subgraph "Input Configuration"
-        RULES[ingress_rules = [<br/>{port: 80, protocol: tcp, desc: HTTP},<br/>{port: 443, protocol: tcp, desc: HTTPS},<br/>{port: 22, protocol: tcp, desc: SSH}<br/>]]
+        RULES["ingress_rules = [<br/>port: 80, protocol: tcp, desc: HTTP<br/>port: 443, protocol: tcp, desc: HTTPS<br/>port: 22, protocol: tcp, desc: SSH<br/>]"]
     end
     
     subgraph "Dynamic Block Processing"
-        DYNAMIC[dynamic "ingress" {<br/>for_each = var.ingress_rules<br/>content { ... }<br/>}]
-        ITERATOR[Iterator:<br/>ingress.value.port<br/>ingress.value.protocol<br/>ingress.value.description]
+        DYNAMIC["dynamic ingress<br/>for_each = var.ingress_rules<br/>content block"]
+        ITERATOR["Iterator:<br/>ingress.value.port<br/>ingress.value.protocol<br/>ingress.value.description"]
     end
     
     subgraph "Generated Resources"
-        RULE1[Ingress Rule 1<br/>Port: 80, Protocol: TCP<br/>Description: HTTP]
-        RULE2[Ingress Rule 2<br/>Port: 443, Protocol: TCP<br/>Description: HTTPS]
-        RULE3[Ingress Rule 3<br/>Port: 22, Protocol: TCP<br/>Description: SSH]
+        RULE1["Ingress Rule 1<br/>Port: 80, Protocol: TCP<br/>Description: HTTP"]
+        RULE2["Ingress Rule 2<br/>Port: 443, Protocol: TCP<br/>Description: HTTPS"]
+        RULE3["Ingress Rule 3<br/>Port: 22, Protocol: TCP<br/>Description: SSH"]
     end
     
     subgraph "Security Group"
-        SG[aws_security_group.main<br/>Contains all dynamic rules]
+        SG["aws_security_group.main<br/>Contains all dynamic rules"]
     end
     
     %% Processing flow
@@ -707,7 +707,7 @@ graph TD
     
     %% Conditional rules
     subgraph "Conditional Dynamic Block"
-        SSH_COND[dynamic "ingress" {<br/>for_each = var.key_name != null ? [1] : []<br/>content { SSH rule }<br/>}]
+        SSH_COND["dynamic ingress<br/>for_each = var.key_name != null ? [1] : []<br/>content SSH rule"]
     end
     
     RULES --> SSH_COND
