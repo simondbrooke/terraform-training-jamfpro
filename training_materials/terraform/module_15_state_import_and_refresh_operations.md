@@ -55,8 +55,8 @@ flowchart TD
     end
     
     subgraph "📝 Configuration Phase"
-        CREATE_EMPTY[Create Empty Resource Block<br/>resource "aws_instance" "web" {}]
-        TERRAFORM_INIT[Initialize Terraform<br/>terraform init]
+        CREATE_EMPTY["Create Empty Resource Block<br/>resource aws_instance web {}"]
+        TERRAFORM_INIT["Initialize Terraform<br/>terraform init"]
     end
     
     subgraph "📥 Import Phase"
