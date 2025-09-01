@@ -26,6 +26,57 @@ By the end of this module, you will be able to:
 
 ### 🎯 **What Are Modules?**
 
+**Module Concept Overview:**
+```mermaid
+graph TD
+    subgraph "Traditional Approach"
+        MONO[Monolithic Configuration<br/>All resources in main.tf<br/>Hard to maintain & reuse]
+    end
+    
+    subgraph "Module Approach"
+        ROOT[Root Module<br/>main.tf calls other modules]
+        
+        subgraph "Reusable Modules"
+            VPC_MOD[VPC Module<br/>Networking components]
+            COMP_MOD[Compute Module<br/>EC2, ASG, etc.]
+            DB_MOD[Database Module<br/>RDS, security]
+            STOR_MOD[Storage Module<br/>S3, EBS, etc.]
+        end
+    end
+    
+    subgraph "Benefits"
+        REUSE[🚀 Reusability<br/>Write once, use many times]
+        ABSTRACT[🛡️ Abstraction<br/>Hide complexity]
+        STANDARD[🏢 Standardization<br/>Consistent patterns]
+        SPEED[⚡ Speed<br/>Faster development]
+    end
+    
+    %% Traditional limitations
+    MONO -.->|Problems| REUSE
+    MONO -.->|Problems| ABSTRACT
+    MONO -.->|Problems| STANDARD
+    MONO -.->|Problems| SPEED
+    
+    %% Module relationships
+    ROOT --> VPC_MOD
+    ROOT --> COMP_MOD
+    ROOT --> DB_MOD
+    ROOT --> STOR_MOD
+    
+    %% Module benefits
+    VPC_MOD --> REUSE
+    COMP_MOD --> ABSTRACT
+    DB_MOD --> STANDARD
+    STOR_MOD --> SPEED
+    
+    style MONO fill:#ffebee
+    style ROOT fill:#e8f5e8
+    style REUSE fill:#e3f2fd
+    style ABSTRACT fill:#f1f8e9
+    style STANDARD fill:#fff3e0
+    style SPEED fill:#f3e5f5
+```
+
 ```hcl
 # Every Terraform configuration is technically a module
 # Your main.tf is actually a "root module"
@@ -93,6 +144,63 @@ The **Terraform Registry** is the central repository for sharing Terraform modul
 
 ### 🔍 **Finding Modules in the Registry**
 
+**Registry Navigation Structure:**
+```mermaid
+graph TD
+    subgraph "Terraform Registry"
+        HOME[Registry Home<br/>registry.terraform.io]
+        
+        subgraph "Main Categories"
+            PROVIDERS[Providers<br/>AWS, Azure, GCP, etc.]
+            MODULES[Modules<br/>Reusable Infrastructure]
+            POLICIES[Policies<br/>Sentinel Governance]
+        end
+        
+        subgraph "Module Discovery"
+            BROWSE[Browse by Provider<br/>AWS, Azure, GCP]
+            SEARCH[Search by Keyword<br/>vpc, compute, database]
+            FILTER[Filter Options<br/>Verified, Popular, Recent]
+        end
+        
+        subgraph "Module Categories"
+            INFRA[Infrastructure<br/>VPC, Compute, Storage]
+            APP[Applications<br/>Web Apps, Databases]
+            UTIL[Utilities<br/>Monitoring, Security]
+        end
+        
+        subgraph "Module Information"
+            DOCS[Documentation<br/>README, Examples]
+            VERSIONS[Version History<br/>Semantic Versioning]
+            STATS[Usage Statistics<br/>Downloads, Stars]
+        end
+    end
+    
+    %% Navigation flow
+    HOME --> PROVIDERS
+    HOME --> MODULES
+    HOME --> POLICIES
+    
+    %% Module discovery flow
+    MODULES --> BROWSE
+    MODULES --> SEARCH
+    MODULES --> FILTER
+    
+    %% Category relationships
+    BROWSE --> INFRA
+    BROWSE --> APP
+    BROWSE --> UTIL
+    
+    %% Information access
+    INFRA --> DOCS
+    APP --> VERSIONS
+    UTIL --> STATS
+    
+    style HOME fill:#e3f2fd
+    style MODULES fill:#f1f8e9
+    style SEARCH fill:#fff3e0
+    style DOCS fill:#ffebee
+```
+
 **Navigation Structure:**
 ```
 Registry Home
@@ -135,6 +243,70 @@ Registry Home
 ---
 
 ## ✅ Verified vs Unverified Modules
+
+**Module Verification Comparison:**
+```mermaid
+graph TB
+    subgraph "Module Selection Process"
+        NEED[Infrastructure Need<br/>VPC, Database, etc.]
+        SEARCH[Search Registry<br/>Find Candidate Modules]
+        EVALUATE[Evaluate Options<br/>Compare Modules]
+    end
+    
+    subgraph "✅ Verified Modules"
+        VER_BADGE[Verified Badge<br/>✅ HashiCorp Reviewed]
+        VER_QUAL[Quality Assurance<br/>🔍 Peer Reviewed<br/>📊 Tested]
+        VER_MAINT[Active Maintenance<br/>🔄 Regular Updates<br/>🐛 Bug Fixes]
+        VER_DOC[Comprehensive Docs<br/>📚 Examples<br/>📋 API Reference]
+        VER_SUPPORT[Professional Support<br/>🏢 Partner Backed<br/>💬 Community]
+    end
+    
+    subgraph "🔧 Unverified Modules"
+        UNVER_COMM[Community Driven<br/>👥 Open Source<br/>🚀 Innovation]
+        UNVER_VAR[Variety<br/>🎯 Specialized Use Cases<br/>🔬 Experimental Features]
+        UNVER_QUAL[Variable Quality<br/>⚠️ Self-Assessed<br/>📈 Community Reviewed]
+        UNVER_MAINT[Maintenance Varies<br/>👤 Individual Maintainers<br/>⏰ Update Frequency Varies]
+    end
+    
+    subgraph "Decision Factors"
+        CRITICAL[Critical Infrastructure<br/>→ Prefer Verified]
+        SPECIALIZED[Specialized Needs<br/>→ Consider Unverified]
+        INNOVATION[Latest Features<br/>→ Explore Unverified]
+        ENTERPRISE[Enterprise Use<br/>→ Prefer Verified]
+    end
+    
+    %% Process flow
+    NEED --> SEARCH
+    SEARCH --> EVALUATE
+    
+    %% Evaluation paths
+    EVALUATE --> VER_BADGE
+    EVALUATE --> UNVER_COMM
+    
+    %% Verified characteristics
+    VER_BADGE --> VER_QUAL
+    VER_QUAL --> VER_MAINT
+    VER_MAINT --> VER_DOC
+    VER_DOC --> VER_SUPPORT
+    
+    %% Unverified characteristics
+    UNVER_COMM --> UNVER_VAR
+    UNVER_VAR --> UNVER_QUAL
+    UNVER_QUAL --> UNVER_MAINT
+    
+    %% Decision guidance
+    VER_SUPPORT --> CRITICAL
+    VER_SUPPORT --> ENTERPRISE
+    UNVER_MAINT --> SPECIALIZED
+    UNVER_VAR --> INNOVATION
+    
+    style VER_BADGE fill:#e8f5e8
+    style VER_QUAL fill:#e8f5e8
+    style UNVER_COMM fill:#fff3e0
+    style UNVER_VAR fill:#fff3e0
+    style CRITICAL fill:#ffebee
+    style ENTERPRISE fill:#ffebee
+```
 
 Understanding the difference between verified and unverified modules is crucial for making informed decisions.
 
@@ -220,6 +392,71 @@ module "vpc" {
 
 ## 💻 **Exercise 17.1**: Building Infrastructure with Registry Modules
 **Duration**: 25 minutes
+
+**Lab Infrastructure Architecture:**
+```mermaid
+graph TB
+    subgraph "Internet"
+        USERS[Users/Clients]
+    end
+    
+    subgraph "AWS VPC - terraform-aws-modules/vpc/aws"
+        subgraph "Public Subnets"
+            ALB[Application Load Balancer<br/>terraform-aws-modules/alb/aws]
+            NAT[NAT Gateway<br/>For private subnet internet access]
+        end
+        
+        subgraph "Private Subnets"
+            WEB1[Web Server 1<br/>Auto Scaling Group]
+            WEB2[Web Server 2<br/>Auto Scaling Group]
+            WEB3[Web Server 3<br/>Auto Scaling Group]
+        end
+        
+        subgraph "Database Subnets"
+            RDS[RDS MySQL<br/>terraform-aws-modules/rds/aws]
+        end
+    end
+    
+    subgraph "External Services"
+        S3[S3 Bucket<br/>terraform-aws-modules/s3-bucket/aws<br/>Static Assets]
+    end
+    
+    subgraph "Security Groups - terraform-aws-modules/security-group/aws"
+        ALB_SG[ALB Security Group<br/>HTTP/HTTPS from Internet]
+        WEB_SG[Web Security Group<br/>HTTP from ALB only]
+        DB_SG[Database Security Group<br/>MySQL from Web only]
+    end
+    
+    %% Traffic flow
+    USERS --> ALB
+    ALB --> WEB1
+    ALB --> WEB2
+    ALB --> WEB3
+    WEB1 --> RDS
+    WEB2 --> RDS
+    WEB3 --> RDS
+    WEB1 --> S3
+    WEB2 --> S3
+    WEB3 --> S3
+    
+    %% Internet access for private subnets
+    WEB1 --> NAT
+    WEB2 --> NAT
+    WEB3 --> NAT
+    
+    %% Security group relationships
+    ALB_SG --> ALB
+    WEB_SG --> WEB1
+    WEB_SG --> WEB2
+    WEB_SG --> WEB3
+    DB_SG --> RDS
+    
+    style USERS fill:#e3f2fd
+    style ALB fill:#f1f8e9
+    style RDS fill:#fff3e0
+    style S3 fill:#ffebee
+    style ALB_SG fill:#f3e5f5
+```
 
 Practice finding, evaluating, and using Terraform Registry modules to build a complete web application infrastructure.
 
@@ -635,6 +872,71 @@ echo "✅ Complete infrastructure plan generated!"
 ```
 
 **Step 9: Module Dependency Analysis**
+
+**Module Dependency Visualization:**
+```mermaid
+graph TD
+    subgraph "Foundation Layer"
+        VPC[VPC Module<br/>terraform-aws-modules/vpc/aws<br/>Network Foundation]
+        RANDOM[Random ID<br/>hashicorp/random<br/>Unique Naming]
+    end
+    
+    subgraph "Security Layer"
+        ALB_SG[ALB Security Group<br/>terraform-aws-modules/security-group/aws<br/>Internet → ALB]
+        WEB_SG[Web Security Group<br/>terraform-aws-modules/security-group/aws<br/>ALB → Web Servers]
+        DB_SG[Database Security Group<br/>terraform-aws-modules/security-group/aws<br/>Web → Database]
+    end
+    
+    subgraph "Application Layer"
+        ALB[Application Load Balancer<br/>terraform-aws-modules/alb/aws<br/>Load Distribution]
+        RDS[RDS Database<br/>terraform-aws-modules/rds/aws<br/>Data Storage]
+    end
+    
+    subgraph "Storage Layer"
+        S3[S3 Bucket<br/>terraform-aws-modules/s3-bucket/aws<br/>Static Assets]
+    end
+    
+    subgraph "Dependency Types"
+        HARD[Hard Dependency<br/>Required for Creation]
+        SOFT[Soft Dependency<br/>Configuration Reference]
+        INDEPENDENT[Independent<br/>No Dependencies]
+    end
+    
+    %% Foundation dependencies
+    VPC --> ALB_SG
+    VPC --> WEB_SG
+    VPC --> DB_SG
+    VPC --> ALB
+    VPC --> RDS
+    
+    %% Security dependencies
+    ALB_SG --> ALB
+    WEB_SG --> ALB
+    DB_SG --> RDS
+    
+    %% Cross-references
+    ALB_SG --> WEB_SG
+    WEB_SG --> DB_SG
+    
+    %% Independent resources
+    RANDOM --> VPC
+    RANDOM --> RDS
+    RANDOM --> S3
+    
+    %% Dependency classification
+    VPC --> HARD
+    ALB_SG --> HARD
+    S3 --> INDEPENDENT
+    
+    style VPC fill:#e8f5e8
+    style ALB_SG fill:#f1f8e9
+    style WEB_SG fill:#f1f8e9
+    style DB_SG fill:#f1f8e9
+    style S3 fill:#fff3e0
+    style HARD fill:#ffebee
+    style INDEPENDENT fill:#e3f2fd
+```
+
 ```bash
 # Create dependency visualization
 cat > analyze-modules.sh << EOF
