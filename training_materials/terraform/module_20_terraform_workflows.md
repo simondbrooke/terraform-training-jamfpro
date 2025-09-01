@@ -1106,3 +1106,15 @@ The transcript's key insight rings true: *"terraform Cloud streamlines a lot of 
 **➡️ Ready for the next module?** You now have the foundation to tackle more advanced Terraform topics with a solid understanding of how teams successfully collaborate on infrastructure as code!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 21: Terraform Backends](./module_21_terraform_backends.md)**
+
+Configure and manage remote state backends for collaboration.
+
+---

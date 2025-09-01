@@ -574,8 +574,16 @@ echo $PATH          # Verify PATH includes Terraform
 
 ---
 
-**🎉 Congratulations!** You've completed Module 1. You now understand the fundamental concepts that make Infrastructure as Code so powerful. 
+**🎉 Congratulations!** You've completed Module 1. You now understand the fundamental concepts that make Infrastructure as Code so powerful.
 
-**➡️ Ready for Module 2?** Let me know when you'd like to continue with the HashiCorp Introduction module!
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 2: HashiCorp Introduction](./module_02_hashicorp_introduction.md)**
+
+Learn about HashiCorp's ecosystem, tools, and how Terraform fits into the broader infrastructure automation landscape.
 
 ---

@@ -648,3 +648,15 @@ terraform destroy
 **➡️ Next Steps**: Ready to explore **Import and Refresh Operations** where you'll learn to bring existing resources under Terraform management and synchronize state!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 15: State Import and Refresh Operations](./module_15_state_import_and_refresh_operations.md)**
+
+Import existing resources and manage state operations.
+
+---

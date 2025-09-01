@@ -2313,3 +2313,13 @@ You're now prepared to:
 **🎉 Module 25: Terraform Workspaces is now complete and ready for deployment!**
 
 This module provides a solid foundation for understanding and implementing Terraform workspaces in both individual and team scenarios, with practical experience in real-world patterns and migration strategies.
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 26: Sentinel and Policy as Code](./module_26_sentinel_policy_as_code.md)**
+
+Learn how to implement automated governance, security, and compliance controls using HashiCorp Sentinel policies.

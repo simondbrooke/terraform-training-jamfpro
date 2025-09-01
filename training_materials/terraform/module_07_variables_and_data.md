@@ -1342,3 +1342,15 @@ terraform destroy
 **➡️ Next Steps**: Ready to explore **Meta Arguments** where you'll learn to control resource behavior with `depends_on`, `count`, `for_each`, and lifecycle management!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 8: Meta Arguments](./module_08_meta_arguments.md)**
+
+Learn powerful meta-arguments like count, for_each, and lifecycle rules.
+
+---

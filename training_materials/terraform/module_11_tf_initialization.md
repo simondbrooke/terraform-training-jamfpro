@@ -589,3 +589,15 @@ terraform destroy
 **➡️ Next Steps**: Ready to explore **Writing and Modifying** where you'll master `terraform fmt`, `validate`, and `console` commands!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 12: Writing and Modifying HCL](./module_12_writting_and_modifying_hcl.md)**
+
+Best practices for writing maintainable Terraform code.
+
+---

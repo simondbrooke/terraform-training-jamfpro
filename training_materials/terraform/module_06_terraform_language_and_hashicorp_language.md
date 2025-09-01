@@ -1232,3 +1232,15 @@ It supports complex data types and nested structures, making it more powerful th
 **➡️ Ready for Module 7?** Let me know when you'd like to continue with Variables and Data - where we'll explore advanced variable types, validation, and data sources!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 7: Variables and Data](./module_07_variables_and_data.md)**
+
+Master variable management, data sources, and configuration flexibility.
+
+---

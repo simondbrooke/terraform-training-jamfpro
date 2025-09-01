@@ -450,3 +450,15 @@ chmod +x error-recovery.sh
 **➡️ Next Steps**: Ready to master **Finding and Using Terraform Modules** where you'll learn to leverage reusable infrastructure components like a pro!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 17: Finding and Using Terraform Modules](./module_17_finding_and_using_terraform_modules.md)**
+
+Discover and consume modules from the Terraform Registry.
+
+---

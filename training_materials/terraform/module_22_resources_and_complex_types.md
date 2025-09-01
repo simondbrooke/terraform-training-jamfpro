@@ -2817,3 +2817,15 @@ The transcript's hands-on approach showed you: *"structural types require a sche
 **➡️ Ready for Module 23?** You now have the foundation to tackle advanced Terraform features with a solid understanding of how to structure and validate complex data in your configurations!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 23: Built-in Functions](./module_23_built_in_functions.md)**
+
+Master Terraform's built-in functions for data manipulation and logic.
+
+---

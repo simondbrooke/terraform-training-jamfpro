@@ -1245,3 +1245,15 @@ Test your understanding of Terraform Provisioners with these questions:
 **➡️ Ready for Module 5?** Let me know when you'd like to continue with Terraform Providers - where we'll explore the plugin ecosystem that makes Terraform so powerful!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 5: Terraform Providers](./module_05_terraform_providers.md)**
+
+Understand how providers work and manage different cloud platforms.
+
+---

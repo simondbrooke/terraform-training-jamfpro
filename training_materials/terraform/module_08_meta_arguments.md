@@ -1486,3 +1486,15 @@ terraform destroy
 **➡️ Next Steps**: Ready to explore **Expressions** where you'll learn about advanced Terraform language features including conditionals, loops, and dynamic blocks!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 9: Expressions](./module_09_expressions.md)**
+
+Understand Terraform expressions, functions, and dynamic configurations.
+
+---

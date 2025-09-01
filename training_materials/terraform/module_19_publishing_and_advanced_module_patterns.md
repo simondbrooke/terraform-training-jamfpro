@@ -2297,3 +2297,15 @@ Individual Practitioner
 Team
 Terraform Cloud
 VCS Workflows
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 20: Terraform Workflows](./module_20_terraform_workflows.md)**
+
+Implement efficient workflows for teams and organizations.
+
+---

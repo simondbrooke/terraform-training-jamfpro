@@ -2438,3 +2438,15 @@ terraform destroy
 **➡️ Next Steps**: Ready to explore **Terraform State Management** where you'll learn about state files, state commands, and state best practices!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 10: Terraform State](./module_10_terraform_state.md)**
+
+Master state management, the foundation of Terraform operations.
+
+---

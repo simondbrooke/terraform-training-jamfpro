@@ -1729,3 +1729,15 @@ echo "📊 Module summary created in MODULE_SUMMARY.md"
 **➡️ Next Steps**: Ready to master **Publishing and Advanced Module Patterns** where you'll learn to share your modules with the world and implement enterprise-grade module governance!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 19: Publishing and Advanced Module Patterns](./module_19_publishing_and_advanced_module_patterns.md)**
+
+Publish modules and implement advanced patterns.
+
+---

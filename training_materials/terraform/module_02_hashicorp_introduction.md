@@ -99,7 +99,8 @@ The Terraform Associate Certification covers **9 domains** (exact weighting not 
 - **Collaborate** on infrastructure development
 
 **🔑 Key Characteristics:**
-- **☁️ Cloud Agnostic**: Works with AWS, Azure, GCP, and 1000+ providers
+
+- **☁️ Cloud Agnostic**: Works with AWS, Azure, GCP, and 5000+ providers
 - **📋 Declarative**: You describe what you want, not how to get it
 - **🔄 Idempotent**: Same configuration = same result every time
 - **📊 State Management**: Tracks what resources exist and their configuration
@@ -345,6 +346,14 @@ terraform state list    # List managed resources
 
 **🎉 Congratulations!** You've completed Module 2 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
 
-**➡️ Ready for Module 3?** Let me know when you'd like to continue with Terraform Basics - where we'll dive deep into the core workflow and commands!
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 3: Terraform Basics](./module_03_terraform_basics.md)**
+
+Dive deep into the core Terraform workflow and commands - where you'll master the essential operations for managing infrastructure.
 
 ---

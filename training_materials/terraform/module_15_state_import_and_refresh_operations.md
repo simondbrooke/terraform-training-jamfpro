@@ -847,3 +847,15 @@ aws ec2 describe-vpcs --filters "Name=tag:Name,Values=import-demo-vpc" --query '
 **➡️ Next Steps**: Ready to master **Terraform Troubleshooting and Debugging** where you'll learn to diagnose and resolve any Terraform issues like a pro!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 16: Terraform Troubleshooting and Debugging](./module_16_terraform_troubleshooting_and_debugging.md)**
+
+Debug and troubleshoot common Terraform issues.
+
+---

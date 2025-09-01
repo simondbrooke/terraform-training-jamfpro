@@ -538,3 +538,15 @@ Test your understanding of Terraform Basics with these questions:
 **➡️ Ready for Module 4?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 4: Configuration Management and Provisioners](./module_04_configuration_management_and_provisioners.md)**
+
+Learn advanced configuration management techniques and provisioner usage.
+
+---

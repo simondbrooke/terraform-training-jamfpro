@@ -753,3 +753,15 @@ echo "📋 Best practices review completed!"
 **➡️ Next Steps**: Ready to dive into **Module Structure and Development** where you'll learn to create your own well-structured, reusable Terraform modules!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 18: Standard Module Structure and Development](./module_18_standard_module_structure_and_development.md)**
+
+Create well-structured, reusable Terraform modules.
+
+---

@@ -587,3 +587,15 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 **➡️ Next Steps**: Ready to explore **Terraform Initialization** where you'll master `terraform init`, provider installation, and project setup!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 11: TF Initialization](./module_11_tf_initialization.md)**
+
+Learn the terraform init process and dependency management.
+
+---

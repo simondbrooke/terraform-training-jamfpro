@@ -991,3 +991,15 @@ terraform destroy -var-file="dev.tfvars" -auto-approve
 **➡️ Next Steps**: Ready to explore **Resource Drift Management** where you'll learn to detect, understand, and resolve infrastructure drift scenarios!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 14: Resource Drift Management](./module_14_resource_drift_management.md)**
+
+Detect and manage configuration drift in your infrastructure.
+
+---

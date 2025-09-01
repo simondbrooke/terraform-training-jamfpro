@@ -760,3 +760,15 @@ Create `.vscode/settings.json`:
 **➡️ Next Steps**: Ready to explore **Plan and Apply** where you'll master execution planning, applying changes, and saved plans!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 13: Plan and Apply](./module_13_plan_and_apply.md)**
+
+Master the core Terraform workflow for safe infrastructure changes.
+
+---

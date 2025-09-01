@@ -2722,3 +2722,15 @@ terraform output infrastructure_analysis
 **➡️ Ready for the next module?** Let me know when you'd like to continue with the next section of the training!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 24: Terraform Cloud](./module_24_terraform_cloud.md)**
+
+Learn about HashiCorp's managed service for team collaboration, governance, and automation.
+
+---

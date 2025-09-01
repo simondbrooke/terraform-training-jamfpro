@@ -2160,3 +2160,15 @@ The transcript's key insight is crucial: *"I give this a lot more attention in t
 **➡️ Ready for Module 22?** You now have the foundation to understand more advanced Terraform topics with solid knowledge of how state management and backend configuration work in production environments!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 22: Resources and Complex Types](./module_22_resources_and_complex_types.md)**
+
+Work with complex data types and advanced resource configurations.
+
+---

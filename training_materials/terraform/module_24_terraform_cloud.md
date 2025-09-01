@@ -3610,5 +3610,13 @@ resource "tfe_notification_configuration" "prod_alerts" {
 
 **🎉 Congratulations!** You've completed Module 24 and mastered Terraform Cloud! You can now implement enterprise-grade infrastructure workflows with collaboration, security, and cost management.
 
-**➡️ Ready for the next module?** Let me know when you'd like to continue with the next section of the training!
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 25: Terraform Workspaces](./module_25_terraform_workspaces.md)**
+
+Learn how to manage multiple environments and alternate state files using Terraform workspaces, both locally and in the cloud.
 

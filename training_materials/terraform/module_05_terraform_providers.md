@@ -1224,3 +1224,15 @@ Test your understanding of Terraform Providers with these questions:
 **➡️ Ready for Module 6?** Let me know when you'd like to continue with Terraform Language - where we'll dive deep into HCL syntax and advanced language features!
 
 ---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 6: Terraform Language and HashiCorp Language](./module_06_terraform_language_and_hashicorp_language.md)**
+
+Deep dive into HCL syntax and Terraform's configuration language.
+
+---
