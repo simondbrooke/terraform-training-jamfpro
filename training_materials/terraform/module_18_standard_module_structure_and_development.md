@@ -24,6 +24,54 @@ HashiCorp defines a standard module structure that ensures consistency and usabi
 
 ### 🏛️ **Root Module Structure**
 
+**Module Structure Visualization:**
+```mermaid
+graph TD
+    subgraph "Root Module"
+        MAIN[main.tf<br/>Primary Resources]
+        VARS[variables.tf<br/>Input Variables]
+        OUTPUTS[outputs.tf<br/>Output Values]
+        README[README.md<br/>Documentation]
+        LICENSE[LICENSE<br/>License File]
+    end
+    
+    subgraph "Optional Files"
+        VERSIONS[versions.tf<br/>Provider Constraints]
+        LOCALS[locals.tf<br/>Local Values]
+        DATA[data.tf<br/>Data Sources]
+        TERRAFORM[terraform.tf<br/>Terraform Config]
+    end
+    
+    subgraph "Supporting Structure"
+        EXAMPLES[examples/<br/>Usage Examples]
+        MODULES[modules/<br/>Nested Modules]
+        TESTS[test/<br/>Testing Files]
+        DOCS[docs/<br/>Additional Docs]
+    end
+    
+    %% Core relationships
+    VARS --> MAIN
+    MAIN --> OUTPUTS
+    DATA --> MAIN
+    LOCALS --> MAIN
+    VERSIONS --> MAIN
+    
+    %% Documentation relationships
+    MAIN --> README
+    VARS --> README
+    OUTPUTS --> README
+    
+    %% Supporting relationships
+    MAIN --> EXAMPLES
+    MAIN --> MODULES
+    README --> EXAMPLES
+    
+    style MAIN fill:#e3f2fd
+    style VARS fill:#f1f8e9
+    style OUTPUTS fill:#fff3e0
+    style README fill:#ffebee
+```
+
 **Required Files:**
 ```
 my-terraform-module/
@@ -48,6 +96,67 @@ my-terraform-module/
 ```
 
 ### 🗂️ **Nested Module Structure**
+
+**Nested Module Architecture:**
+```mermaid
+graph TB
+    subgraph "Root Module"
+        ROOT_MAIN[main.tf]
+        ROOT_VARS[variables.tf]
+        ROOT_OUTPUTS[outputs.tf]
+    end
+    
+    subgraph "Nested Modules"
+        subgraph "VPC Endpoints Module"
+            VE_MAIN[main.tf<br/>VPC Endpoints Logic]
+            VE_VARS[variables.tf<br/>Endpoint Config]
+            VE_OUTPUTS[outputs.tf<br/>Endpoint IDs]
+        end
+        
+        subgraph "NAT Gateway Module"
+            NAT_MAIN[main.tf<br/>NAT Gateway Logic]
+            NAT_VARS[variables.tf<br/>NAT Config]
+            NAT_OUTPUTS[outputs.tf<br/>NAT Gateway IDs]
+        end
+        
+        subgraph "Subnets Module"
+            SUB_MAIN[main.tf<br/>Subnet Logic]
+            SUB_VARS[variables.tf<br/>Subnet Config]
+            SUB_OUTPUTS[outputs.tf<br/>Subnet IDs]
+        end
+    end
+    
+    subgraph "Examples"
+        SIMPLE[Simple VPC<br/>Basic Usage]
+        ENDPOINTS[VPC with Endpoints<br/>Advanced Usage]
+        COMPLETE[Complete VPC<br/>Full Featured]
+    end
+    
+    %% Root module calls nested modules
+    ROOT_MAIN --> VE_MAIN
+    ROOT_MAIN --> NAT_MAIN
+    ROOT_MAIN --> SUB_MAIN
+    
+    %% Variables flow down
+    ROOT_VARS --> VE_VARS
+    ROOT_VARS --> NAT_VARS
+    ROOT_VARS --> SUB_VARS
+    
+    %% Outputs flow up
+    VE_OUTPUTS --> ROOT_OUTPUTS
+    NAT_OUTPUTS --> ROOT_OUTPUTS
+    SUB_OUTPUTS --> ROOT_OUTPUTS
+    
+    %% Examples use root module
+    ROOT_MAIN --> SIMPLE
+    ROOT_MAIN --> ENDPOINTS
+    ROOT_MAIN --> COMPLETE
+    
+    style ROOT_MAIN fill:#e3f2fd
+    style VE_MAIN fill:#f1f8e9
+    style NAT_MAIN fill:#fff3e0
+    style SUB_MAIN fill:#ffebee
+```
 
 **With Submodules:**
 ```
@@ -81,6 +190,63 @@ terraform-aws-vpc/
 ```
 
 ### 📋 **File Responsibilities**
+
+**Module Interface Design:**
+```mermaid
+graph LR
+    subgraph "Input Layer"
+        VARS[variables.tf<br/>📥 Input Variables]
+        VALIDATION[Variable Validation<br/>🔍 Type Constraints<br/>🔍 Value Validation]
+        DEFAULTS[Default Values<br/>⚙️ Sensible Defaults]
+    end
+    
+    subgraph "Processing Layer"
+        DATA[data.tf<br/>🔍 External Data]
+        LOCALS[locals.tf<br/>🧮 Computed Values]
+        MAIN[main.tf<br/>🏗️ Resource Logic]
+    end
+    
+    subgraph "Output Layer"
+        OUTPUTS[outputs.tf<br/>📤 Output Values]
+        ATTRIBUTES[Resource Attributes<br/>📊 IDs, ARNs, Names]
+        COMPUTED[Computed Outputs<br/>🧮 Derived Values]
+    end
+    
+    subgraph "Documentation Layer"
+        README[README.md<br/>📚 Usage Guide]
+        EXAMPLES[examples/<br/>💡 Usage Examples]
+        DOCS[Auto-generated Docs<br/>📋 terraform-docs]
+    end
+    
+    %% Input flow
+    VARS --> VALIDATION
+    VALIDATION --> DEFAULTS
+    DEFAULTS --> LOCALS
+    
+    %% Processing flow
+    DATA --> LOCALS
+    LOCALS --> MAIN
+    VARS --> MAIN
+    
+    %% Output flow
+    MAIN --> OUTPUTS
+    MAIN --> ATTRIBUTES
+    LOCALS --> COMPUTED
+    ATTRIBUTES --> OUTPUTS
+    COMPUTED --> OUTPUTS
+    
+    %% Documentation flow
+    VARS --> README
+    OUTPUTS --> README
+    MAIN --> EXAMPLES
+    VARS --> DOCS
+    OUTPUTS --> DOCS
+    
+    style VARS fill:#e3f2fd
+    style MAIN fill:#f1f8e9
+    style OUTPUTS fill:#fff3e0
+    style README fill:#ffebee
+```
 
 **main.tf:**
 ```hcl
@@ -267,6 +433,63 @@ module "everything" {
 
 ### 🔄 **Composition over Inheritance**
 
+**Module Composition Architecture:**
+```mermaid
+graph TD
+    subgraph "❌ Bad: Monolithic Module"
+        MONO[Everything Module<br/>VPC + DB + ALB + App + Monitoring<br/>Hard to maintain, test, reuse]
+    end
+    
+    subgraph "✅ Good: Composed Modules"
+        subgraph "Focused Modules"
+            NET[Networking Module<br/>VPC, Subnets, Routes]
+            SEC[Security Module<br/>Security Groups, NACLs]
+            COMP[Compute Module<br/>EC2, ASG, Launch Templates]
+            DATA[Data Module<br/>RDS, ElastiCache]
+            MON[Monitoring Module<br/>CloudWatch, Alarms]
+        end
+        
+        subgraph "Root Composition"
+            ROOT[Root Module<br/>Orchestrates All Components]
+        end
+    end
+    
+    subgraph "Benefits"
+        REUSE[Reusability<br/>Use modules independently]
+        TEST[Testability<br/>Test each module separately]
+        MAINTAIN[Maintainability<br/>Update modules independently]
+        TEAM[Team Collaboration<br/>Different teams own modules]
+    end
+    
+    %% Composition relationships
+    ROOT --> NET
+    ROOT --> SEC
+    ROOT --> COMP
+    ROOT --> DATA
+    ROOT --> MON
+    
+    %% Dependencies between modules
+    NET --> SEC
+    NET --> COMP
+    NET --> DATA
+    SEC --> COMP
+    SEC --> DATA
+    COMP --> MON
+    DATA --> MON
+    
+    %% Benefits flow from composition
+    ROOT --> REUSE
+    ROOT --> TEST
+    ROOT --> MAINTAIN
+    ROOT --> TEAM
+    
+    style MONO fill:#ffebee
+    style ROOT fill:#e8f5e8
+    style NET fill:#e3f2fd
+    style SEC fill:#fff3e0
+    style COMP fill:#f3e5f5
+```
+
 Build complex infrastructure by **composing multiple focused modules**.
 
 ```hcl
@@ -350,6 +573,58 @@ variable "backup_config" {
 
 ### 🎭 **Conditional Resources**
 
+**Conditional Resource Pattern:**
+```mermaid
+graph TD
+    subgraph "Input Variables"
+        VAR1[enable_nat_gateway = true]
+        VAR2[enable_vpc_endpoints = false]
+        VAR3[enable_flow_logs = true]
+    end
+    
+    subgraph "Conditional Logic"
+        COND1{count = var.enable_nat_gateway ? 1 : 0}
+        COND2{count = var.enable_vpc_endpoints ? 1 : 0}
+        COND3{count = var.enable_flow_logs ? 1 : 0}
+    end
+    
+    subgraph "Resources Created"
+        NAT[NAT Gateway<br/>✅ Created]
+        EIP[Elastic IP<br/>✅ Created]
+        ENDPOINTS[VPC Endpoints<br/>❌ Not Created]
+        LOGS[Flow Logs<br/>✅ Created]
+    end
+    
+    subgraph "Dependencies"
+        IGW[Internet Gateway<br/>Required for NAT]
+        SUBNETS[Public Subnets<br/>Required for NAT]
+    end
+    
+    %% Variable to condition mapping
+    VAR1 --> COND1
+    VAR2 --> COND2
+    VAR3 --> COND3
+    
+    %% Condition to resource mapping
+    COND1 -->|count = 1| NAT
+    COND1 -->|count = 1| EIP
+    COND2 -->|count = 0| ENDPOINTS
+    COND3 -->|count = 1| LOGS
+    
+    %% Dependencies
+    IGW --> NAT
+    SUBNETS --> NAT
+    NAT --> EIP
+    
+    style VAR1 fill:#e8f5e8
+    style VAR3 fill:#e8f5e8
+    style VAR2 fill:#ffebee
+    style NAT fill:#e8f5e8
+    style EIP fill:#e8f5e8
+    style LOGS fill:#e8f5e8
+    style ENDPOINTS fill:#ffebee
+```
+
 Create resources based on input variables or conditions.
 
 ```hcl
@@ -393,6 +668,56 @@ variable "enable_nat_gateway" {
 ```
 
 ### 🔢 **Dynamic Blocks and For-Each**
+
+**Dynamic Block Pattern:**
+```mermaid
+graph TD
+    subgraph "Input Configuration"
+        RULES[ingress_rules = [<br/>{port: 80, protocol: tcp, desc: HTTP},<br/>{port: 443, protocol: tcp, desc: HTTPS},<br/>{port: 22, protocol: tcp, desc: SSH}<br/>]]
+    end
+    
+    subgraph "Dynamic Block Processing"
+        DYNAMIC[dynamic "ingress" {<br/>for_each = var.ingress_rules<br/>content { ... }<br/>}]
+        ITERATOR[Iterator:<br/>ingress.value.port<br/>ingress.value.protocol<br/>ingress.value.description]
+    end
+    
+    subgraph "Generated Resources"
+        RULE1[Ingress Rule 1<br/>Port: 80, Protocol: TCP<br/>Description: HTTP]
+        RULE2[Ingress Rule 2<br/>Port: 443, Protocol: TCP<br/>Description: HTTPS]
+        RULE3[Ingress Rule 3<br/>Port: 22, Protocol: TCP<br/>Description: SSH]
+    end
+    
+    subgraph "Security Group"
+        SG[aws_security_group.main<br/>Contains all dynamic rules]
+    end
+    
+    %% Processing flow
+    RULES --> DYNAMIC
+    DYNAMIC --> ITERATOR
+    
+    %% Rule generation
+    ITERATOR --> RULE1
+    ITERATOR --> RULE2
+    ITERATOR --> RULE3
+    
+    %% Rules added to security group
+    RULE1 --> SG
+    RULE2 --> SG
+    RULE3 --> SG
+    
+    %% Conditional rules
+    subgraph "Conditional Dynamic Block"
+        SSH_COND[dynamic "ingress" {<br/>for_each = var.key_name != null ? [1] : []<br/>content { SSH rule }<br/>}]
+    end
+    
+    RULES --> SSH_COND
+    SSH_COND --> SG
+    
+    style RULES fill:#e3f2fd
+    style DYNAMIC fill:#f1f8e9
+    style SG fill:#fff3e0
+    style SSH_COND fill:#ffebee
+```
 
 Handle variable numbers of similar resources.
 
@@ -694,6 +1019,50 @@ settings:
 
 ## 💻 **Exercise 18.1**: Creating a Professional Terraform Module
 **Duration**: 30 minutes
+
+**Module Development Workflow:**
+```mermaid
+flowchart TD
+    START[Start Module Development] --> PLAN[Step 1: Module Planning]
+    
+    PLAN --> STRUCT[Step 2: Create Structure<br/>- Core files<br/>- Examples<br/>- Tests]
+    
+    STRUCT --> PROVIDERS[Step 3: Define Providers<br/>- versions.tf<br/>- Provider constraints]
+    
+    PROVIDERS --> INTERFACE[Step 4: Design Interface<br/>- variables.tf<br/>- Input validation<br/>- Type constraints]
+    
+    INTERFACE --> DATA[Step 5: Data & Locals<br/>- data.tf<br/>- locals.tf<br/>- Computed values]
+    
+    DATA --> LOGIC[Step 6: Main Logic<br/>- main.tf<br/>- Resource definitions<br/>- Conditional resources]
+    
+    LOGIC --> OUTPUTS[Step 7: Define Outputs<br/>- outputs.tf<br/>- Resource attributes<br/>- Computed values]
+    
+    OUTPUTS --> EXAMPLES[Step 8: Create Examples<br/>- Basic usage<br/>- Advanced usage<br/>- Complete setup]
+    
+    EXAMPLES --> DOCS[Step 9: Documentation<br/>- README.md<br/>- terraform-docs<br/>- Usage examples]
+    
+    DOCS --> VALIDATE[Step 10: Validation<br/>- terraform validate<br/>- Security scan<br/>- Example testing]
+    
+    VALIDATE --> COMPLETE[Module Complete!<br/>✅ Production Ready]
+    
+    %% Quality gates
+    subgraph "Quality Checks"
+        LINT[Linting & Formatting]
+        SECURITY[Security Scanning]
+        TEST[Testing & Validation]
+    end
+    
+    LOGIC --> LINT
+    EXAMPLES --> SECURITY
+    VALIDATE --> TEST
+    
+    style START fill:#e3f2fd
+    style COMPLETE fill:#e8f5e8
+    style VALIDATE fill:#fff3e0
+    style LINT fill:#f3e5f5
+    style SECURITY fill:#ffebee
+    style TEST fill:#f1f8e9
+```
 
 Build a complete, production-ready Terraform module following all best practices and standards.
 

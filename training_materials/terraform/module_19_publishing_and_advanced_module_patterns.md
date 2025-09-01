@@ -2691,17 +2691,6 @@ echo "✅ Enterprise development workflow validated!"
 
 ---
 
-
--- TODO --
-☁️ 3:11:25 Terraform Workflows
-Team Workflows Overview
-Individual Practitioner
-Team
-Terraform Cloud
-VCS Workflows
-
----
-
 ## 🔗 **Next Steps**
 
 Ready to continue your Terraform journey? Proceed to the next module:
