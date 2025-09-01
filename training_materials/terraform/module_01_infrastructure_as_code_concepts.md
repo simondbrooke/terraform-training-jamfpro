@@ -160,6 +160,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 18 | 🏗️ Standard Module Structure and Development | 3 hours | 🔴 Advanced | 4 labs |
 | 19 | 🚀 Publishing and Advanced Module Patterns | 2.5 hours | 🔴 Advanced | 3 labs |
 
+
 **Total Course Time**: ~38 hours of content + ~55 hands-on labs
 
 ---
