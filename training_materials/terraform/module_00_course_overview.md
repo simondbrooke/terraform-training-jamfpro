@@ -81,8 +81,8 @@ code --install-extension HashiCorp.terraform
 code --install-extension ms-vscode.vscode-json
 code --install-extension redhat.vscode-yaml
 
-# Optional but Recommended Extensions:
-code --install-extension GitHub.copilot                    # AI assistance
+# Optional but useful Extensions:
+code --install-extension GitHub.copilot                   # AI assistance
 code --install-extension ms-vscode.powershell             # PowerShell support
 code --install-extension ms-vscode-remote.remote-ssh      # Remote development
 code --install-extension eamodio.gitlens                  # Enhanced Git features

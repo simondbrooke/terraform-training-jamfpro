@@ -49,9 +49,9 @@ terraform import [options] ADDRESS ID
 ```mermaid
 flowchart TD
     subgraph "🔍 Discovery Phase"
-        DISCOVER[Identify Existing Resources<br/>AWS CLI, Console, APIs]
-        DOCUMENT[Document Resource IDs<br/>Instance IDs, ARNs, Names]
-        RELATIONSHIPS[Map Resource Dependencies<br/>VPC → Subnet → Instance]
+        DISCOVER["Identify Existing Resources<br/>AWS CLI, Console, APIs"]
+        DOCUMENT["Document Resource IDs<br/>Instance IDs, ARNs, Names"]
+        RELATIONSHIPS["Map Resource Dependencies<br/>VPC → Subnet → Instance"]
     end
     
     subgraph "📝 Configuration Phase"
@@ -60,23 +60,23 @@ flowchart TD
     end
     
     subgraph "📥 Import Phase"
-        IMPORT_CMD[Execute Import Command<br/>terraform import aws_instance.web i-12345]
-        IMPORT_SUCCESS{Import Successful?}
-        IMPORT_ERROR[Troubleshoot Import Error<br/>Check ID, permissions, syntax]
+        IMPORT_CMD["Execute Import Command<br/>terraform import aws_instance.web i-12345"]
+        IMPORT_SUCCESS{"Import Successful?"}
+        IMPORT_ERROR["Troubleshoot Import Error<br/>Check ID, permissions, syntax"]
     end
     
     subgraph "🔧 Configuration Matching"
-        SHOW_STATE[View Imported State<br/>terraform show aws_instance.web]
-        UPDATE_CONFIG[Update Configuration<br/>Match imported attributes]
-        PLAN_CHECK[Verify Configuration<br/>terraform plan]
-        CONFIG_MATCH{Plan Shows No Changes?}
-        FIX_CONFIG[Fix Configuration Mismatches<br/>Add missing attributes]
+        SHOW_STATE["View Imported State<br/>terraform show aws_instance.web"]
+        UPDATE_CONFIG["Update Configuration<br/>Match imported attributes"]
+        PLAN_CHECK["Verify Configuration<br/>terraform plan"]
+        CONFIG_MATCH{"Plan Shows No Changes?"}
+        FIX_CONFIG["Fix Configuration Mismatches<br/>Add missing attributes"]
     end
     
     subgraph "✅ Verification Phase"
-        FINAL_PLAN[Final Plan Check<br/>terraform plan]
-        APPLY_TEST[Test Apply (Optional)<br/>terraform apply]
-        IMPORT_COMPLETE[Import Complete<br/>Resource Under Management]
+        FINAL_PLAN["Final Plan Check<br/>terraform plan"]
+        APPLY_TEST["Test Apply Optional<br/>terraform apply"]
+        IMPORT_COMPLETE["Import Complete<br/>Resource Under Management"]
     end
     
     %% Discovery flow
