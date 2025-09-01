@@ -169,7 +169,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 26 | 📝 Sentinel and Policy as Code | 3 hours | 🔴 Advanced | 4 labs |
 
 
-**Total Course Time**: ~38 hours of content + ~55 hands-on labs
+**Total Course Time**: ~53 hours of content + ~84 hands-on labs
 
 ---
 
