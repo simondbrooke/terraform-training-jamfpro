@@ -106,10 +106,6 @@ sequenceDiagram
     
     Note over Vault,AWS: Credentials expire automatically
     Note over TF: Next run gets new credentials
-    
-    style Vault fill:#ffebee
-    style TF fill:#e3f2fd
-    style AWS fill:#fff3e0
 ```
 
 #### 📊 **Vault Injection via Data Source**
