@@ -1,3 +1,274 @@
+transcript time stamps.
+
+0:00:00 Course Intro
+
+☁️ 0:15:03 Introduction
+Exam Guide
+Practice Exam Preview
+Version 003 Considerations
+
+☁️ 0:31:55 IaC Concepts
+What is Infrastructure as Code
+Popular Infrastructure as Code tools
+Declarative
+Infrastructure Lifecycle
+Infrastructure Lifecycle Advantages
+Non Idempontent vs Idempontent
+Provisioning vs Deployment vs Orchestration
+Configuration Drift
+Mutable vs Immutable Infrastructure
+What is GitOps
+Immutable Infrastructure Guarantee
+
+☁️ 0:52:26 Hashicorp Introduction
+HashiCorp
+What is Terraform
+What is Terraform Cloud
+
+☁️ 0:56:33 Terraform Basics
+Terraform Lifecycle
+Change Automation
+Execution Plans
+Visualizing Execution Plans
+Resource Graph
+Use Cases
+Core and Plugins
+Up and Running
+Best Practices
+Install
+CLI and Configuration
+Init
+Plan and Apply
+Apply Update
+Inputs Variables
+Local Values
+Outputs
+Modules
+Divide Files
+Destroy
+Cloud
+Cloud Updated
+Cleanup
+
+☁️ 1:07:37 Terraform Provisioners
+Terraform Provisioners
+Exec
+File
+Connection
+Null Resources
+Terraform Data
+Cloud Init
+Local Exec
+Remote Exec
+File
+Null Resource
+Terraform Data
+Cleanup
+
+☁️ 1:20:19 Terraform Providers
+Providers
+Registry
+Providers Command
+Providers Configuration
+Modules
+The Fine Line
+Azure Provider
+GCP Provider
+
+☁️ 1:30:35 Terraform Language
+Terraform Language
+Alternate JSON Syntax
+Terraform Settings
+HashiCorp Configuration Language
+
+☁️ 1:35:23 Variables and Data
+Input Variables
+Variable Definition Files
+Variables vs Environment Variables
+Loading Input Variables
+Output Values
+Local Values
+Data Sources
+References to Named values
+Input Variables Types
+Input Variables Arguments
+Outputs CLI
+Outputs Chaining
+Local Values
+Data Sources
+
+☁️ 1:47:52 Meta Arguments
+Resource Meta Arguments
+depends_on
+count
+for_each
+Resource Behaviour and Lifecycle
+Resource Providers and Alias
+Depends On
+Count
+For Each
+Alias
+Lifecycle
+
+☁️ 1:54:40 Expressions
+Introduction to Expressions
+Types and Values
+Strings and Strings Templates
+Expressions Operators
+Conditional Expressions
+Expressions For Expressions
+Dynamic Blocks
+Version Constraints
+String Templates
+For Expressions
+Splats
+Dynamic Blocks
+Versioning
+
+☁️ 2:41:01 Terraform State
+State
+State MV
+State Backups
+State CLI
+
+☁️ 2:45:42 Initialization
+terraform init
+terraform get
+
+☁️ 2:48:09 Writing and Modifying
+Introduction
+terraform fmt
+terraform validate
+terraform console
+
+☁️ 2:51:17 Plan and Apply
+Plan
+Apply
+Saved Plans
+
+☁️ 2:54:23 Drift
+Managed Resource Drift
+Replacing Resources
+Resource Addressing
+Import
+refresh and Refresh Only Mode
+Apply Replace and Refresh Only
+Import
+
+☁️ 3:01:24 Troubleshooting
+Terraform Troubleshooting
+Debugging Terraform
+Crash Logs
+TF_LOG
+Opening a Github Issue
+
+☁️ 3:05:55 Terraform Modules
+Finding Modules
+Using Modules
+Publishing Modules
+Verified Modules
+Standard Module Structure
+Creating
+
+☁️ 3:11:25 Terraform Workflows
+Team Workflows Overview
+Individual Practitioner
+Team
+Terraform Cloud
+VCS Workflows
+
+☁️ 3:18:28 Terraform Backends
+Backends
+Backend Initialization
+terraform_remote_state
+State Locking
+Protecting Sensitive Data
+Terraform Ignore File
+Standard Backend Type S3
+Multiple Workspaces
+Terraform Remote State
+Force Unlock
+Cloud Backend
+
+☁️ 3:37:22 Resources and Complex Types
+Resources
+Complex Types
+Collection Types
+Structural Types
+Complex Types Follow Along
+
+☁️ 3:48:10 Built in Functions
+Introduction
+Numeric Functions
+String Functions
+Collection Functions
+Encoding and Decoding Functions
+Filesystem Functions
+Date and Time Functions
+Hash and Crypto Functions
+IP Network Functions
+Type Conversion Functions
+Built In Functions Follow Along
+
+☁️ 4:18:30 Terraform Cloud
+Terraform Cloud
+Terraform Cloud Terms
+Run Workflows
+Permissions
+API Tokens
+Private Registry
+Cost Estimation
+Workflow Options
+Migrating Default Local State
+VCS Integration
+Run Environment
+Cloud Agents
+Private Registry
+
+☁️ 4:42:10 Terraform Enterprise
+Terraform Enterprise
+Terraform Enterprise Requirements
+Air Gapped Environments
+Cloud Features and Pricing
+
+☁️ 4:51:47 Workspaces
+Workspaces
+Workspaces Internals
+Current Workspace Interpolation
+Multiple Workspaces
+Cloud Workspaces
+Workspaces CLI commands
+Workspaces Differences
+Cloud Multiple Workspaces
+
+☁️ 5:07:53 Sentinel and Terraform
+Sentinel
+Policy as Code
+Sentinel Policy Language Example
+Sentinel with Terraform
+
+☁️ 5:54:42 Packer
+HashiCorp Packer
+Packer Template File
+Terraform and Packer Integration
+Packer
+
+☁️ 6:22:04 Consul
+Terraform and Consul
+
+☁️ 6:23:13 Vault
+HashiCorp Vault
+Terraform and Vault
+Vault Injection via Data Source
+
+☁️ 6:56:06 Misc
+Alantis
+CDK for Terraform
+Gruntwork
+Terragrunt
+TerraTest
+
+
 # tactiq.io free youtube transcript
 # HashiCorp Terraform Associate Certification Course (003) - Pass the Exam!
 # https://www.youtube.com/watch/SPcwo0Gq9T8
