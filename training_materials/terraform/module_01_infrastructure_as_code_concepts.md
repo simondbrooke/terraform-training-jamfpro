@@ -132,7 +132,8 @@ By the end of this course, you will be able to:
 - ✅ **Implement advanced Terraform features** like modules, expressions, and meta-arguments
 - ✅ **Manage Terraform state** and understand state file operations
 - ✅ **Use Terraform Cloud** for collaboration and remote operations
-- ✅ **Pass the HashiCorp Terraform Associate Certification Exam**
+- ✅ **Use Terraform Modules** to create reusable infrastructure
+
 
 ### 📊 Course Structure
 
@@ -158,7 +159,11 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 16 | 🔧 Terraform Troubleshooting and Debugging | 1.5 hours | 🔴 Advanced | 2 labs |
 | 17 | 📦 Finding and Using Terraform Modules | 2 hours | 🟡 Intermediate | 3 labs |
 | 18 | 🏗️ Standard Module Structure and Development | 3 hours | 🔴 Advanced | 4 labs |
-| 19 | 🚀 Publishing and Advanced Module Patterns | 2.5 hours | 🔴 Advanced | 3 labs |
+| 19 | 📝 Publishing and Advanced Module Patterns | 2.5 hours | 🔴 Advanced | 3 labs |
+| 20 | 🚀 Terraform Workflows | 2 hours | 🟡 Intermediate | 4 labs |
+| 21 | 🚀 Terraform Backends | 3 hours | 🟡 Intermediate | 6 labs |
+| 22 | 📝 Resources and Complex Types | 2.5 hours | 🟡 Intermediate | 4 labs |
+| 23 | 🚀 Built-In Functions | 2 hours | 🔴 Advanced | 4 labs |
 
 
 **Total Course Time**: ~38 hours of content + ~55 hands-on labs
@@ -306,6 +311,7 @@ graph LR
 ```
 
 **🎯 Lifecycle Advantages:**
+
 - **🔄 Repeatable**: Same process every time
 - **📊 Predictable**: Known outcomes and timelines
 - **🔍 Auditable**: Every change is tracked
@@ -315,7 +321,8 @@ graph LR
 
 The transcript emphasizes a **simplified 3-phase approach** to infrastructure lifecycle:
 
-**📅 Day Zero - Planning & Design Phase**
+**📅 Phase Zero - Planning & Design Phase**
+
 ```hcl
 # Example: Initial planning configuration
 terraform {
@@ -323,7 +330,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.11.0"
     }
   }
 }
@@ -342,9 +349,9 @@ locals {
 }
 ```
 
-**🔨 Day One - Development & Iteration Phase**
+**🔨 Phase One - Development & Iteration Phase**
 ```hcl
-# Day One: Implementing and testing the infrastructure
+# Phase One: Implementing and testing the infrastructure
 resource "aws_instance" "web" {
   count         = local.infrastructure_requirements.compute_instances
   ami           = "ami-0c02fb55956c7d316"
@@ -361,9 +368,9 @@ resource "aws_instance" "web" {
 # Testing with terraform plan/apply cycles
 ```
 
-**🚀 Day Two - Production & Maintenance Phase**
+**🚀 Phase Two - Production & Maintenance Phase**
 ```hcl
-# Day Two: Production-ready with monitoring and maintenance
+# Phase Two: Production-ready with monitoring and maintenance
 resource "aws_instance" "production_web" {
   count                  = local.infrastructure_requirements.compute_instances
   ami                   = "ami-0c02fb55956c7d316"
@@ -382,7 +389,7 @@ resource "aws_instance" "production_web" {
 
 💡 **Pro Tip**: IaC starts on **Day Zero**! The earlier you involve infrastructure as code in your project, the better your outcomes will be.
 
-⚠️ **Important**: These "days" don't represent 24-hour periods - they're **broad phases** of your infrastructure project lifecycle.
+⚠️ **Important**: These broad phases represent the typical phases of your infrastructure project lifecycle.
 
 #### 🎯 Idempotency Explained
 

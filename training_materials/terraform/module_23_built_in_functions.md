@@ -3,6 +3,7 @@
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:
+
 - ✅ Understand Terraform's built-in function categories and their purposes
 - ✅ Use numeric functions for mathematical operations and calculations
 - ✅ Apply string functions for text manipulation and formatting
