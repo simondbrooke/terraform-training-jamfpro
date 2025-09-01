@@ -89,6 +89,67 @@ git tag -l
 4. **Verify module** structure and documentation
 5. **Publish** and wait for automatic validation
 
+### 📊 **Module Publishing Workflow**
+
+**End-to-End Publishing Process:**
+```mermaid
+flowchart TD
+    A[Local Development] --> B{Code Quality Gates}
+    B -->|Pass| C[Git Commit]
+    B -->|Fail| A
+    C --> D[Push to Repository]
+    D --> E[CI/CD Pipeline Triggered]
+    
+    E --> F[Terraform Validation]
+    E --> G[Security Scanning]
+    E --> H[Documentation Generation]
+    
+    F --> I{All Checks Pass?}
+    G --> I
+    H --> I
+    
+    I -->|No| J[Fix Issues]
+    J --> A
+    
+    I -->|Yes| K[Create Release Tag]
+    K --> L[GoReleaser Execution]
+    
+    L --> M[Generate Artifacts]
+    L --> N[Create GitHub Release]
+    L --> O[Update Documentation]
+    
+    M --> P[Registry Detection]
+    N --> P
+    O --> P
+    
+    P --> Q[Terraform Registry Update]
+    Q --> R[Module Available]
+    
+    subgraph "Quality Gates"
+        F
+        G
+        H
+    end
+    
+    subgraph "Release Automation"
+        L
+        M
+        N
+        O
+    end
+    
+    subgraph "Distribution"
+        P
+        Q
+        R
+    end
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style I fill:#fff3e0
+    style R fill:#e8f5e8
+```
+
 ### 📊 **Module Registry Best Practices**
 
 **Documentation Excellence:**
@@ -261,6 +322,69 @@ jobs:
 Sophisticated patterns for complex infrastructure requirements and enterprise-scale deployments.
 
 ### 🏭 **Factory Pattern**
+
+**Factory Pattern Architecture:**
+```mermaid
+graph TB
+    subgraph "Configuration Input"
+        ENV[Environment Configs]
+        DEV[Dev: t3.micro, 1-2 instances]
+        STAGE[Staging: t3.small, 2-4 instances]
+        PROD[Production: t3.medium, 3-10 instances]
+    end
+    
+    subgraph "Factory Module"
+        FACTORY[Environment Factory]
+        LOGIC[Configuration Logic]
+        LOOP[for_each Loop]
+    end
+    
+    subgraph "Generated Resources"
+        DEV_ENV[Development Environment]
+        STAGE_ENV[Staging Environment]
+        PROD_ENV[Production Environment]
+    end
+    
+    subgraph "Each Environment Contains"
+        ASG[Auto Scaling Group]
+        LB[Load Balancer]
+        DB[Database]
+        MONITOR[Monitoring]
+    end
+    
+    ENV --> FACTORY
+    DEV --> LOGIC
+    STAGE --> LOGIC
+    PROD --> LOGIC
+    
+    FACTORY --> LOOP
+    LOGIC --> LOOP
+    
+    LOOP --> DEV_ENV
+    LOOP --> STAGE_ENV
+    LOOP --> PROD_ENV
+    
+    DEV_ENV --> ASG
+    DEV_ENV --> LB
+    DEV_ENV --> DB
+    DEV_ENV --> MONITOR
+    
+    STAGE_ENV --> ASG
+    STAGE_ENV --> LB
+    STAGE_ENV --> DB
+    STAGE_ENV --> MONITOR
+    
+    PROD_ENV --> ASG
+    PROD_ENV --> LB
+    PROD_ENV --> DB
+    PROD_ENV --> MONITOR
+    
+    style FACTORY fill:#e3f2fd
+    style LOOP fill:#f1f8e9
+    style DEV_ENV fill:#fff3e0
+    style STAGE_ENV fill:#fff8e1
+    style PROD_ENV fill:#ffebee
+```
 
 Create multiple similar resources with different configurations:
 
@@ -453,6 +577,90 @@ applications:
 Establish robust processes for module development, testing, and deployment.
 
 ### 🧪 **Automated Testing Pipeline**
+
+**CI/CD Pipeline Architecture:**
+```mermaid
+graph TD
+    subgraph "Trigger Events"
+        PR[Pull Request]
+        PUSH[Push to Main]
+        RELEASE[Release Tag]
+    end
+    
+    subgraph "Parallel Quality Gates"
+        LINT[Lint & Format]
+        VALIDATE[Terraform Validate]
+        SECURITY[Security Scan]
+        DOCS[Documentation Check]
+    end
+    
+    subgraph "Testing Matrix"
+        TF14[Terraform 1.4.x]
+        TF15[Terraform 1.5.x]
+        TF16[Terraform 1.6.x]
+        BASIC[Basic Tests]
+        ADV[Advanced Tests]
+        COMP[Compliance Tests]
+    end
+    
+    subgraph "Release Process"
+        TAG[Create Tag]
+        GORELEASER[GoReleaser]
+        ARTIFACTS[Generate Artifacts]
+        GITHUB_REL[GitHub Release]
+        REGISTRY[Registry Update]
+    end
+    
+    subgraph "Deployment Targets"
+        DEV[Dev Environment]
+        STAGING[Staging Environment]
+        PROD[Production Environment]
+    end
+    
+    PR --> LINT
+    PR --> VALIDATE
+    PR --> SECURITY
+    PR --> DOCS
+    
+    PUSH --> LINT
+    PUSH --> VALIDATE
+    PUSH --> SECURITY
+    PUSH --> DOCS
+    
+    LINT --> TF14
+    LINT --> TF15
+    LINT --> TF16
+    
+    VALIDATE --> BASIC
+    VALIDATE --> ADV
+    VALIDATE --> COMP
+    
+    SECURITY --> BASIC
+    DOCS --> ADV
+    
+    TF14 --> TAG
+    TF15 --> TAG
+    TF16 --> TAG
+    BASIC --> TAG
+    ADV --> TAG
+    COMP --> TAG
+    
+    RELEASE --> GORELEASER
+    TAG --> GORELEASER
+    
+    GORELEASER --> ARTIFACTS
+    GORELEASER --> GITHUB_REL
+    GORELEASER --> REGISTRY
+    
+    REGISTRY --> DEV
+    REGISTRY --> STAGING
+    REGISTRY --> PROD
+    
+    style PR fill:#e3f2fd
+    style SECURITY fill:#ffebee
+    style GORELEASER fill:#e8f5e8
+    style REGISTRY fill:#f1f8e9
+```
 
 **GitHub Actions Workflow:**
 ```yaml
@@ -890,29 +1098,76 @@ module "applications" {
 **Dependency Graph Visualization:**
 ```mermaid
 graph TD
-    A[Foundation Layer] --> B[Platform Layer]
-    B --> C[Application Layer]
-    A --> D[Security Layer]
-    D --> B
-    D --> C
-    
-    subgraph "Foundation"
+    subgraph "Foundation Layer"
         A1[VPC Module]
         A2[Security Groups]
         A3[IAM Roles]
+        A4[Route Tables]
     end
     
-    subgraph "Platform"
+    subgraph "Platform Layer"
         B1[RDS Module]
         B2[ElastiCache Module]
         B3[SQS/SNS Module]
+        B4[Load Balancer]
     end
     
-    subgraph "Applications"
+    subgraph "Application Layer"
         C1[Web App Module]
         C2[API Module]
         C3[Worker Module]
+        C4[Monitoring Module]
     end
+    
+    subgraph "Security Layer"
+        D1[WAF Module]
+        D2[KMS Module]
+        D3[Secrets Manager]
+        D4[GuardDuty]
+    end
+    
+    %% Foundation dependencies
+    A1 --> A2
+    A1 --> A4
+    A3 --> A2
+    
+    %% Platform dependencies on Foundation
+    A1 --> B1
+    A1 --> B2
+    A1 --> B4
+    A2 --> B1
+    A2 --> B4
+    A3 --> B1
+    A3 --> B2
+    A3 --> B3
+    
+    %% Application dependencies on Platform
+    B1 --> C1
+    B1 --> C2
+    B2 --> C1
+    B2 --> C2
+    B3 --> C3
+    B4 --> C1
+    B4 --> C2
+    
+    %% Security dependencies
+    D2 --> B1
+    D2 --> B2
+    D3 --> C1
+    D3 --> C2
+    D3 --> C3
+    D1 --> B4
+    D4 --> A1
+    
+    %% Cross-layer monitoring
+    C4 --> C1
+    C4 --> C2
+    C4 --> C3
+    
+    style A1 fill:#e3f2fd
+    style B4 fill:#f1f8e9
+    style C4 fill:#fff3e0
+    style D1 fill:#ffebee
 ```
 
 **Dependency Declaration:**
@@ -963,6 +1218,59 @@ variable "cache_endpoint" {
 ```
 
 ### 📦 **Module Versioning Strategy**
+
+**Version Compatibility Matrix:**
+```mermaid
+graph TB
+    subgraph "Version Constraints"
+        EXACT[Exact Version<br/>= 2.1.0]
+        MAJOR[Major Version<br/>~> 5.0]
+        MINOR[Minor Version<br/>~> 1.2.0]
+        RANGE[Version Range<br/>>= 1.4, < 2.0]
+    end
+    
+    subgraph "Module Types"
+        SECURITY[Security Modules<br/>Critical Infrastructure]
+        PLATFORM[Platform Modules<br/>Core Services]
+        APP[Application Modules<br/>Business Logic]
+        DEV[Development Modules<br/>Testing/Utilities]
+    end
+    
+    subgraph "Risk Assessment"
+        HIGH[High Risk<br/>Production Critical]
+        MEDIUM[Medium Risk<br/>Platform Services]
+        LOW[Low Risk<br/>Development Tools]
+    end
+    
+    subgraph "Update Strategy"
+        MANUAL[Manual Updates<br/>Change Control Process]
+        SEMI[Semi-Automated<br/>Approval Required]
+        AUTO[Automated Updates<br/>CI/CD Pipeline]
+    end
+    
+    %% Version constraint relationships
+    EXACT --> SECURITY
+    MAJOR --> PLATFORM
+    MINOR --> APP
+    RANGE --> DEV
+    
+    %% Risk assessment
+    SECURITY --> HIGH
+    PLATFORM --> MEDIUM
+    APP --> MEDIUM
+    DEV --> LOW
+    
+    %% Update strategy
+    HIGH --> MANUAL
+    MEDIUM --> SEMI
+    LOW --> AUTO
+    
+    style EXACT fill:#ffebee
+    style SECURITY fill:#ffebee
+    style HIGH fill:#ffebee
+    style MANUAL fill:#ffebee
+    style AUTO fill:#e8f5e8
+```
 
 **Semantic Versioning with Compatibility:**
 ```hcl
@@ -1533,9 +1841,14 @@ An enterprise-grade Terraform module for creating compliant, scalable web server
 
 ```mermaid
 graph TB
+    subgraph "Internet"
+        USERS[Users/Clients]
+    end
+    
     subgraph "Public Subnets"
         ALB[Application Load Balancer]
         WAF[AWS WAF]
+        NAT[NAT Gateway]
     end
     
     subgraph "Private Subnets"
@@ -1545,29 +1858,71 @@ graph TB
         EC2C[EC2 Instance C]
     end
     
+    subgraph "Database Subnets"
+        RDS[RDS Database]
+        CACHE[ElastiCache]
+    end
+    
     subgraph "Security & Compliance"
         SG[Security Groups]
         IAM[IAM Roles]
         KMS[KMS Encryption]
+        SECRETS[Secrets Manager]
     end
     
     subgraph "Monitoring & Observability"
-        CW[CloudWatch]
+        CW[CloudWatch Metrics]
         XR[X-Ray Tracing]
-        LOG[Log Groups]
+        LOG[CloudWatch Logs]
+        ALARM[CloudWatch Alarms]
     end
     
+    %% User traffic flow
+    USERS --> WAF
     WAF --> ALB
     ALB --> ASG
     ASG --> EC2A
     ASG --> EC2B
     ASG --> EC2C
+    
+    %% Database connections
+    EC2A --> RDS
+    EC2B --> RDS
+    EC2C --> RDS
+    EC2A --> CACHE
+    EC2B --> CACHE
+    EC2C --> CACHE
+    
+    %% Security relationships
+    SG --> ALB
     SG --> ASG
+    SG --> RDS
     IAM --> ASG
-    KMS --> ASG
-    CW --> ASG
-    XR --> ASG
-    LOG --> ASG
+    IAM --> RDS
+    KMS --> RDS
+    KMS --> CACHE
+    SECRETS --> ASG
+    
+    %% Monitoring relationships
+    ASG --> CW
+    EC2A --> CW
+    EC2B --> CW
+    EC2C --> CW
+    RDS --> CW
+    ASG --> XR
+    ASG --> LOG
+    CW --> ALARM
+    
+    %% Internet access for private subnets
+    EC2A --> NAT
+    EC2B --> NAT
+    EC2C --> NAT
+    
+    style USERS fill:#e3f2fd
+    style WAF fill:#ffebee
+    style ASG fill:#f1f8e9
+    style RDS fill:#fff3e0
+    style CW fill:#f3e5f5
 ```
 EOF
 
@@ -2117,8 +2472,13 @@ module "enterprise_webserver" {
 
 ```mermaid
 graph TB
+    subgraph "Internet"
+        USERS[Users/Clients]
+    end
+    
     subgraph "Public Subnets"
         ALB[Application Load Balancer]
+        NAT[NAT Gateway]
     end
     
     subgraph "Private Subnets"
@@ -2128,28 +2488,70 @@ graph TB
         EC2C[EC2 Instance C]
     end
     
+    subgraph "Database Subnets"
+        RDS[RDS Database]
+        CACHE[ElastiCache]
+    end
+    
     subgraph "Security & Compliance"
         WAF[AWS WAF]
         SG[Security Groups]
         IAM[IAM Roles]
+        KMS[KMS Encryption]
     end
     
     subgraph "Monitoring & Observability"
-        CW[CloudWatch]
+        CW[CloudWatch Metrics]
         XR[X-Ray Tracing]
-        LOG[Log Groups]
+        LOG[CloudWatch Logs]
+        ALARM[CloudWatch Alarms]
     end
     
+    %% User traffic flow
+    USERS --> WAF
+    WAF --> ALB
     ALB --> ASG
     ASG --> EC2A
     ASG --> EC2B
     ASG --> EC2C
-    WAF --> ALB
+    
+    %% Database connections
+    EC2A --> RDS
+    EC2B --> RDS
+    EC2C --> RDS
+    EC2A --> CACHE
+    EC2B --> CACHE
+    EC2C --> CACHE
+    
+    %% Security relationships
+    SG --> ALB
     SG --> ASG
+    SG --> RDS
     IAM --> ASG
-    CW --> ASG
-    XR --> ASG
-    LOG --> ASG
+    IAM --> RDS
+    KMS --> RDS
+    KMS --> CACHE
+    
+    %% Monitoring relationships
+    ASG --> CW
+    EC2A --> CW
+    EC2B --> CW
+    EC2C --> CW
+    RDS --> CW
+    ASG --> XR
+    ASG --> LOG
+    CW --> ALARM
+    
+    %% Internet access for private subnets
+    EC2A --> NAT
+    EC2B --> NAT
+    EC2C --> NAT
+    
+    style USERS fill:#e3f2fd
+    style WAF fill:#ffebee
+    style ASG fill:#f1f8e9
+    style RDS fill:#fff3e0
+    style CW fill:#f3e5f5
 ```
 
 ## 📖 Documentation
