@@ -1,5 +1,5 @@
 
-## ⚡ Module 20: Terraform Workflows
+## ⚡ Module 28: Terraform Workflows
 *Duration: 2 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -1113,7 +1113,7 @@ The transcript's key insight rings true: *"terraform Cloud streamlines a lot of 
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 21: Terraform Backends](./module_21_terraform_backends.md)**
+**➡️ [Module 28: Terraform Backends](./module_21_terraform_backends.md)**
 
 Configure and manage remote state backends for collaboration.
 

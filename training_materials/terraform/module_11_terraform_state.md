@@ -1,6 +1,6 @@
 
 
-# 📁 Module 10: Terraform State
+# 📁 Module 28: Terraform State
 
 **⏱️ Duration**: 45 minutes  
 **🎯 Difficulty**: Intermediate  
@@ -594,7 +594,7 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 11: TF Initialization](./module_11_tf_initialization.md)**
+**➡️ [Module 28: TF Initialization](./module_11_tf_initialization.md)**
 
 Learn the terraform init process and dependency management.
 

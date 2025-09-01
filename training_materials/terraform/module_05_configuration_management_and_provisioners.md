@@ -1,7 +1,7 @@
 
 ---
 
-## 🛠️ Module 4: Terraform Provisioners & Modern Infrastructure Configuration
+## 🛠️ Module 5: Configuration Management and Provisioners
 *Duration: 3 hours | Labs: 5 | Difficulty: 🟡 Intermediate*
 
 ### 🎯 Learning Objectives
@@ -1252,7 +1252,7 @@ Test your understanding of Terraform Provisioners with these questions:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 5: Terraform Providers](./module_05_terraform_providers.md)**
+**➡️ [Module 6: Terraform Providers](./module_06_terraform_providers.md)**
 
 Understand how providers work and manage different cloud platforms.
 

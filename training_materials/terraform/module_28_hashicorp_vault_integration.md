@@ -1,4 +1,4 @@
-## 🔷 Module 27: HashiCorp Vault Integration
+## 🔷 Module 28: HashiCorp Vault Integration
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives
@@ -988,7 +988,7 @@ Migration considerations:
 
 ## ✅ Module 27 Summary
 
-Congratulations! You have completed **Module 27: HashiCorp Vault Integration**. This comprehensive module covered:
+Congratulations! You have completed **Module 28: HashiCorp Vault Integration**. This comprehensive module covered:
 
 ### 🎯 **What You've Learned**
 - ✅ **Vault Fundamentals**: Understanding secret management architecture and benefits
@@ -1021,7 +1021,7 @@ You're now prepared to:
 - Integrate Vault authentication with CI/CD pipelines
 - Operate and maintain Vault in enterprise environments
 
-**🎉 Module 27: HashiCorp Vault Integration is now complete and ready for deployment!**
+**🎉 Module 28: HashiCorp Vault Integration is now complete and ready for deployment!**
 
 This module provides the essential knowledge and practical skills needed to implement secure, dynamic credential management using HashiCorp Vault with Terraform, enabling organizations to eliminate static credentials and implement just-in-time access patterns.
 

@@ -1,7 +1,7 @@
 
 ---
 
-## 📝 Module 6: Terraform Language
+## 📝 Module 7: Terraform Language
 *Duration: 1.5 hours | Labs: 2*
 
 ### 🎯 Learning Objectives
@@ -990,7 +990,7 @@ output "vpc_id" {
 
 ---
 
-## 📚 Quiz - Module 6: Terraform Language & HCL
+## 📚 Quiz - Module 7: Terraform Language & HCL
 
 **Test your knowledge of HCL syntax, Terraform Language, and configuration best practices!**
 
@@ -1239,7 +1239,7 @@ It supports complex data types and nested structures, making it more powerful th
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 7: Variables and Data](./module_07_variables_and_data.md)**
+**➡️ [Module 8: Variables and Data](./module_08_variables_and_data.md)**
 
 Master variable management, data sources, and configuration flexibility.
 

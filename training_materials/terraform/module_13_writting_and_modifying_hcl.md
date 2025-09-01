@@ -1,6 +1,6 @@
 
 
-# ✍️ Module 12: Writing and Modifying
+# ✍️ Module 28: Writing and Modifying
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Beginner to Intermediate  
@@ -767,7 +767,7 @@ Create `.vscode/settings.json`:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 13: Plan and Apply](./module_13_plan_and_apply.md)**
+**➡️ [Module 28: Plan and Apply](./module_13_plan_and_apply.md)**
 
 Master the core Terraform workflow for safe infrastructure changes.
 

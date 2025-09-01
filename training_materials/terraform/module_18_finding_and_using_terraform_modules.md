@@ -1,6 +1,6 @@
 
 
-# 📦 Module 17: Finding and Using Terraform Modules
+# 📦 Module 28: Finding and Using Terraform Modules
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate  
@@ -1062,7 +1062,7 @@ echo "📋 Best practices review completed!"
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 18: Standard Module Structure and Development](./module_18_standard_module_structure_and_development.md)**
+**➡️ [Module 28: Standard Module Structure and Development](./module_18_standard_module_structure_and_development.md)**
 
 Create well-structured, reusable Terraform modules.
 

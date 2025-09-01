@@ -1,7 +1,7 @@
 
 ---
 
-## ⚡ Module 3: Terraform Basics
+## ⚡ Module 4: Terraform Basics
 *Duration: 3 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -545,7 +545,7 @@ Test your understanding of Terraform Basics with these questions:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 4: Configuration Management and Provisioners](./module_04_configuration_management_and_provisioners.md)**
+**➡️ [Module 5: Configuration Management and Provisioners](./module_05_configuration_management_and_provisioners.md)**
 
 Learn advanced configuration management techniques and provisioner usage.
 

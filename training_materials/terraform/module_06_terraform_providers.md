@@ -1,7 +1,7 @@
 
 ---
 
-## 🔌 Module 5: Terraform Providers
+## 🔌 Module 6: Terraform Providers
 *Duration: 2.5 hours | Labs: 4 | Difficulty: 🟡 Intermediate*
 
 ### 🎯 Learning Objectives
@@ -1231,7 +1231,7 @@ Test your understanding of Terraform Providers with these questions:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 6: Terraform Language and HashiCorp Language](./module_06_terraform_language_and_hashicorp_language.md)**
+**➡️ [Module 7: Terraform Language and HashiCorp Language](./module_07_terraform_language_and_hashicorp_language.md)**
 
 Deep dive into HCL syntax and Terraform's configuration language.
 

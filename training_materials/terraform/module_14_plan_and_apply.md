@@ -1,6 +1,6 @@
 
 
-# 🚀 Module 13: Plan and Apply
+# 🚀 Module 28: Plan and Apply
 
 **⏱️ Duration**: 40 minutes  
 **🎯 Difficulty**: Intermediate  
@@ -1363,7 +1363,7 @@ terraform destroy -var-file="dev.tfvars" -auto-approve
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 14: Resource Drift Management](./module_14_resource_drift_management.md)**
+**➡️ [Module 28: Resource Drift Management](./module_14_resource_drift_management.md)**
 
 Detect and manage configuration drift in your infrastructure.
 

@@ -1,4 +1,4 @@
-## 🔷 Module 26: Sentinel and Policy as Code
+## 🔷 Module 28: Sentinel and Policy as Code
 *Duration: 3 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -1373,7 +1373,7 @@ main = rule {
 
 ## ✅ Module 26 Summary
 
-Congratulations! You have completed **Module 26: Sentinel and Policy as Code**. This comprehensive module covered:
+Congratulations! You have completed **Module 28: Sentinel and Policy as Code**. This comprehensive module covered:
 
 ### 🎯 **What You've Learned**
 - ✅ **Policy as Code Fundamentals**: Understanding automated governance and compliance
@@ -1407,7 +1407,7 @@ You're now prepared to:
 - Manage policy lifecycle in production environments
 - Build enterprise-grade infrastructure governance frameworks
 
-**🎉 Module 26: Sentinel and Policy as Code is now complete and ready for deployment!**
+**🎉 Module 28: Sentinel and Policy as Code is now complete and ready for deployment!**
 
 This module provides the essential knowledge and practical skills needed to implement automated governance, security, and compliance controls using HashiCorp Sentinel, enabling organizations to enforce consistent policies across their infrastructure as code workflows.
 
@@ -1417,6 +1417,6 @@ This module provides the essential knowledge and practical skills needed to impl
 
 Ready to continue your Terraform journey? Proceed to the final module:
 
-**➡️ [Module 27: HashiCorp Vault Integration](./module_27_hashicorp_vault_integration.md)**
+**➡️ [Module 28: HashiCorp Vault Integration](./module_27_hashicorp_vault_integration.md)**
 
 Learn how to integrate HashiCorp Vault with Terraform for secure credential management, dynamic secret generation, and just-in-time access patterns.

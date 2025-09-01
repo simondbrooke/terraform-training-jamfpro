@@ -1,4 +1,4 @@
-## 🔷 Module 25: Terraform Workspaces
+## 🔷 Module 28: Terraform Workspaces
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives
@@ -2287,7 +2287,7 @@ This creates workspaces like `my-app-dev`, `my-app-staging`, `my-app-prod`.
 
 ## ✅ Module 25 Summary
 
-Congratulations! You have completed **Module 25: Terraform Workspaces**. This module covered:
+Congratulations! You have completed **Module 28: Terraform Workspaces**. This module covered:
 
 ### 🎯 **What You've Learned**
 - ✅ **Workspace Fundamentals**: Understanding CLI vs Cloud workspaces
@@ -2310,7 +2310,7 @@ You're now prepared to:
 - Migrate between different backend configurations
 - Apply workspace best practices in team environments
 
-**🎉 Module 25: Terraform Workspaces is now complete and ready for deployment!**
+**🎉 Module 28: Terraform Workspaces is now complete and ready for deployment!**
 
 This module provides a solid foundation for understanding and implementing Terraform workspaces in both individual and team scenarios, with practical experience in real-world patterns and migration strategies.
 
@@ -2320,6 +2320,6 @@ This module provides a solid foundation for understanding and implementing Terra
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 26: Sentinel and Policy as Code](./module_26_sentinel_policy_as_code.md)**
+**➡️ [Module 28: Sentinel and Policy as Code](./module_26_sentinel_policy_as_code.md)**
 
 Learn how to implement automated governance, security, and compliance controls using HashiCorp Sentinel policies.

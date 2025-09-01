@@ -1,10 +1,10 @@
 
 
-# 🧮 Module 9: Expressions
+# 🧮 Module 28: Expressions
 
 **⏱️ Duration**: 70 minutes  
 **🎯 Difficulty**: Advanced  
-**📋 Prerequisites**: Completed Modules 1-8
+**📋 Prerequisites**: Completed Modules 1-9
 
 ## 🎯 Learning Objectives
 
@@ -2445,7 +2445,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 10: Terraform State](./module_10_terraform_state.md)**
+**➡️ [Module 28: Terraform State](./module_10_terraform_state.md)**
 
 Master state management, the foundation of Terraform operations.
 

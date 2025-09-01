@@ -22,11 +22,11 @@ By the end of this module, you will be able to:
 
 | Aspect | Infrastructure as Code | Configuration as Code |
 |--------|----------------------|----------------------|
-| **Scope** | Physical/Virtual Resources | Service Settings & Policies |
+| **Scope** | Physical/Virtual Resources | Saas Service Settings, Resources & Policies |
 | **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Application settings |
 | **APIs** | Cloud Provider APIs | SaaS Service APIs |
 | **State** | Resource existence & properties | Service configuration & policies |
-| **Drift** | Resource configuration changes | Settings modified via GUI/manual changes |
+| **Drift** | Resource configuration changes | Settings modified via GUI/manual changes and imperatie scripts |
 
 **🎯 Configuration as Code Evolution:**
 ```mermaid

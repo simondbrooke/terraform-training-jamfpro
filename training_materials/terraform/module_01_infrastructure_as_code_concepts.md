@@ -807,7 +807,7 @@ echo $PATH          # Verify PATH includes Terraform
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 2: HashiCorp Introduction](./module_02_hashicorp_introduction.md)**
+**➡️ [Module 2: Configuration as Code Concepts](./module_02_configuration_as_code_concepts.md)**
 
 Learn about HashiCorp's ecosystem, tools, and how Terraform fits into the broader infrastructure automation landscape.
 

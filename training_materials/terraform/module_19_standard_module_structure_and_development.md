@@ -1,4 +1,4 @@
-# 🏗️ Module 18: Standard Module Structure and Development
+# 🏗️ Module 28: Standard Module Structure and Development
 
 **⏱️ Duration**: 40 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  
@@ -2105,7 +2105,7 @@ echo "📊 Module summary created in MODULE_SUMMARY.md"
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 19: Publishing and Advanced Module Patterns](./module_19_publishing_and_advanced_module_patterns.md)**
+**➡️ [Module 28: Publishing and Advanced Module Patterns](./module_19_publishing_and_advanced_module_patterns.md)**
 
 Publish modules and implement advanced patterns.
 

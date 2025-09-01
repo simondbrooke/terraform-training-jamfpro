@@ -1,10 +1,10 @@
 
 
-# 🔧 Module 8: Meta Arguments
+# 🔧 Module 9: Meta Arguments
 
 **⏱️ Duration**: 60 minutes  
 **🎯 Difficulty**: Intermediate  
-**📋 Prerequisites**: Completed Modules 1-7
+**📋 Prerequisites**: Completed Modules 1-8
 
 ## 🎯 Learning Objectives
 
@@ -1493,7 +1493,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 9: Expressions](./module_09_expressions.md)**
+**➡️ [Module 28: Expressions](./module_10_expressions.md)**
 
 Understand Terraform expressions, functions, and dynamic configurations.
 

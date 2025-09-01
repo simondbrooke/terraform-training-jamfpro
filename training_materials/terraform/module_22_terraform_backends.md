@@ -1,4 +1,4 @@
-## ⚡ Module 21: Terraform Backends
+## ⚡ Module 28: Terraform Backends
 *Duration: 3 hours | Labs: 6*
 
 ### 🎯 Learning Objectives
@@ -2167,7 +2167,7 @@ The transcript's key insight is crucial: *"I give this a lot more attention in t
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 22: Resources and Complex Types](./module_22_resources_and_complex_types.md)**
+**➡️ [Module 28: Resources and Complex Types](./module_22_resources_and_complex_types.md)**
 
 Work with complex data types and advanced resource configurations.
 

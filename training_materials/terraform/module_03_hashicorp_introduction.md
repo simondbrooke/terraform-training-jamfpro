@@ -1,7 +1,7 @@
 
 ---
 
-## 🔷 Module 2: HashiCorp Introduction
+## 🔷 Module 3: HashiCorp Introduction
 *Duration: 1 hour | Labs: 1*
 
 ### 🎯 Learning Objectives
@@ -352,7 +352,7 @@ terraform state list    # List managed resources
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 3: Terraform Basics](./module_03_terraform_basics.md)**
+**➡️ [Module 4: Terraform Basics](./module_04_terraform_basics.md)**
 
 Dive deep into the core Terraform workflow and commands - where you'll master the essential operations for managing infrastructure.
 
