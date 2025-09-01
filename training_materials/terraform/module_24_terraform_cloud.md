@@ -3173,82 +3173,41 @@ echo "Testing policy enforcement..."
 
 **Question 1 (5 points):** What are the three main execution modes available in Terraform Cloud, and when would you use each one?
 
-**Question 2 (5 points):** Explain the difference between a "speculative plan" and a "regular plan" in Terraform Cloud workflows.
-
-**Question 3 (5 points):** What is the primary advantage of using Terraform Cloud's remote state management over local state files?
-
-**Question 4 (5 points):** List three core benefits that Terraform Cloud provides over running Terraform locally.
-
-**Question 5 (5 points):** What is the relationship between Organizations, Teams, and Workspaces in Terraform Cloud's hierarchy?
-
-#### **Section B: Workflow Management (25 points)**
-
-**Question 6 (5 points):** You have a production environment that requires manual approval for all changes and should use self-hosted agents for security. Configure a workspace with these requirements using Terraform code.
-
-**Question 7 (5 points):** Explain how VCS integration works in Terraform Cloud and describe the workflow when a developer pushes code to a connected repository.
-
-**Question 8 (5 points):** What is the purpose of run triggers, and provide an example scenario where you would use them?
-
-**Question 9 (5 points):** How do you configure a workspace to only trigger runs when specific files or directories are modified?
-
-**Question 10 (5 points):** What are the different permission levels available for workspace access, and what actions can each level perform?
-
-#### **Section C: Security and Team Management (25 points)**
-
-**Question 11 (5 points):** What are the three types of API tokens in Terraform Cloud, and what is the appropriate use case for each?
-
-**Question 12 (5 points):** How would you set up a team structure where developers can plan changes in staging but only read access in production?
-
-**Question 13 (5 points):** Explain the difference between workspace-level and organization-level permissions.
-
-**Question 14 (5 points):** What security considerations should you keep in mind when migrating from local state to Terraform Cloud?
-
-**Question 15 (5 points):** How do you securely store and manage sensitive variables in Terraform Cloud?
-
-#### **Section D: Advanced Features (25 points)**
-
-**Question 16 (5 points):** Describe the complete process of publishing a module to Terraform Cloud's private registry.
-
-**Question 17 (5 points):** How does Terraform Cloud's cost estimation feature work, and what triggers cost alerts?
-
-**Question 18 (5 points):** When would you choose to use Terraform Cloud Agents instead of the default remote execution?
-
-**Question 19 (5 points):** Explain how to set up cross-workspace collaboration where one workspace's outputs are consumed by another.
-
-**Question 20 (5 points):** What is the purpose of variable sets, and how do they differ from workspace-specific variables?
-
-#### **Section E: Practical Scenarios (Bonus - 10 points)**
-
-**Scenario Question (10 points):** 
-Your organization has three environments (dev, staging, production) with the following requirements:
-- Development: Auto-apply enabled, all developers have write access
-- Staging: Manual approval required, only senior developers can apply
-- Production: Agent-based execution, only DevOps team can apply, security team has read access
-
-Write Terraform code that implements this complete setup including:
-1. Team creation with appropriate members
-2. Workspace configuration for each environment
-3. Proper permission assignments
-4. Agent pool setup for production
-5. Notification configuration for production changes
-
----
-
-### 🔑 **Assessment Answer Key**
-
-#### **Section A Answers:**
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 1:** 
 - **Remote**: Runs in Terraform Cloud's infrastructure (default, good for team collaboration)
 - **Local**: Runs on local machine but stores state remotely (good for debugging/development)
 - **Agent**: Runs on self-hosted agents (good for private networks/compliance requirements)
 
+</details>
+
+**Question 2 (5 points):** Explain the difference between a "speculative plan" and a "regular plan" in Terraform Cloud workflows.
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 2:** 
 - **Speculative Plan**: Triggered by pull requests, shows preview of changes without affecting real infrastructure, doesn't require approval
 - **Regular Plan**: Triggered by pushes to main branches, creates official plan that can be applied to infrastructure, may require approval
 
+</details>
+
+**Question 3 (5 points):** What is the primary advantage of using Terraform Cloud's remote state management over local state files?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 3:** 
 Remote state provides secure, encrypted storage with automatic locking, version history, team collaboration, and eliminates risk of state file loss or corruption.
+
+</details>
+
+**Question 4 (5 points):** List three core benefits that Terraform Cloud provides over running Terraform locally.
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 4:** Any three of:
 - Team collaboration and shared state
@@ -3259,10 +3218,24 @@ Remote state provides secure, encrypted storage with automatic locking, version 
 - Secure variable management
 - Private module registry
 
+</details>
+
+**Question 5 (5 points):** What is the relationship between Organizations, Teams, and Workspaces in Terraform Cloud's hierarchy?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 5:** 
 Organizations are top-level containers that contain Teams (groups of users) and Workspaces (individual Terraform configurations). Teams are assigned permissions to access specific Workspaces.
 
-#### **Section B Answers:**
+</details>
+
+#### **Section B: Workflow Management (25 points)**
+
+**Question 6 (5 points):** You have a production environment that requires manual approval for all changes and should use self-hosted agents for security. Configure a workspace with these requirements using Terraform code.
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 6:**
 ```hcl
@@ -3278,11 +3251,32 @@ resource "tfe_workspace" "production" {
 }
 ```
 
+</details>
+
+**Question 7 (5 points):** Explain how VCS integration works in Terraform Cloud and describe the workflow when a developer pushes code to a connected repository.
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 7:** 
 VCS integration connects repositories to workspaces via webhooks. When code is pushed: webhook triggers → Terraform Cloud queues run → executes plan → posts results as PR comment (speculative) or requires approval (regular).
 
+</details>
+
+**Question 8 (5 points):** What is the purpose of run triggers, and provide an example scenario where you would use them?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 8:** 
 Run triggers automatically start runs in dependent workspaces when source workspaces complete. Example: Network workspace completes → triggers application workspace that depends on network outputs.
+
+</details>
+
+**Question 9 (5 points):** How do you configure a workspace to only trigger runs when specific files or directories are modified?
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 9:** 
 Use `trigger_prefixes` in workspace configuration:
@@ -3294,18 +3288,39 @@ trigger_prefixes = [
 ]
 ```
 
+</details>
+
+**Question 10 (5 points):** What are the different permission levels available for workspace access, and what actions can each level perform?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 10:**
 - **Read**: View runs, variables, state (no execution)
 - **Plan**: Queue plans but cannot apply
 - **Write**: Queue plans and apply changes
 - **Admin**: Full workspace management including settings
 
-#### **Section C Answers:**
+</details>
+
+#### **Section C: Security and Team Management (25 points)**
+
+**Question 11 (5 points):** What are the three types of API tokens in Terraform Cloud, and what is the appropriate use case for each?
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 11:**
 - **User tokens**: Personal access (30-day expiration, individual use)
 - **Team tokens**: Shared team access (no expiration, CI/CD automation)  
 - **Organization tokens**: Admin operations (no expiration, org management)
+
+</details>
+
+**Question 12 (5 points):** How would you set up a team structure where developers can plan changes in staging but only read access in production?
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 12:**
 ```hcl
@@ -3322,9 +3337,23 @@ resource "tfe_team_access" "developers_production" {
 }
 ```
 
+</details>
+
+**Question 13 (5 points):** Explain the difference between workspace-level and organization-level permissions.
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 13:**
 - **Organization-level**: Controls team management, billing, general settings across entire organization
 - **Workspace-level**: Controls access to specific workspaces (read/plan/write/admin permissions)
+
+</details>
+
+**Question 14 (5 points):** What security considerations should you keep in mind when migrating from local state to Terraform Cloud?
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 14:**
 - Backup local state before migration
@@ -3333,10 +3362,24 @@ resource "tfe_team_access" "developers_production" {
 - Verify state encryption and access controls
 - Test migration with non-critical workspaces first
 
+</details>
+
+**Question 15 (5 points):** How do you securely store and manage sensitive variables in Terraform Cloud?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 15:**
 Mark variables as sensitive in Terraform Cloud UI or via API, use environment variables for provider credentials, leverage external secret management systems for highly sensitive data.
 
-#### **Section D Answers:**
+</details>
+
+#### **Section D: Advanced Features (25 points)**
+
+**Question 16 (5 points):** Describe the complete process of publishing a module to Terraform Cloud's private registry.
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 16:**
 1. Create module repository with proper structure (main.tf, variables.tf, outputs.tf)
@@ -3345,8 +3388,22 @@ Mark variables as sensitive in Terraform Cloud UI or via API, use environment va
 4. Configure registry module in Terraform Cloud
 5. Module automatically published on new tags
 
+</details>
+
+**Question 17 (5 points):** How does Terraform Cloud's cost estimation feature work, and what triggers cost alerts?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 17:**
 Cost estimation analyzes planned resources against cloud provider pricing APIs before apply. Triggered by plans, alerts sent when costs exceed configured thresholds via notifications.
+
+</details>
+
+**Question 18 (5 points):** When would you choose to use Terraform Cloud Agents instead of the default remote execution?
+
+<details>
+<summary>🔍 Click for Answer</summary>
 
 **Answer 18:**
 Use agents for:
@@ -3356,14 +3413,155 @@ Use agents for:
 - Reduced latency for large state files
 - Existing compute resource utilization
 
+</details>
+
+**Question 19 (5 points):** Explain how to set up cross-workspace collaboration where one workspace's outputs are consumed by another.
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 19:**
 1. Configure source workspace with `global_remote_state = true`
 2. Add consumer workspace to allowed list
 3. Use `data "terraform_remote_state"` in consumer workspace
 4. Set up run triggers for automatic updates
 
+</details>
+
+**Question 20 (5 points):** What is the purpose of variable sets, and how do they differ from workspace-specific variables?
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
 **Answer 20:**
 Variable sets are shared collections of variables that can be applied to multiple workspaces (global or specific assignment), while workspace variables are specific to individual workspaces only.
+
+</details>
+
+#### **Section E: Practical Scenarios (Bonus - 10 points)**
+
+**Scenario Question (10 points):** 
+Your organization has three environments (dev, staging, production) with the following requirements:
+- Development: Auto-apply enabled, all developers have write access
+- Staging: Manual approval required, only senior developers can apply
+- Production: Agent-based execution, only DevOps team can apply, security team has read access
+
+Write Terraform code that implements this complete setup including:
+1. Team creation with appropriate members
+2. Workspace configuration for each environment
+3. Proper permission assignments
+4. Agent pool setup for production
+5. Notification configuration for production changes
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**Answer - Complete Enterprise Setup:**
+
+```hcl
+# Create teams
+resource "tfe_team" "developers" {
+  name         = "developers"
+  organization = var.organization_name
+}
+
+resource "tfe_team" "senior_developers" {
+  name         = "senior-developers"
+  organization = var.organization_name
+}
+
+resource "tfe_team" "devops" {
+  name         = "devops-team"
+  organization = var.organization_name
+}
+
+resource "tfe_team" "security" {
+  name         = "security-team"
+  organization = var.organization_name
+}
+
+# Create agent pool for production
+resource "tfe_agent_pool" "production" {
+  name         = "production-agents"
+  organization = var.organization_name
+}
+
+# Create workspaces
+locals {
+  environments = {
+    development = {
+      auto_apply     = true
+      execution_mode = "remote"
+    }
+    staging = {
+      auto_apply     = false
+      execution_mode = "remote"
+    }
+    production = {
+      auto_apply     = false
+      execution_mode = "agent"
+    }
+  }
+}
+
+resource "tfe_workspace" "environments" {
+  for_each = local.environments
+  
+  name           = "${each.key}-infrastructure"
+  organization   = var.organization_name
+  auto_apply     = each.value.auto_apply
+  execution_mode = each.value.execution_mode
+  
+  # Use agent pool for production
+  agent_pool_id = each.key == "production" ? tfe_agent_pool.production.id : null
+}
+
+# Configure team access
+resource "tfe_team_access" "dev_access" {
+  access       = "write"
+  team_id      = tfe_team.developers.id
+  workspace_id = tfe_workspace.environments["development"].id
+}
+
+resource "tfe_team_access" "senior_dev_staging" {
+  access       = "write"
+  team_id      = tfe_team.senior_developers.id
+  workspace_id = tfe_workspace.environments["staging"].id
+}
+
+resource "tfe_team_access" "devops_prod" {
+  access       = "admin"
+  team_id      = tfe_team.devops.id
+  workspace_id = tfe_workspace.environments["production"].id
+}
+
+resource "tfe_team_access" "security_prod" {
+  access       = "read"
+  team_id      = tfe_team.security.id
+  workspace_id = tfe_workspace.environments["production"].id
+}
+
+# Production notifications
+resource "tfe_notification_configuration" "prod_alerts" {
+  name             = "production-alerts"
+  enabled          = true
+  destination_type = "email"
+  workspace_id     = tfe_workspace.environments["production"].id
+  
+  triggers = [
+    "run:applying",
+    "run:completed",
+    "run:errored"
+  ]
+  
+  email_addresses = [
+    "devops@company.com",
+    "security@company.com"
+  ]
+}
+```
+
+</details>
 
 ---
 
