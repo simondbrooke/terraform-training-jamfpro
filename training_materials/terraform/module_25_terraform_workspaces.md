@@ -2287,7 +2287,7 @@ This creates workspaces like `my-app-dev`, `my-app-staging`, `my-app-prod`.
 
 ## ✅ Module 25 Summary
 
-Congratulations! You have completed **Module 25: Terraform Workspaces**. This comprehensive module covered:
+Congratulations! You have completed **Module 25: Terraform Workspaces**. This module covered:
 
 ### 🎯 **What You've Learned**
 - ✅ **Workspace Fundamentals**: Understanding CLI vs Cloud workspaces
@@ -2302,16 +2302,6 @@ Congratulations! You have completed **Module 25: Terraform Workspaces**. This co
 - ✅ **Lab 25.1**: CLI workspace basics and state isolation
 - ✅ **Lab 25.2**: Multi-environment infrastructure patterns
 - ✅ **Lab 25.3**: Backend migration and integration
-
-### 📊 **Visual Learning**
-- ✅ **6 Mermaid Diagrams**: Architecture, workflows, and comparisons
-- ✅ **Interactive Examples**: Real-world configuration patterns
-- ✅ **Command References**: Complete CLI operation guides
-
-### 🧠 **Knowledge Validation**
-- ✅ **20 Assessment Questions**: Comprehensive coverage testing
-- ✅ **Practical Scenarios**: Real-world problem solving
-- ✅ **Interactive Answers**: Self-paced learning support
 
 ### 🚀 **Next Steps**
 You're now prepared to:

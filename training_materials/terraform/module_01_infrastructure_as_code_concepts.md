@@ -164,6 +164,9 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 21 | 🚀 Terraform Backends | 3 hours | 🟡 Intermediate | 6 labs |
 | 22 | 📝 Resources and Complex Types | 2.5 hours | 🟡 Intermediate | 4 labs |
 | 23 | 🚀 Built-In Functions | 2 hours | 🔴 Advanced | 4 labs |
+| 24 | 🚀 Terraform Cloud | 3 hours | 🟡 Intermediate | 4 labs |
+| 25 | 📁 Terraform Workspaces | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 26 | 📝 Sentinel and Policy as Code | 3 hours | 🔴 Advanced | 4 labs |
 
 
 **Total Course Time**: ~38 hours of content + ~55 hands-on labs
@@ -175,6 +178,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 ### 🎯 Study Timeline by Experience Level
 
 #### 🔰 **Beginner** (New to IaC, 30+ hours recommended)
+
 - **Week 1-2**: Complete Modules 1-3 (Foundation building)
 - **Week 3**: Complete Modules 4-6 (Core concepts)
 - **Week 4**: Complete Modules 7-9 (Advanced topics)
