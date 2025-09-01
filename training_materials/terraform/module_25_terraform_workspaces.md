@@ -210,9 +210,9 @@ graph TB
     end
     
     subgraph "Resource Configuration"
-        Naming[Resource Naming<br/>web-$${terraform.workspace}]
-        Conditional[Conditional Logic<br/>count = terraform.workspace == "prod" ? 3 : 1]
-        Tags[Resource Tags<br/>Environment = terraform.workspace]
+        Naming["Resource Naming<br/>web-terraform.workspace"]
+        Conditional["Conditional Logic<br/>count = workspace == prod ? 3 : 1"]
+        Tags["Resource Tags<br/>Environment = terraform.workspace"]
     end
     
     subgraph "Outputs"
