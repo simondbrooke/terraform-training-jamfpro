@@ -69,63 +69,302 @@ The shift from traditional GUI-based administration to code-based configuration 
 **Traditional vs Modern SaaS Management:**
 ```mermaid
 graph TB
-    subgraph "❌ Traditional GUI-Based Management"
-        GUI_ADMIN["👨‍💼 Manual Administration<br/>• Point-and-click interfaces<br/>• Individual service portals<br/>• Manual policy creation<br/>• Screenshot documentation<br/>• Human error prone"]
-        GUI_PROBLEMS["❌ Problems<br/>• Configuration drift<br/>• Inconsistent settings<br/>• No version control<br/>• Difficult to replicate<br/>• Audit trail gaps<br/>• Scaling challenges"]
-        GUI_EXAMPLE["📝 Example Workflow<br/>1. Login to admin portal<br/>2. Navigate through menus<br/>3. Create policy manually<br/>4. Screenshot for docs<br/>5. Repeat for each environment<br/>6. Hope settings are consistent"]
+    subgraph "❌ Traditional Imperative Scripting"
+        SCRIPT_ADMIN["🔧 Imperative Script Administration<br/>• PowerShell/Bash scripts<br/>• Step-by-step API calls<br/>• Manual error handling<br/>• Hardcoded configurations<br/>• No state management"]
+        SCRIPT_PROBLEMS["❌ Problems<br/>• No idempotency<br/>• Complex error handling<br/>• No drift detection<br/>• Fragile dependencies<br/>• Manual rollback<br/>• Credential exposure"]
+        SCRIPT_EXAMPLE["📝 Example Workflow<br/>1. Write imperative script<br/>2. Manual authentication<br/>3. Step-by-step API calls<br/>4. Hope nothing fails<br/>5. Manual verification<br/>6. Different scripts for CRUD"]
     end
     
     subgraph "✅ Modern Configuration as Code"
-        CAC_ADMIN["👨‍💻 Code-Based Administration<br/>• Terraform configurations<br/>• API-driven management<br/>• Declarative policies<br/>• Version controlled<br/>• Automated deployment"]
-        CAC_BENEFITS["✅ Benefits<br/>• Consistent configurations<br/>• Version control & audit<br/>• Automated deployment<br/>• Easy replication<br/>• Drift detection<br/>• Scalable management"]
-        CAC_EXAMPLE["📝 Example Workflow<br/>1. Define policy in code<br/>2. Peer review changes<br/>3. terraform plan/apply<br/>4. Automated deployment<br/>5. Consistent across environments<br/>6. Full audit trail"]
+        CAC_ADMIN["📋 Declarative Configuration<br/>• Terraform configurations<br/>• Desired state definition<br/>• Automatic state management<br/>• Version controlled<br/>• Idempotent operations"]
+        CAC_BENEFITS["✅ Benefits<br/>• Idempotent execution<br/>• State drift detection<br/>• Plan before apply<br/>• Automated rollback<br/>• Dependency management<br/>• Secure credential handling"]
+        CAC_EXAMPLE["📝 Example Workflow<br/>1. Define desired state<br/>2. terraform plan (preview)<br/>3. Peer review changes<br/>4. terraform apply<br/>5. Automatic state tracking<br/>6. Drift detection built-in"]
     end
     
-    GUI_ADMIN --> GUI_PROBLEMS
-    GUI_PROBLEMS --> GUI_EXAMPLE
+    SCRIPT_ADMIN --> SCRIPT_PROBLEMS
+    SCRIPT_PROBLEMS --> SCRIPT_EXAMPLE
     
     CAC_ADMIN --> CAC_BENEFITS
     CAC_BENEFITS --> CAC_EXAMPLE
     
-    style GUI_ADMIN fill:#ffebee
-    style GUI_PROBLEMS fill:#ffcdd2
+    style SCRIPT_ADMIN fill:#ffebee
+    style SCRIPT_PROBLEMS fill:#ffcdd2
     style CAC_ADMIN fill:#e8f5e8
     style CAC_BENEFITS fill:#c8e6c9
 ```
 
-**❌ Traditional GUI-Based Configuration (What NOT to do):**
+**❌ Traditional Imperative Scripting (What we're moving away from):**
+```powershell
+# Traditional PowerShell script approach - IMPERATIVE AUTOMATION
+# Based on Microsoft.Graph.Authentication module
+
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory=$true)]
+    [string]$TenantId,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$ClientId,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$ClientSecret,
+    
+    [Parameter(Mandatory=$false)]
+    [string]$PolicyNameSuffix = "PowerShell-Creation-Test"
+)
+
+# Import required modules - dependency management nightmare
+Import-Module Microsoft.Graph.Authentication
+Import-Module Microsoft.Graph.Identity.SignIns
+
+# Manual authentication setup - credentials scattered
+$secureClientSecret = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
+$clientSecretCredential = New-Object System.Management.Automation.PSCredential($ClientId, $secureClientSecret)
+Connect-MgGraph -ClientSecretCredential $clientSecretCredential -TenantId $TenantId
+
+# Hardcoded policy payload - no reusability
+$testPolicyPayload = @'
+{
+    "displayName": "TEST-PowerShell-Creation-Test",
+    "state": "disabled",
+    "conditions": {
+        "applications": {
+            "includeApplications": ["All"]
+        },
+        "users": {
+            "includeUsers": ["All"],
+            "excludeGroups": ["11111111-1111-1111-1111-111111111111"]
+        },
+        "clientAppTypes": ["browser", "mobileAppsAndDesktopClients"],
+        "locations": {
+            "includeLocations": ["All"]
+        }
+    },
+    "grantControls": {
+        "operator": "OR",
+        "builtInControls": ["mfa"]
+    }
+}
+'@
+
+# Imperative step-by-step execution - error-prone
+try {
+    Write-Host "🔄 Creating conditional access policy..." -ForegroundColor Cyan
+    
+    # Manual JSON manipulation - fragile
+    $policyObject = $testPolicyPayload | ConvertFrom-Json
+    $policyObject.displayName = "TEST-$PolicyNameSuffix"
+    $finalPayload = $policyObject | ConvertTo-Json -Depth 10
+    
+    # Direct API call - no state management
+    $uri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies"
+    $response = Invoke-MgGraphRequest -Method POST -Uri $uri -Body $finalPayload -ContentType "application/json"
+    
+    Write-Host "✅ Policy creation request completed!" -ForegroundColor Green
+    
+    # Manual verification - no drift detection
+    Start-Sleep -Seconds 5
+    $checkUri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies"
+    $allPolicies = Invoke-MgGraphRequest -Method GET -Uri $checkUri
+    $foundPolicy = $allPolicies.value | Where-Object { $_.displayName -eq "TEST-$PolicyNameSuffix" }
+    
+    if ($foundPolicy) {
+        Write-Host "✅ Found created policy: $($foundPolicy.id)" -ForegroundColor Green
+        
+        # Manual cleanup decision - no lifecycle management
+        $deleteChoice = Read-Host "Delete test policy? (y/N)"
+        if ($deleteChoice -eq "y") {
+            $deleteUri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies/$($foundPolicy.id)"
+            Invoke-MgGraphRequest -Method DELETE -Uri $deleteUri
+            Write-Host "✅ Test policy deleted" -ForegroundColor Green
+        }
+    }
+}
+catch {
+    Write-Host "❌ Script failed: $_" -ForegroundColor Red
+    # No rollback mechanism - partial state left behind
+    exit 1
+}
+finally {
+    # Manual cleanup - connection management
+    Disconnect-MgGraph 2>$null
+}
+
+# Problems with this imperative PowerShell approach:
+# 1. No state management - can't detect drift or changes
+# 2. No idempotency - running twice creates duplicates or errors
+# 3. Hard-coded values scattered throughout script
+# 4. Manual error handling and rollback procedures
+# 5. Difficult to version control the actual configuration
+# 6. No dependency management between resources
+# 7. Scripts become complex and unmaintainable at scale
+# 8. No plan/preview capability - changes are immediate
+# 9. Credential management is manual and insecure
+# 10. Different scripts for create/update/delete operations
+
+Write-Host "Configuration applied - hope nothing broke and no duplicates created!"
+```
+
+**🔧 Traditional Jamf Pro Bash Scripting (What we're evolving from):**
 ```bash
-# Traditional manual SaaS configuration - AVOID THIS APPROACH!
+#!/bin/bash
+# Traditional Jamf Pro bash script approach - IMPERATIVE AUTOMATION
+# Based on Jamf Pro API recipes: https://developer.jamf.com/jamf-pro/recipes
 
-# Step 1: Login to Microsoft 365 Admin Center
-# - Navigate to https://admin.microsoft.com
-# - Enter credentials manually
-# - Navigate through multiple menu levels
+# Script parameters - scattered configuration
+JAMF_URL="${1}"
+API_USERNAME="${2}"
+API_PASSWORD="${3}"
+POLICY_NAME="${4:-Test-Bash-Policy}"
 
-# Step 2: Create security policies manually
-# - Security & Compliance → Policies → Create New
-# - Fill out forms with point-and-click
-# - Each admin configures slightly differently
+# Manual authentication - credential exposure
+echo "🔐 Authenticating with Jamf Pro API..."
+AUTH_TOKEN=$(curl -s -u "${API_USERNAME}:${API_PASSWORD}" \
+    "${JAMF_URL}/api/v1/auth/token" -X POST | \
+    plutil -extract token raw -)
 
-# Step 3: Document with screenshots
-# - Take screenshots of each setting
-# - Update Word document with current state
-# - Documentation becomes outdated immediately
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "❌ Authentication failed"
+    exit 1
+fi
 
-# Step 4: Repeat for each environment
-# - Manually replicate settings in dev/test/prod
-# - High chance of configuration drift
-# - No way to track who changed what when
+echo "✅ Authentication successful"
 
-# Problems with this approach:
-# 1. Configuration drift between environments
-# 2. No version control of changes
-# 3. Difficult to audit and compliance track
-# 4. Human error in manual replication
-# 5. Time-intensive for large-scale changes
-# 6. No automated rollback capabilities
+# Hardcoded XML payload - no reusability
+COMPUTER_GROUP_XML='<computer_group>
+    <name>Finance-Computers-Bash</name>
+    <is_smart>false</is_smart>
+    <site>
+        <id>-1</id>
+        <name>None</name>
+    </site>
+</computer_group>'
 
-echo "Configuration updated - hope it's consistent across environments!"
+POLICY_XML='<policy>
+    <general>
+        <name>'${POLICY_NAME}'</name>
+        <enabled>true</enabled>
+        <frequency>Once per computer</frequency>
+        <category>
+            <id>-1</id>
+        </category>
+    </general>
+    <scope>
+        <all_computers>false</all_computers>
+        <computers/>
+        <computer_groups>
+            <computer_group>
+                <id>REPLACE_GROUP_ID</id>
+            </computer_group>
+        </computer_groups>
+    </scope>
+    <package_configuration>
+        <packages>
+            <size>1</size>
+            <package>
+                <id>123</id>
+                <name>Security-Tool</name>
+                <action>Install</action>
+            </package>
+        </packages>
+    </package_configuration>
+</policy>'
+
+# Imperative step-by-step execution - fragile
+echo "🔄 Creating computer group..."
+GROUP_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Content-Type: application/xml" \
+    -X POST "${JAMF_URL}/JSSResource/computergroups/id/0" \
+    -d "${COMPUTER_GROUP_XML}")
+
+# Manual XML parsing - error-prone
+GROUP_ID=$(echo "${GROUP_RESPONSE}" | xpath '/computer_group/id/text()' 2>/dev/null)
+
+if [ -z "$GROUP_ID" ]; then
+    echo "❌ Failed to create computer group"
+    # Manual cleanup - no rollback mechanism
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+    exit 1
+fi
+
+echo "✅ Computer group created with ID: ${GROUP_ID}"
+
+# Manual string replacement - fragile
+UPDATED_POLICY_XML=$(echo "${POLICY_XML}" | sed "s/REPLACE_GROUP_ID/${GROUP_ID}/g")
+
+echo "🔄 Creating policy..."
+POLICY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Content-Type: application/xml" \
+    -X POST "${JAMF_URL}/JSSResource/policies/id/0" \
+    -d "${UPDATED_POLICY_XML}")
+
+# Manual verification - no state tracking
+POLICY_ID=$(echo "${POLICY_RESPONSE}" | xpath '/policy/id/text()' 2>/dev/null)
+
+if [ -z "$POLICY_ID" ]; then
+    echo "❌ Failed to create policy"
+    # Partial cleanup - manual and incomplete
+    echo "🗑️ Cleaning up computer group..."
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X DELETE "${JAMF_URL}/JSSResource/computergroups/id/${GROUP_ID}"
+    
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+    exit 1
+fi
+
+echo "✅ Policy created with ID: ${POLICY_ID}"
+
+# Manual status check - no drift detection
+echo "🔍 Verifying configuration..."
+VERIFY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X GET "${JAMF_URL}/JSSResource/policies/id/${POLICY_ID}")
+
+if echo "${VERIFY_RESPONSE}" | grep -q "${POLICY_NAME}"; then
+    echo "✅ Policy verification successful"
+else
+    echo "⚠️ Policy verification failed - manual check required"
+fi
+
+# Manual cleanup decision - no lifecycle management
+echo "❓ Delete test resources? (y/N): "
+read -r DELETE_CHOICE
+
+if [ "$DELETE_CHOICE" = "y" ] || [ "$DELETE_CHOICE" = "Y" ]; then
+    echo "🗑️ Deleting test policy..."
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X DELETE "${JAMF_URL}/JSSResource/policies/id/${POLICY_ID}"
+    
+    echo "🗑️ Deleting test computer group..."
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X DELETE "${JAMF_URL}/JSSResource/computergroups/id/${GROUP_ID}"
+    
+    echo "✅ Cleanup completed"
+else
+    echo "⚠️ Test resources left in place:"
+    echo "   Policy ID: ${POLICY_ID}"
+    echo "   Computer Group ID: ${GROUP_ID}"
+    echo "   Manual cleanup required"
+fi
+
+# Token cleanup
+curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+
+# Problems with this imperative bash approach:
+# 1. No state management - can't track or detect changes
+# 2. No idempotency - running twice creates duplicates
+# 3. Manual XML manipulation and string replacement
+# 4. Complex error handling and partial rollback scenarios
+# 5. Hard to version control the actual configuration
+# 6. No dependency management between API calls
+# 7. Credential management is manual and insecure
+# 8. No plan/preview - changes are immediate and irreversible
+# 9. Different scripts needed for CRUD operations
+# 10. Difficult to maintain and scale across environments
+
+echo "Configuration applied - hope the XML was valid and nothing broke!"
 ```
 
 #### 🏢 Microsoft 365 Configuration as Code
