@@ -45,6 +45,77 @@ terraform import [options] ADDRESS ID
 
 ### 💻 Import Process Workflow
 
+**Complete Terraform Import Process:**
+```mermaid
+flowchart TD
+    subgraph "🔍 Discovery Phase"
+        DISCOVER[Identify Existing Resources<br/>AWS CLI, Console, APIs]
+        DOCUMENT[Document Resource IDs<br/>Instance IDs, ARNs, Names]
+        RELATIONSHIPS[Map Resource Dependencies<br/>VPC → Subnet → Instance]
+    end
+    
+    subgraph "📝 Configuration Phase"
+        CREATE_EMPTY[Create Empty Resource Block<br/>resource "aws_instance" "web" {}]
+        TERRAFORM_INIT[Initialize Terraform<br/>terraform init]
+    end
+    
+    subgraph "📥 Import Phase"
+        IMPORT_CMD[Execute Import Command<br/>terraform import aws_instance.web i-12345]
+        IMPORT_SUCCESS{Import Successful?}
+        IMPORT_ERROR[Troubleshoot Import Error<br/>Check ID, permissions, syntax]
+    end
+    
+    subgraph "🔧 Configuration Matching"
+        SHOW_STATE[View Imported State<br/>terraform show aws_instance.web]
+        UPDATE_CONFIG[Update Configuration<br/>Match imported attributes]
+        PLAN_CHECK[Verify Configuration<br/>terraform plan]
+        CONFIG_MATCH{Plan Shows No Changes?}
+        FIX_CONFIG[Fix Configuration Mismatches<br/>Add missing attributes]
+    end
+    
+    subgraph "✅ Verification Phase"
+        FINAL_PLAN[Final Plan Check<br/>terraform plan]
+        APPLY_TEST[Test Apply (Optional)<br/>terraform apply]
+        IMPORT_COMPLETE[Import Complete<br/>Resource Under Management]
+    end
+    
+    %% Discovery flow
+    DISCOVER --> DOCUMENT
+    DOCUMENT --> RELATIONSHIPS
+    
+    %% Configuration flow
+    RELATIONSHIPS --> CREATE_EMPTY
+    CREATE_EMPTY --> TERRAFORM_INIT
+    
+    %% Import flow
+    TERRAFORM_INIT --> IMPORT_CMD
+    IMPORT_CMD --> IMPORT_SUCCESS
+    IMPORT_SUCCESS -->|Yes| SHOW_STATE
+    IMPORT_SUCCESS -->|No| IMPORT_ERROR
+    IMPORT_ERROR --> IMPORT_CMD
+    
+    %% Configuration matching
+    SHOW_STATE --> UPDATE_CONFIG
+    UPDATE_CONFIG --> PLAN_CHECK
+    PLAN_CHECK --> CONFIG_MATCH
+    CONFIG_MATCH -->|No| FIX_CONFIG
+    FIX_CONFIG --> PLAN_CHECK
+    CONFIG_MATCH -->|Yes| FINAL_PLAN
+    
+    %% Final verification
+    FINAL_PLAN --> APPLY_TEST
+    APPLY_TEST --> IMPORT_COMPLETE
+    
+    %% Parallel processes for dependencies
+    RELATIONSHIPS -.-> CREATE_EMPTY
+    IMPORT_COMPLETE -.-> DISCOVER
+    
+    style DISCOVER fill:#e3f2fd
+    style IMPORT_COMPLETE fill:#e8f5e8
+    style IMPORT_ERROR fill:#ffebee
+    style CONFIG_MATCH fill:#fff3e0
+```
+
 **Step 1: Create Resource Configuration**
 ```hcl
 # Create empty resource block first
@@ -82,6 +153,92 @@ terraform plan
 ---
 
 ## 🔄 Import Examples by Resource Type
+
+**AWS Infrastructure Import Architecture:**
+```mermaid
+graph TB
+    subgraph "🌐 Network Layer"
+        VPC[AWS VPC<br/>vpc-12345<br/>terraform import aws_vpc.main]
+        IGW[Internet Gateway<br/>igw-12345<br/>terraform import aws_internet_gateway.main]
+        RT[Route Table<br/>rtb-12345<br/>terraform import aws_route_table.public]
+    end
+    
+    subgraph "🔒 Security Layer"
+        SG[Security Group<br/>sg-12345<br/>terraform import aws_security_group.web]
+        NACL[Network ACL<br/>acl-12345<br/>terraform import aws_network_acl.main]
+    end
+    
+    subgraph "🏗️ Subnet Layer"
+        PUB_SUBNET[Public Subnet<br/>subnet-12345<br/>terraform import aws_subnet.public]
+        PRIV_SUBNET[Private Subnet<br/>subnet-67890<br/>terraform import aws_subnet.private]
+    end
+    
+    subgraph "🖥️ Compute Layer"
+        EC2[EC2 Instance<br/>i-12345<br/>terraform import aws_instance.web]
+        ELB[Load Balancer<br/>elb-12345<br/>terraform import aws_lb.main]
+        ASG[Auto Scaling Group<br/>asg-12345<br/>terraform import aws_autoscaling_group.web]
+    end
+    
+    subgraph "🗄️ Storage Layer"
+        S3[S3 Bucket<br/>my-bucket<br/>terraform import aws_s3_bucket.data]
+        EBS[EBS Volume<br/>vol-12345<br/>terraform import aws_ebs_volume.data]
+    end
+    
+    subgraph "🔑 IAM Layer"
+        IAM_ROLE[IAM Role<br/>MyRole<br/>terraform import aws_iam_role.main]
+        IAM_POLICY[IAM Policy<br/>arn:aws:iam::123:policy/MyPolicy<br/>terraform import aws_iam_policy.main]
+        INSTANCE_PROFILE[Instance Profile<br/>MyProfile<br/>terraform import aws_iam_instance_profile.main]
+    end
+    
+    %% Network dependencies
+    VPC --> PUB_SUBNET
+    VPC --> PRIV_SUBNET
+    VPC --> SG
+    VPC --> NACL
+    VPC --> IGW
+    IGW --> RT
+    
+    %% Security dependencies
+    SG --> EC2
+    NACL --> PUB_SUBNET
+    NACL --> PRIV_SUBNET
+    
+    %% Compute dependencies
+    PUB_SUBNET --> EC2
+    PUB_SUBNET --> ELB
+    PRIV_SUBNET --> ASG
+    ELB --> ASG
+    
+    %% Storage dependencies
+    EC2 --> EBS
+    
+    %% IAM dependencies
+    IAM_ROLE --> INSTANCE_PROFILE
+    IAM_POLICY --> IAM_ROLE
+    INSTANCE_PROFILE --> EC2
+    
+    %% Import order indicators
+    subgraph "📋 Import Order"
+        ORDER1[1. Network Layer<br/>VPC, IGW, Route Tables]
+        ORDER2[2. Security Layer<br/>Security Groups, NACLs]
+        ORDER3[3. Subnet Layer<br/>Public/Private Subnets]
+        ORDER4[4. IAM Layer<br/>Roles, Policies, Profiles]
+        ORDER5[5. Compute Layer<br/>Instances, Load Balancers]
+        ORDER6[6. Storage Layer<br/>S3, EBS Volumes]
+    end
+    
+    ORDER1 --> ORDER2
+    ORDER2 --> ORDER3
+    ORDER3 --> ORDER4
+    ORDER4 --> ORDER5
+    ORDER5 --> ORDER6
+    
+    style VPC fill:#e3f2fd
+    style EC2 fill:#fff3e0
+    style S3 fill:#e8f5e8
+    style IAM_ROLE fill:#f3e5f5
+    style ORDER1 fill:#ffebee
+```
 
 ### 🖥️ AWS EC2 Instance Import
 
@@ -375,6 +532,72 @@ The `terraform apply -refresh-only` command synchronizes your Terraform state wi
 
 ### 🎯 What is Refresh-Only Mode?
 
+**Terraform Refresh Operation Architecture:**
+```mermaid
+flowchart TD
+    subgraph "🔍 Current State"
+        TF_STATE[Terraform State File<br/>terraform.tfstate<br/>Last Known State]
+        CONFIG[Terraform Configuration<br/>*.tf files<br/>Desired State]
+    end
+    
+    subgraph "☁️ Real Infrastructure"
+        AWS_INFRA[Actual AWS Resources<br/>Current Reality<br/>May have changed externally]
+        EXTERNAL_CHANGES[External Modifications<br/>• Manual console changes<br/>• Other tools/scripts<br/>• Auto-scaling events]
+    end
+    
+    subgraph "🔄 Refresh Operations"
+        PLAN_REFRESH[terraform plan -refresh-only<br/>Preview state changes<br/>Show differences]
+        APPLY_REFRESH[terraform apply -refresh-only<br/>Update state file<br/>Sync with reality]
+        DETECT_DRIFT[Drift Detection<br/>Compare state vs reality<br/>Identify discrepancies]
+    end
+    
+    subgraph "📊 Refresh Scenarios"
+        DELETED[Resource Deleted Externally<br/>State: exists → null<br/>Action: Remove from state]
+        MODIFIED[Resource Modified Externally<br/>State: old values → new values<br/>Action: Update state attributes]
+        ADDED_TAGS[Tags Added Externally<br/>State: partial tags → full tags<br/>Action: Update tag state]
+    end
+    
+    subgraph "⚡ Post-Refresh Actions"
+        PLAN_AFTER[terraform plan<br/>Compare updated state<br/>vs configuration]
+        DECIDE{Decision Point}
+        UPDATE_CONFIG[Update Configuration<br/>Accept external changes<br/>Match new reality]
+        REVERT_CHANGES[Apply Configuration<br/>Revert external changes<br/>Restore desired state]
+    end
+    
+    %% Flow relationships
+    TF_STATE --> DETECT_DRIFT
+    AWS_INFRA --> DETECT_DRIFT
+    EXTERNAL_CHANGES --> AWS_INFRA
+    
+    %% Refresh operations
+    DETECT_DRIFT --> PLAN_REFRESH
+    PLAN_REFRESH --> APPLY_REFRESH
+    
+    %% Scenario handling
+    APPLY_REFRESH --> DELETED
+    APPLY_REFRESH --> MODIFIED
+    APPLY_REFRESH --> ADDED_TAGS
+    
+    %% Post-refresh workflow
+    DELETED --> PLAN_AFTER
+    MODIFIED --> PLAN_AFTER
+    ADDED_TAGS --> PLAN_AFTER
+    PLAN_AFTER --> DECIDE
+    
+    DECIDE -->|Accept Changes| UPDATE_CONFIG
+    DECIDE -->|Reject Changes| REVERT_CHANGES
+    
+    %% Continuous cycle
+    UPDATE_CONFIG -.-> CONFIG
+    REVERT_CHANGES -.-> AWS_INFRA
+    
+    style TF_STATE fill:#e3f2fd
+    style AWS_INFRA fill:#fff3e0
+    style EXTERNAL_CHANGES fill:#ffebee
+    style APPLY_REFRESH fill:#e8f5e8
+    style DECIDE fill:#f3e5f5
+```
+
 **Refresh-only mode** updates your state file to reflect the current reality of your infrastructure without applying any configuration changes.
 
 **🔍 Key Differences:**
@@ -470,6 +693,63 @@ terraform plan  # Should show no changes
 
 ## 🔄 Refresh vs Import Decision Matrix
 
+**Import vs Refresh Decision Tree:**
+```mermaid
+flowchart TD
+    START[Infrastructure Management Decision] --> QUESTION{What's the situation?}
+    
+    QUESTION -->|New Resource Created Outside| NEW_RESOURCE[Resource exists but not in Terraform state]
+    QUESTION -->|Managed Resource Changed| CHANGED_RESOURCE[Resource in state but modified externally]
+    QUESTION -->|Managed Resource Deleted| DELETED_RESOURCE[Resource was in state but deleted externally]
+    QUESTION -->|Adopting Existing Infrastructure| ADOPT_INFRA[Want to manage existing resources]
+    QUESTION -->|State File Issues| STATE_ISSUES[State file lost or corrupted]
+    QUESTION -->|Migration Scenario| MIGRATION[Moving from other IaC tools]
+    
+    %% New Resource Path
+    NEW_RESOURCE --> USE_IMPORT1[✅ Use terraform import<br/>Add resource to management]
+    USE_IMPORT1 --> IMPORT_STEPS1[1. Create resource block<br/>2. terraform import<br/>3. Update configuration]
+    
+    %% Changed Resource Path
+    CHANGED_RESOURCE --> USE_REFRESH1[✅ Use terraform apply -refresh-only<br/>Sync state with reality]
+    USE_REFRESH1 --> REFRESH_STEPS1[1. terraform plan -refresh-only<br/>2. terraform apply -refresh-only<br/>3. Decide: accept or revert]
+    
+    %% Deleted Resource Path
+    DELETED_RESOURCE --> USE_REFRESH2[✅ Use terraform apply -refresh-only<br/>Remove from state]
+    USE_REFRESH2 --> REFRESH_STEPS2[1. Refresh detects deletion<br/>2. State updated<br/>3. Plan shows recreation needed]
+    
+    %% Adoption Path
+    ADOPT_INFRA --> USE_IMPORT2[✅ Use terraform import<br/>Bring under management]
+    USE_IMPORT2 --> IMPORT_STEPS2[1. Inventory existing resources<br/>2. Import incrementally<br/>3. Verify configurations]
+    
+    %% State Issues Path
+    STATE_ISSUES --> USE_IMPORT3[✅ Use terraform import<br/>Rebuild state file]
+    USE_IMPORT3 --> IMPORT_STEPS3[1. Identify all resources<br/>2. Re-import everything<br/>3. Validate state accuracy]
+    
+    %% Migration Path
+    MIGRATION --> USE_IMPORT4[✅ Use terraform import<br/>Migrate to Terraform]
+    USE_IMPORT4 --> IMPORT_STEPS4[1. Export from old tool<br/>2. Create Terraform configs<br/>3. Import resources]
+    
+    %% Decision outcomes
+    subgraph "❌ When NOT to Use"
+        NO_IMPORT[Don't Use Import:<br/>• Resource already managed<br/>• Just need state sync<br/>• Resource was deleted]
+        NO_REFRESH[Don't Use Refresh:<br/>• Resource not in state<br/>• Want to adopt new resources<br/>• State file doesn't exist]
+    end
+    
+    CHANGED_RESOURCE -.-> NO_IMPORT
+    NEW_RESOURCE -.-> NO_REFRESH
+    
+    %% Styling
+    style USE_IMPORT1 fill:#e8f5e8
+    style USE_IMPORT2 fill:#e8f5e8
+    style USE_IMPORT3 fill:#e8f5e8
+    style USE_IMPORT4 fill:#e8f5e8
+    style USE_REFRESH1 fill:#e3f2fd
+    style USE_REFRESH2 fill:#e3f2fd
+    style NO_IMPORT fill:#ffebee
+    style NO_REFRESH fill:#ffebee
+    style START fill:#f3e5f5
+```
+
 | Scenario | Use Import | Use Refresh-Only |
 |----------|------------|------------------|
 | **New resource created outside Terraform** | ✅ Import the resource | ❌ Cannot refresh non-managed resources |
@@ -483,6 +763,110 @@ terraform plan  # Should show no changes
 
 ## 💻 **Exercise 15.1**: Import and Refresh Workflow
 **Duration**: 30 minutes
+
+**Complete Import and Refresh Lab Architecture:**
+```mermaid
+flowchart TD
+    subgraph "🏗️ Infrastructure Creation (Simulate External)"
+        CREATE_SCRIPT[Create External Infrastructure<br/>create-existing.sh<br/>AWS CLI commands]
+        VPC_CREATE[Create VPC<br/>10.0.0.0/16 CIDR]
+        IGW_CREATE[Create Internet Gateway<br/>Attach to VPC]
+        SUBNET_CREATE[Create Public Subnet<br/>10.0.1.0/24]
+        SG_CREATE[Create Security Group<br/>HTTP/HTTPS rules]
+        EC2_CREATE[Create EC2 Instance<br/>Ubuntu t2.micro]
+        S3_CREATE[Create S3 Bucket<br/>Random unique name]
+        SAVE_IDS[Save Resource IDs<br/>resource_ids.txt]
+    end
+    
+    subgraph "📝 Terraform Project Setup"
+        TF_INIT_PROJECT[Initialize Project<br/>main.tf with provider]
+        TF_INIT_CMD[terraform init<br/>Download AWS provider]
+    end
+    
+    subgraph "📥 Import Phase (Incremental)"
+        IMPORT_VPC[Import VPC<br/>terraform import aws_vpc.main]
+        IMPORT_IGW[Import Internet Gateway<br/>terraform import aws_internet_gateway.main]
+        IMPORT_SUBNET[Import Subnet<br/>terraform import aws_subnet.public]
+        IMPORT_SG[Import Security Group<br/>terraform import aws_security_group.web]
+        IMPORT_EC2[Import EC2 Instance<br/>terraform import aws_instance.web]
+        IMPORT_S3[Import S3 Bucket<br/>terraform import aws_s3_bucket.demo]
+    end
+    
+    subgraph "🔧 Configuration Matching"
+        SHOW_STATE[terraform show<br/>Inspect imported state]
+        CREATE_CONFIG[Create Configuration<br/>Match imported attributes]
+        VERIFY_PLAN[terraform plan<br/>Verify no changes needed]
+        FIX_MISMATCHES[Fix Configuration<br/>Address plan differences]
+    end
+    
+    subgraph "🔄 Refresh Operations Practice"
+        MANUAL_CHANGE[Make Manual Changes<br/>Add tags via AWS console]
+        PLAN_REFRESH[terraform plan -refresh-only<br/>Preview state changes]
+        APPLY_REFRESH[terraform apply -refresh-only<br/>Update state file]
+        UPDATE_CONFIG_MATCH[Update Configuration<br/>Match new state]
+    end
+    
+    subgraph "✅ Validation & Testing"
+        FINAL_PLAN[Final terraform plan<br/>Verify complete import]
+        TEST_MANAGEMENT[Test Terraform Management<br/>Make controlled changes]
+        CLEANUP[terraform destroy<br/>Clean up resources]
+    end
+    
+    %% Infrastructure creation flow
+    CREATE_SCRIPT --> VPC_CREATE
+    VPC_CREATE --> IGW_CREATE
+    IGW_CREATE --> SUBNET_CREATE
+    SUBNET_CREATE --> SG_CREATE
+    SG_CREATE --> EC2_CREATE
+    EC2_CREATE --> S3_CREATE
+    S3_CREATE --> SAVE_IDS
+    
+    %% Project setup
+    SAVE_IDS --> TF_INIT_PROJECT
+    TF_INIT_PROJECT --> TF_INIT_CMD
+    
+    %% Import sequence (order matters)
+    TF_INIT_CMD --> IMPORT_VPC
+    IMPORT_VPC --> IMPORT_IGW
+    IMPORT_IGW --> IMPORT_SUBNET
+    IMPORT_SUBNET --> IMPORT_SG
+    IMPORT_SG --> IMPORT_EC2
+    IMPORT_EC2 --> IMPORT_S3
+    
+    %% Configuration matching (after each import)
+    IMPORT_VPC -.-> SHOW_STATE
+    IMPORT_IGW -.-> SHOW_STATE
+    IMPORT_SUBNET -.-> SHOW_STATE
+    IMPORT_SG -.-> SHOW_STATE
+    IMPORT_EC2 -.-> SHOW_STATE
+    IMPORT_S3 -.-> SHOW_STATE
+    
+    SHOW_STATE --> CREATE_CONFIG
+    CREATE_CONFIG --> VERIFY_PLAN
+    VERIFY_PLAN --> FIX_MISMATCHES
+    FIX_MISMATCHES --> VERIFY_PLAN
+    
+    %% Refresh operations
+    IMPORT_S3 --> MANUAL_CHANGE
+    MANUAL_CHANGE --> PLAN_REFRESH
+    PLAN_REFRESH --> APPLY_REFRESH
+    APPLY_REFRESH --> UPDATE_CONFIG_MATCH
+    
+    %% Final validation
+    UPDATE_CONFIG_MATCH --> FINAL_PLAN
+    FINAL_PLAN --> TEST_MANAGEMENT
+    TEST_MANAGEMENT --> CLEANUP
+    
+    %% Parallel verification processes
+    VERIFY_PLAN -.-> FINAL_PLAN
+    
+    style CREATE_SCRIPT fill:#e3f2fd
+    style IMPORT_VPC fill:#e8f5e8
+    style SHOW_STATE fill:#fff3e0
+    style APPLY_REFRESH fill:#f3e5f5
+    style FINAL_PLAN fill:#e8f5e8
+    style CLEANUP fill:#ffebee
+```
 
 Let's practice importing existing resources and using refresh operations in realistic scenarios.
 
