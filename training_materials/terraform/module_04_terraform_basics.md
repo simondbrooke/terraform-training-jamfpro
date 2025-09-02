@@ -90,6 +90,8 @@ Plan: 1 to add, 1 to change, 0 to destroy.
 
 💡 **Pro Tip**: Always run `terraform plan` before `terraform apply` to avoid surprises!
 
+[hashi docs: terraform plan command](https://developer.hashicorp.com/terraform/cli/commands/plan)
+
 #### 📊 Visualizing Execution Plans
 
 **🗺️ Terraform Graph**
