@@ -1754,64 +1754,120 @@ resource "jamfpro_policy" "critical_security" {
 - [Jamf Pro API Documentation](https://developer.jamf.com/jamf-pro/reference/jamf-pro-api)
 - [Microsoft Graph API Documentation](https://learn.microsoft.com/en-us/graph/use-the-api)
 
-### 💻 **Exercise 2.1**: Imperative vs Declarative Comparison
-**Duration**: 30 minutes
+### 🧠 **Knowledge Check Questions**
 
-**Task**: Compare the imperative script approach with the Terraform declarative approach for Jamf Pro script management.
+Test your understanding of Configuration as Code concepts covered in this module:
 
-**Analysis Questions:**
+**Question 1: Why do traditional configuration management tools like Ansible struggle with SaaS API management?**
 
-1. **🔧 CRUD Operations Complexity:**
-   - Count the lines of code in the 4 imperative scripts vs the Terraform configuration
-   - How many API calls are required for each approach?
-   - What happens if you need to modify the script content?
+<details>
+<summary>🔍 Click to reveal answer</summary>
 
-2. **🔄 Idempotency:**
-   - What happens if you run the imperative CREATE script twice?
-   - What happens if you run `terraform apply` twice?
-   - How does each approach handle existing resources?
+Traditional tools like Ansible struggle with SaaS APIs because they were architecturally designed for a different problem space. They were built with file-based assumptions (managing files, packages, and services on servers) rather than API-driven resource management. Key issues include:
 
-3. **📊 State Management:**
-   - How do the imperative scripts track resource IDs and relationships?
-   - How does Terraform manage state and dependencies?
-   - Which approach is more reliable for managing complex configurations?
+- **No Native Idempotency**: Generic HTTP modules don't understand when a POST creates vs. updates a resource
+- **Manual State Checking**: Must implement custom logic to determine if resources exist before operations
+- **Resource Relationship Complexity**: Cannot automatically handle dependencies between SaaS resources
+- **API Schema Evolution**: No type safety or automatic handling when APIs change
+- **Verbose Configuration**: Simple operations require extensive YAML definitions (often 100+ lines for what should be simple resources)
 
-4. **🔍 Error Handling:**
-   - How do the imperative scripts handle API errors and failures?
-   - How does Terraform handle errors and partial failures?
-   - Which approach provides better recovery mechanisms?
+The fundamental mismatch is that these tools use imperative approaches (telling the system *how* to do something step-by-step) rather than declarative approaches (describing *what* the desired end state should be).
 
-**📝 Comparison Template:**
+</details>
 
-```markdown
-## Imperative vs Declarative Analysis
+**Question 2: What is the key difference between imperative and declarative configuration management approaches?**
 
-### Code Complexity
-- **Imperative Scripts**: ___ lines total
-- **Terraform Configuration**: ___ lines total  
-- **Maintenance Overhead**: ___
+<details>
+<summary>🔍 Click to reveal answer</summary>
 
-### Operational Differences
-| Aspect | Imperative Scripts | Terraform |
-|--------|-------------------|-----------|
-| **Idempotency** | | |
-| **State Management** | | |
-| **Error Handling** | | |
-| **Dependency Management** | | |
-| **Rollback Capability** | | |
+The fundamental difference lies in *how* vs *what*:
 
-### Key Advantages
-**Imperative:**
-- 
-- 
+**Imperative Approach** (How):
+- Explicit step-by-step instructions: "First authenticate, then check if resource exists, then create or update accordingly"
+- Must handle all CRUD operations manually with custom logic
+- Requires complex conditional logic for different scenarios
+- Example: The 400+ line Python script that manually handles authentication, state checking, error recovery, and API calls
 
-**Declarative (Terraform):**
-- 
-- 
+**Declarative Approach** (What):  
+- Describes the desired end state: "Ensure this script resource exists with these properties"
+- Provider handles all implementation details automatically
+- Same configuration works regardless of current state
+- Example: The 20-line Terraform configuration that achieves the same result
 
-### Recommendation
-___
-```
+This difference becomes critical at scale - imperative approaches require exponentially more code and maintenance as complexity grows, while declarative approaches maintain consistent simplicity.
+
+</details>
+
+**Question 3: How does Terraform's state management provide advantages over custom script approaches?**
+
+<details>
+<summary>🔍 Click to reveal answer</summary>
+
+Terraform's state management provides several critical advantages:
+
+**Automatic Resource Tracking**: Terraform automatically tracks all resource attributes, relationships, and metadata in its state file, eliminating the need for custom databases or file-based tracking systems that imperative scripts require.
+
+**Built-in Drift Detection**: Running `terraform plan` instantly compares the desired state (configuration) with actual state (current resources), showing exactly what has changed. Custom scripts would need hundreds of lines of code to implement similar functionality.
+
+**Dependency Resolution**: Terraform automatically calculates resource dependencies and handles creation/deletion order, while imperative scripts require manual orchestration of resource relationships.
+
+**Idempotency Guarantee**: The state allows Terraform to determine the precise operations needed (create/update/delete/no-op) for each resource, ensuring the same configuration always produces the same result regardless of how many times it's applied.
+
+**Recovery and Rollback**: State enables Terraform to understand partial failures and provide clear remediation paths, while imperative scripts often leave systems in inconsistent states when failures occur partway through operations.
+
+</details>
+
+**Question 4: What are the main problems with manual GUI administration that Configuration as Code solves?**
+
+<details>
+<summary>🔍 Click to reveal answer</summary>
+
+Manual GUI administration suffers from several fundamental limitations:
+
+**Time-consuming and Error-prone**: Requires navigating multiple web interface screens and manually entering values, leading to inevitable human errors through typos, missed checkboxes, or wrong selections that often aren't discovered until production issues occur.
+
+**Scalability Failure**: Every configuration change requires linear human effort that cannot be parallelized. Adding 100 users means 100 individual manual processes, creating overwhelming administrative overhead as organizations grow.
+
+**Impossible Repeatability**: Humans cannot perfectly replicate the same sequence of actions across environments or time periods, leading to configuration drift where supposedly identical environments slowly diverge.
+
+**Poor Auditability**: Limited logging of who changed what and when, with little context about why changes were made, making compliance difficult and troubleshooting time-consuming.
+
+**No Testing Capability**: No systematic way to validate changes before production, relying on manual spot-checking that cannot comprehensively test complex configuration interactions.
+
+Configuration as Code solves these by providing automation, repeatability, version control, comprehensive audit trails, and the ability to test configurations systematically before deployment.
+
+</details>
+
+**Question 5: Why is the evolution from custom scripts to Configuration as Code considered a paradigm shift rather than just an improvement?**
+
+<details>
+<summary>🔍 Click to reveal answer</summary>
+
+The shift represents a fundamental change in approach rather than incremental improvement:
+
+**Architectural Philosophy Change**: 
+- Custom scripts: Build your own configuration management system from HTTP requests up
+- Configuration as Code: Use purpose-built tools designed specifically for declarative resource management
+
+**Problem-solving Approach Change**:
+- Custom scripts: Solve the "how to make API calls" problem with imperative logic
+- Configuration as Code: Solve the "what should my infrastructure look like" problem with declarative definitions
+
+**Operational Model Change**:
+- Custom scripts: Developers write, test, and maintain complex automation code
+- Configuration as Code: Teams define desired state, providers handle all implementation complexity
+
+**State Management Philosophy Change**:
+- Custom scripts: Manual tracking of resources and relationships using custom logic
+- Configuration as Code: Automatic state management as a core platform capability
+
+**Error Handling Philosophy Change**:
+- Custom scripts: Build custom error handling, retry logic, and recovery mechanisms
+- Configuration as Code: Provider handles all error scenarios with built-in resilience
+
+This isn't just "better scripting" - it's a complete reconceptualization of how configuration management should work, similar to how containerization wasn't just "better VMs" but a fundamental change in how we think about application deployment.
+
+</details>
 
 ### 💻 **Exercise 2.2**: Configuration Drift Simulation
 **Duration**: 45 minutes
