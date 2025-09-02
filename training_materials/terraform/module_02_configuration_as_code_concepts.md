@@ -229,8 +229,6 @@ flowchart TB
     style START fill:#e3f2fd
     style GLOBAL fill:#ffcdd2
     style SCOPED fill:#c8e6c9
-    style PROD4G fill:#ffcdd2
-    style PROD4S fill:#c8e6c9
     style FAIL1 fill:#ffebee
     style FAIL2 fill:#ffebee
     style FAIL3 fill:#ffebee
