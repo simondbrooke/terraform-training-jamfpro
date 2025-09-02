@@ -34,57 +34,7 @@ HashiCorp is a company focused on **infrastructure automation** and **security**
 
 💡 **Pro Tip**: All HashiCorp tools follow similar principles - they're declarative, use HCL (HashiCorp Configuration Language), and integrate seamlessly!
 
-#### 📜 HashiCorp Terraform Certification Prerequisites
-
-**🎓 Recommended Background:**
-Before diving into Terraform certification, you should have foundational cloud knowledge in the tool you're trying to manage :
-
-- **☁️ Cloud Provider Experience**: AWS Solutions Architect Associate, Azure Administrator, or Google Cloud Associate
-- **💻 DevOps Fundamentals**: Understanding of automation, scripting, and infrastructure concepts
-- **🛠️ System Administration**: Experience with Linux/Windows server management
-
-**⏰ Study Time Recommendations:**
-
-| Experience Level | Study Time | Description |
-|------------------|------------|-------------|
-| **🟢 Beginner** | **30+ hours** | New to IaC, no prior automation experience, no cloud certifications |
-| **🟡 Intermediate** | **12 hours** | Experienced with IaC tools (CloudFormation, ARM, Bicep), holds cloud certifications |
-| **🔵 General Study Plan** | **14 days** | 1-2 hours daily for comprehensive preparation |
-
-**💡 Pro Tip**: Don't try to learn cloud fundamentals and Terraform simultaneously - master your cloud provider first!
-
-#### 🎯 Terraform Certification Exam Details
-
-**📋 Exam Overview:**
-- **⏱️ Duration**: 60 minutes (90 minutes seat time including setup)
-- **❓ Questions**: 57 questions total
-- **📊 Passing Score**: ~70% (scaled scoring)
-- **🎯 Target Score**: Aim for 80-85% on practice exams
-- **🏢 Format**: Proctored online or test center (PSI)
-
-**📝 Question Types:**
-- **Multiple Choice** - Select one correct answer
-- **Multiple Select** - Choose multiple correct answers  
-- **Fill-in-the-Blank** - Type command names, flags, or terraform syntax
-
-**⚠️ Important Notes:**
-- No penalty for wrong answers - always answer every question
-- Questions are short and practical (not theory-heavy)
-- Focus on hands-on experience over memorization
-
-#### 🎓 Certification Exam Domains
-
-The Terraform Associate Certification covers **9 domains** (exact weighting not provided by HashiCorp):
-
-1. **🏗️ Understand Infrastructure as Code (IaC) Concepts**
-2. **🎯 Understand the Purpose of Terraform (vs other IaC)**
-3. **⚡ Understand Terraform Basics**
-4. **🔄 Use the Core Terraform Workflow**
-5. **🔧 Interact with Terraform Modules**
-6. **📦 Use Terraform Outside of Core Workflow**
-7. **🏛️ Implement and Maintain State**
-8. **📝 Read, Generate, and Modify Configuration**
-9. **☁️ Understand Terraform Cloud Capabilities**
+---
 
 #### 🔷 What is Terraform?
 
@@ -146,7 +96,7 @@ resource "aws_security_group" "web" {
 
 **🆓 Terraform Open Source (OSS)**
 - Free to use
-- Run locally or in CI/CD
+- Run locally or in CI/CD with runners like GitHub Actions or GitLab CI
 - Manual state management
 - Individual or small team usage
 
@@ -220,8 +170,8 @@ Let's verify your Terraform installation and explore basic commands.
 terraform version
 
 # Expected output:
-# Terraform v1.6.0
-# on darwin_amd64 (or your platform)
+# Terraform v1.12.2
+# on darwin_arm6 (or your platform)
 ```
 
 **Step 2: Explore Help System**
@@ -256,7 +206,7 @@ terraform {
   required_providers {
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.0"
+      version = "~> 2.5.3"
     }
   }
 }
@@ -274,10 +224,37 @@ output "file_content" {
 ```
 
 **Step 5: Initialize and Apply**
+
+Within your vs code terminal, run the following commands:
+
 ```bash
 # Initialize Terraform (downloads providers)
 terraform init
+```
 
+```bash
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/local versions matching "~> 2.5.3"...
+- Installing hashicorp/local v2.5.3...
+- Installed hashicorp/local v2.5.3 (signed by HashiCorp)
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+<span style="color:green">**Terraform has been successfully initialized!**</span>
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+```
+
+```bash
 # Plan the changes
 terraform plan
 

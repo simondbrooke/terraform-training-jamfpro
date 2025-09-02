@@ -314,6 +314,52 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 
 ---
 
+#### 📜 HashiCorp Terraform Certification Prerequisites
+
+**🎓 Recommended Background:**
+Before diving into Terraform certification, you should have foundational cloud knowledge in the tool you're trying to manage :
+
+- **☁️ Cloud Provider Experience**: AWS Solutions Architect Associate, Azure Administrator, or Google Cloud Associate
+- **☁️ SaaS Provider Experience**: Microsoft 365 services [Certifications](https://learn.microsoft.com/en-us/credentials/browse/?credential_types=certification) , Jamf Pro [Certifications](https://www.jamf.com/training/)
+- **💻 DevOps Fundamentals**: Understanding of automation, scripting, and infrastructure concepts
+- **🛠️ System Administration**: Experience with Linux/Windows server management
+
+
+#### 🎯 Terraform Certification Exam Details
+
+**📋 Exam Overview:**
+- **⏱️ Duration**: 60 minutes (90 minutes seat time including setup)
+- **❓ Questions**: 57 questions total
+- **📊 Passing Score**: ~70% (scaled scoring)
+- **🎯 Target Score**: Aim for 80-85% on practice exams
+- **🏢 Format**: Proctored online or test center (PSI)
+
+**📝 Question Types:**
+- **Multiple Choice** - Select one correct answer
+- **Multiple Select** - Choose multiple correct answers  
+- **Fill-in-the-Blank** - Type command names, flags, or terraform syntax
+
+**⚠️ Important Notes:**
+- No penalty for wrong answers - always answer every question
+- Questions are short and practical (not theory-heavy)
+- Focus on hands-on experience over memorization
+
+#### 🎓 Certification Exam Domains
+
+The Terraform Associate Certification covers **9 domains** (exact weighting not provided by HashiCorp):
+
+1. **🏗️ Understand Infrastructure as Code (IaC) Concepts**
+2. **🎯 Understand the Purpose of Terraform (vs other IaC)**
+3. **⚡ Understand Terraform Basics**
+4. **🔄 Use the Core Terraform Workflow**
+5. **🔧 Interact with Terraform Modules**
+6. **📦 Use Terraform Outside of Core Workflow**
+7. **🏛️ Implement and Maintain State**
+8. **📝 Read, Generate, and Modify Configuration**
+9. **☁️ Understand Terraform Cloud Capabilities**
+
+---
+
 ## 🗓️ Module Structure & Learning Objectives
 
 ### 📋 Learning Approach
