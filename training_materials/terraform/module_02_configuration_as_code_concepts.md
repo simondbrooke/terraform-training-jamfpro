@@ -186,9 +186,7 @@ flowchart TB
     end
     
     subgraph FAIL ["💥 Common Failure Points"]
-        FAIL1[Wrong setting clicked]
-        FAIL2[Typo in configuration]
-        FAIL3[Missed a screen/option]
+        FAIL1[🖱️ Manual GUI Errors<br/>Wrong setting clicked<br/>Typo in configuration<br/>Missed a screen/option]
         FAIL4[Environment differences]
         FAIL5[Documentation out of date]
         FAIL6[Admin unavailable/leaves company]
@@ -221,11 +219,11 @@ flowchart TB
     PRODDOC --> DRIFT1
     
     DEV3 -.->|Human Error| FAIL1
-    DEV4 -.->|Human Error| FAIL2
+    DEV4 -.->|Human Error| FAIL1
     DEV5 -.->|Inadequate Testing| FAIL8
     DEV6 -.->|Documentation Gap| FAIL9
     DEV7 -.->|Review Failure| FAIL6
-    STAGE4 -.->|Human Error| FAIL3
+    STAGE4 -.->|Human Error| FAIL1
     STAGE5 -.->|Human Error| FAIL4
     STAGE6 -.->|Environment Differences| FAIL8
     STAGE7 -.->|Review Failure| FAIL6
@@ -238,8 +236,6 @@ flowchart TB
     PRODDOC -.->|Documentation Neglect| FAIL9
     
     FAIL1 -.->|Recovery| START
-    FAIL2 -.->|Recovery| START
-    FAIL3 -.->|Recovery| START
     FAIL4 -.->|Recovery| START
     FAIL5 -.->|Recovery| START
     FAIL6 -.->|Recovery| START
@@ -257,8 +253,6 @@ flowchart TB
     style PRODFIX fill:#ffab91
     style PRODDOC fill:#e1f5fe
     style FAIL1 fill:#ffebee
-    style FAIL2 fill:#ffebee
-    style FAIL3 fill:#ffebee
     style FAIL4 fill:#ffebee
     style FAIL5 fill:#ffebee
     style FAIL6 fill:#ffebee
