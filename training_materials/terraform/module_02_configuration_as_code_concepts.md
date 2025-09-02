@@ -1386,46 +1386,44 @@ Terraform was specifically designed to handle **API-driven resource management**
 
 ```mermaid
 graph TB
-    subgraph "🎯 Desired State (Terraform Configuration)"
-        CONFIG["Terraform Resources<br/>• jamfpro_script<br/>• jamfpro_policy<br/>• jamfpro_computer_group"]
-        VARIABLES["Variables & Dependencies<br/>• Resource references<br/>• Automatic dependency graph<br/>• Type validation"]
+    subgraph "🎯 Configuration Layer"
+        CONFIG["Terraform Configuration<br/>• Resources (jamfpro_script)<br/>• Variables & validation<br/>• Dependencies & references"]
     end
     
-    subgraph "🔌 Terraform Provider Layer"
-        PROVIDER["Jamf Pro Provider<br/>• API authentication<br/>• CRUD operations<br/>• Error handling<br/>• State mapping"]
-        ABSTRACTION["API Abstraction<br/>• HTTP calls<br/>• JSON/XML parsing<br/>• Response validation<br/>• Error translation"]
+    subgraph "⚙️ Terraform Core Engine"
+        CORE["Terraform Core<br/>• Configuration parsing<br/>• Dependency graph<br/>• Plan generation<br/>• Operation orchestration"]
     end
     
-    subgraph "🌐 SaaS Platform (Jamf Pro)"
-        API["Jamf Pro REST API<br/>• Authentication endpoints<br/>• Resource endpoints<br/>• CRUD operations<br/>• Response formats"]
-        PLATFORM["Jamf Pro Platform<br/>• Scripts<br/>• Policies<br/>• Computer Groups<br/>• Configuration Profiles"]
+    subgraph "🔌 Provider Layer"
+        PROVIDER["Jamf Pro Provider<br/>• API authentication<br/>• HTTP calls & JSON parsing<br/>• CRUD operations<br/>• Error handling & retries<br/>• State mapping"]
+    end
+    
+    subgraph "🌐 SaaS Platform"
+        API["Jamf Pro REST API<br/>• /api/oauth/token<br/>• /api/v1/scripts<br/>• Authentication & endpoints"]
+        PLATFORM["Jamf Pro Platform<br/>• Actual scripts<br/>• Policies & groups<br/>• Configuration profiles"]
     end
     
     subgraph "📊 State Management"
-        STATE["Terraform State<br/>• Resource attributes<br/>• Resource relationships<br/>• Provider metadata<br/>• Dependency tracking"]
-        DRIFT["Drift Detection<br/>• terraform plan<br/>• Compare state vs reality<br/>• Show differences<br/>• Plan remediation"]
+        STATE["Terraform State File<br/>• Resource attributes<br/>• Resource relationships<br/>• Provider metadata<br/>• Dependency tracking"]
     end
     
-    CONFIG --> VARIABLES
-    VARIABLES --> PROVIDER
-    PROVIDER --> ABSTRACTION
-    ABSTRACTION --> API
+    CONFIG --> CORE
+    CORE --> PROVIDER
+    PROVIDER --> API
     API --> PLATFORM
     
-    PROVIDER --> STATE
-    STATE --> DRIFT
-    DRIFT -.-> CONFIG
-    PLATFORM -.-> DRIFT
+    PROVIDER <--> STATE
+    CORE --> STATE
+    
+    CORE -.->|"terraform plan<br/>drift detection"| CONFIG
+    PLATFORM -.->|"current state<br/>comparison"| STATE
     
     style CONFIG fill:#e3f2fd
+    style CORE fill:#e8f5e8
     style PROVIDER fill:#fff3e0
-    style API fill:#e8f5e8
-    style STATE fill:#f3e5f5
+    style API fill:#f3e5f5
+    style STATE fill:#fce4ec
 ```
-
-
-
-
 
 #### ✅ The Declarative Approach: Terraform Configuration
 
