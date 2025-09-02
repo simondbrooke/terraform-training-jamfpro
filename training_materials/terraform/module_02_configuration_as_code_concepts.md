@@ -33,7 +33,7 @@ By the end of this module, you will be able to:
 | **Lifecycle** | Provision → Configure → Terminate | Configure → Deploy → Update → Delete |
 | **Drift** | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions, integrations) |
 
-**🎯 SaaS API and Configuration Management Timeline:**
+**🎯 SaaS API and Configuration Management EvolutionTimeline:**
 
 **🏢 The On-Premises Era Foundation:**
 
@@ -86,7 +86,7 @@ timeline
         
     section Configuration as Code Era (2020+)
         Declarative SaaS Management : Terraform providers for major SaaS platforms
-                                    : Microsoft Graph Terraform provider
+                                    : Microsoft 365 Terraform provider (2024)
                                     : Jamf Pro Terraform provider (2023)
                                     : Okta, Auth0, DataDog providers
                                     : Idempotent API resource management
@@ -125,7 +125,7 @@ Organizations recognizing GUI limitations often develop **custom automation scri
 **Characteristics:**
 - PowerShell, Python, Bash scripts making HTTP API calls
 - CI/CD pipelines (Jenkins, GitHub Actions, Azure DevOps) orchestrating script execution
-- Custom authentication and error handling in each script
+- Custom authentication and error handling in each script. This can vary between teams and individuals too. each script requires the logic to be present.
 - Manual state checking (GET requests to determine if resources exist)
 - Imperative operations (explicit CREATE, UPDATE, DELETE logic)
 
@@ -173,7 +173,7 @@ The challenge is **how** each approach handles this lifecycle - with varying deg
 
 **💥 Universal Pain Points (Shared by GUI, Scripts, and Traditional Config Mgmt):**
 
-All three traditional approaches share fundamental limitations that declarative Configuration as Code addresses comprehensively. Configuration drift represents one of the most persistent challenges, where manual changes inevitably cause environments to diverge from their intended state, creating inconsistencies that compound over time. These approaches also lack built-in drift detection capabilities, making it difficult to track and automatically identify when configurations have changed, often leaving organizations unaware of critical deviations until problems occur.
+All three traditional approaches share fundamental limitations that declarative Configuration as Code (CaC) seeks to address. Configuration drift represents one of the most persistent challenges, where manual changes inevitably cause environments to diverge from their intended state, creating inconsistencies that compound over time. These approaches also lack built-in drift detection capabilities, making it difficult to track and automatically identify when configurations have changed, often leaving organizations unaware of critical deviations until problems occur.
 
 Scaling presents another significant barrier, as these approaches simply don't scale efficiently when managing hundreds or thousands of resources across multiple environments and platforms. The manual effort required grows exponentially with complexity, creating operational bottlenecks that slow business delivery. When failures occur, there is typically no systematic way to rollback failed changes or recover from partial failures, forcing teams into time-consuming manual remediation processes.
 
@@ -347,19 +347,14 @@ As organizations recognized the limitations of manual GUI administration, they n
 Custom scripting seems like the obvious first step beyond GUI administration, but organizations quickly discover the complexity:
 
 **Core Issues:**
+
 - **Imperative Complexity**: Must explicitly handle CREATE, READ, UPDATE, DELETE logic for every resource type
+- **API SDKs**: Each SaaS platform has its own SDK (typically), which can vary significantly in complexity and feature completeness. there can also be challenges in functionality gaps between the SDK and the actual API.
 - **State Management Nightmare**: No built-in way to track what resources exist or their current configuration
 - **Authentication Overhead**: Every script must implement OAuth flows, token refresh, rate limiting
 - **Error Handling Burden**: Must build robust retry logic, partial failure recovery, and rollback mechanisms
-- **API Evolution Tax**: Each API change requires updating multiple scripts across the organization
+- **API Evolution Tax**: Each API change requires updating all existing api management scripts across the organization
 - **Testing Complexity**: Mocking API responses, handling edge cases, integration testing
-
-**Real-World Example**: A simple Jamf Pro script to manage one security policy requires:
-- ~200 lines of authentication code
-- ~150 lines of error handling and retry logic  
-- ~100 lines of JSON parsing and validation
-- ~50 lines of actual business logic
-- Result: **500 lines of code for what should be a 10-line configuration**
 
 ---
 
@@ -410,11 +405,11 @@ resource "jamfpro_script" "security_check" {
 Many organizations try to solve scripting limitations by adding CI/CD orchestration, but this **compounds rather than solves** the core problems:
 
 **Additional Complexity Layers:**
-- **Pipeline Configuration**: YAML/JSON pipeline definitions that must be maintained
-- **Secret Management**: Storing and rotating API credentials across pipeline systems  
-- **Environment Coordination**: Managing deployment order across dev/staging/prod
-- **Failure Recovery**: Building custom logic to handle partial pipeline failures
-- **State Synchronization**: No built-in way to ensure pipeline state matches actual state
+- **Pipeline Configuration**: Complex YAML/JSON pipeline definitions with custom logic for each SaaS platform
+- **Secret Management**: Securing and rotating API credentials across multiple pipeline environments and stages
+- **Environment Coordination**: Orchestrating deployment sequences and dependencies between dev/staging/prod environments
+- **Failure Recovery**: Building custom rollback mechanisms when scripts fail partway through multi-resource operations
+- **Resource State Tracking**: No built-in way to track what resources exist or detect when manual changes occur between pipeline runs
 
 **The Result**: Organizations end up with **thousands of lines** of pipeline configuration, custom scripts, and orchestration logic that must be maintained, tested, and debugged - essentially **building their own configuration management platform**.
 
