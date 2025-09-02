@@ -591,16 +591,16 @@ The `terraform taint` command was deprecated in Terraform v0.15.2. The modern ap
 **📝 Basic Usage:**
 ```bash
 # Plan resource replacement
-terraform plan -replace="aws_instance.web"
+terraform plan -replace="jamfpro_policy.developer_maintenance"
 
 # Apply resource replacement
-terraform apply -replace="aws_instance.web"
+terraform apply -replace="jamfpro_policy.developer_maintenance"
 
 # Replace multiple resources (one at a time)
-terraform apply -replace="aws_instance.web[0]" -replace="aws_instance.web[1]"
+terraform apply -replace="jamfpro_policy.developer_maintenance" -replace="jamfpro_policy.security_baseline"
 ```
 
-**🔍 Replacement vs Update (Jamf Pro):**
+**🔍 Replacement vs Update:**
 ```hcl
 # This resource configuration
 resource "jamfpro_policy" "software_update" {
@@ -617,14 +617,16 @@ resource "jamfpro_policy" "software_update" {
 **Example Scenarios (Jamf Pro):**
 ```bash
 # Scenario 1: Force recreation of corrupted policy
-terraform apply -replace="jamfpro_policy.software_update"
+terraform apply -replace="jamfpro_policy.developer_maintenance"
 
-# Scenario 2: Replace specific policy in a count/for_each
-terraform apply -replace="jamfpro_policy.department_policies[0]"
-terraform apply -replace='jamfpro_policy.site_policies["main_office"]'
+# Scenario 2: Replace configuration profile with updated certificate
+terraform apply -replace="jamfpro_macos_configuration_profile_plist.root_ca_cert"
 
-# Scenario 3: Combine with other changes
-terraform apply -replace="jamfpro_policy.software_update" -var="update_frequency=weekly"
+# Scenario 3: Replace computer group and dependent resources
+terraform apply -replace="jamfpro_smart_computer_group.developer_machines"
+
+# Scenario 4: Combine with variable changes
+terraform apply -replace="jamfpro_policy.self_service_apps" -var="version_number=v2.0"
 ```
 
 **🚨 Important Limitations:**
@@ -637,10 +639,10 @@ terraform apply -replace="jamfpro_policy.software_update" -var="update_frequency
 **💡 Modern Best Practices (Jamf Pro):**
 ```bash
 # ✅ Modern approach
-terraform plan -replace="jamfpro_policy.software_update"
+terraform plan -replace="jamfpro_policy.developer_maintenance"
 
 # ❌ Deprecated approach (don't use)
-terraform taint jamfpro_policy.software_update
+terraform taint jamfpro_policy.developer_maintenance
 terraform plan
 ```
 
@@ -649,13 +651,13 @@ terraform plan
 ### 💻 **Exercise 3.2**: Core Terraform Workflow
 **Duration**: 30 minutes
 
-Let's practice the complete Terraform workflow with a real cloud resource.
+Let's practice the complete Terraform workflow with Jamf Pro resources to understand the full lifecycle.
 
 **Step 1: Setup Project Structure**
 ```bash
 # Create new project directory
-mkdir ~/terraform-aws-basics
-cd ~/terraform-aws-basics
+mkdir ~/terraform-jamfpro-basics
+cd ~/terraform-jamfpro-basics
 
 # Open in VS Code
 code .
@@ -665,75 +667,106 @@ code .
 
 Create `main.tf`:
 ```hcl
-# Configure the AWS Provider
+# Configure the Jamf Pro Provider
 terraform {
   required_version = ">= 1.0"
   
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
   }
 }
 
-provider "aws" {
-  region = var.aws_region
+provider "jamfpro" {
+  jamfpro_instance_fqdn                = "https://lbgsandbox.jamfcloud.com"
+  auth_method                          = "oauth2"
+  client_id                            = "f17936ee-c517-468c-8359-05498fc49b28"
+  client_secret                        = "bwSxPO6byQYq2M5cJDPralSwM962wn_NdCKZOa9QUkPtrgK4YuSNeG2AYmeK2xu8"
+  jamfpro_load_balancer_lock           = true
 }
 
-# Create a VPC
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+# Create a Category for organization
+resource "jamfpro_category" "infrastructure" {
+  name     = "${var.environment} Infrastructure - ${var.version}"
+  priority = 10
+}
+
+# Create a Smart Computer Group for targeting
+resource "jamfpro_smart_computer_group" "test_machines" {
+  name = "${var.environment} Test Machines - ${var.version}"
   
-  tags = {
-    Name        = "terraform-basics-vpc"
-    Environment = "learning"
+  criteria {
+    name          = "Computer Name"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "like"
+    value         = "test"
+    opening_paren = false
+    closing_paren = false
   }
 }
 
-# Create an Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+# Create a Basic Policy
+resource "jamfpro_policy" "inventory_update" {
+  name                        = "${var.environment} Inventory Update - ${var.version}"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = false
+  frequency                  = "Once per day"
+  target_drive               = "/"
+  category_id                = jamfpro_category.infrastructure.id
   
-  tags = {
-    Name = "terraform-basics-igw"
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.test_machines.id]
+  }
+  
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
   }
 }
 
-# Create a subnet
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "terraform-basics-public-subnet"
-  }
-}
-
-# Data source to get available AZs
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+# Data source to get existing packages (demonstrates external data)
+data "jamfpro_packages" "available" {}
 ```
 
 **Step 3: Create Variables File**
 
 Create `variables.tf`:
 ```hcl
-variable "aws_region" {
-  description = "AWS region for resources"
+variable "environment" {
+  description = "Environment name for resource naming"
   type        = string
-  default     = "us-west-2"
+  default     = "Learning"
+  
+  validation {
+    condition     = length(var.environment) > 0
+    error_message = "Environment name cannot be empty."
+  }
 }
 
-variable "environment" {
-  description = "Environment name"
+variable "version" {
+  description = "Version number for resource naming"
   type        = string
-  default     = "learning"
+  default     = "v1.0"
+  
+  validation {
+    condition     = can(regex("^v\\d+\\.\\d+$", var.version))
+    error_message = "Version must be in format 'vX.Y' (e.g., 'v1.0')."
+  }
 }
 ```
 
@@ -741,24 +774,39 @@ variable "environment" {
 
 Create `outputs.tf`:
 ```hcl
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = aws_vpc.main.id
+output "category_id" {
+  description = "ID of the created category"
+  value       = jamfpro_category.infrastructure.id
 }
 
-output "vpc_cidr_block" {
-  description = "CIDR block of the VPC"
-  value       = aws_vpc.main.cidr_block
+output "category_name" {
+  description = "Name of the created category"
+  value       = jamfpro_category.infrastructure.name
 }
 
-output "subnet_id" {
-  description = "ID of the public subnet"
-  value       = aws_subnet.public.id
+output "computer_group_id" {
+  description = "ID of the created computer group"
+  value       = jamfpro_smart_computer_group.test_machines.id
 }
 
-output "availability_zone" {
-  description = "Availability zone of the subnet"
-  value       = aws_subnet.public.availability_zone
+output "computer_group_name" {
+  description = "Name of the created computer group"
+  value       = jamfpro_smart_computer_group.test_machines.name
+}
+
+output "policy_id" {
+  description = "ID of the created policy"
+  value       = jamfpro_policy.inventory_update.id
+}
+
+output "policy_name" {
+  description = "Name of the created policy"
+  value       = jamfpro_policy.inventory_update.name
+}
+
+output "available_packages_count" {
+  description = "Number of available packages in Jamf Pro"
+  value       = length(data.jamfpro_packages.available.packages)
 }
 ```
 
@@ -772,6 +820,17 @@ ls -la
 # You should see .terraform/ directory and .terraform.lock.hcl file
 ```
 
+**Expected Output:**
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
 **Step 6: Validate Configuration**
 ```bash
 # Check syntax and configuration
@@ -779,6 +838,11 @@ terraform validate
 
 # Format code (optional but recommended)
 terraform fmt
+```
+
+**Expected Output:**
+```
+Success! The configuration is valid.
 ```
 
 **Step 7: Plan the Infrastructure**
@@ -793,6 +857,20 @@ terraform plan -out=tfplan
 terraform show tfplan
 ```
 
+**Expected Output Summary:**
+```
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + available_packages_count = (known after apply)
+  + category_id             = (known after apply)
+  + category_name           = "Learning Infrastructure - v1.0"
+  + computer_group_id       = (known after apply)
+  + computer_group_name     = "Learning Test Machines - v1.0"
+  + policy_id               = (known after apply)
+  + policy_name             = "Learning Inventory Update - v1.0"
+```
+
 **Step 8: Apply the Configuration**
 ```bash
 # Apply the changes (will prompt for confirmation)
@@ -800,6 +878,27 @@ terraform apply
 
 # Or apply with auto-approval (be careful!)
 terraform apply -auto-approve
+```
+
+**Expected Output Summary:**
+```
+jamfpro_category.infrastructure: Creating...
+jamfpro_smart_computer_group.test_machines: Creating...
+jamfpro_category.infrastructure: Creation complete after 2s [id=123]
+jamfpro_smart_computer_group.test_machines: Creation complete after 3s [id=456]
+jamfpro_policy.inventory_update: Creating...
+jamfpro_policy.inventory_update: Creation complete after 4s [id=789]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+available_packages_count = 42
+category_id = "123"
+category_name = "Learning Infrastructure - v1.0"
+computer_group_id = "456"
+computer_group_name = "Learning Test Machines - v1.0"
+policy_id = "789"
+policy_name = "Learning Inventory Update - v1.0"
 ```
 
 **Step 9: Explore the State**
@@ -811,10 +910,33 @@ terraform show
 terraform state list
 
 # Show specific resource details
-terraform state show aws_vpc.main
+terraform state show jamfpro_policy.inventory_update
 ```
 
-**Step 10: Clean Up**
+**Expected `terraform state list` Output:**
+```
+data.jamfpro_packages.available
+jamfpro_category.infrastructure
+jamfpro_policy.inventory_update
+jamfpro_smart_computer_group.test_machines
+```
+
+**Step 10: Test Variable Changes**
+```bash
+# Test with different variables
+terraform plan -var="version=v2.0" -var="environment=Production"
+
+# Apply the changes to see resource updates
+terraform apply -var="version=v2.0" -var="environment=Production"
+```
+
+**Expected Output:**
+```
+Plan: 0 to add, 3 to change, 0 to destroy.
+# Resources will be updated in-place to reflect new names
+```
+
+**Step 11: Clean Up**
 ```bash
 # Destroy all resources
 terraform destroy
@@ -823,36 +945,19 @@ terraform destroy
 terraform show
 ```
 
-💡 **Pro Tip**: Notice how Terraform tracks dependencies and creates resources in the correct order!
-
-#### 🎯 Use Cases for Terraform with Jamf Pro
-
-**🏢 Enterprise Use Cases:**
-- **🍎 Multi-environment MDM**: Consistent device management across dev, staging, production
-- **🔄 Policy standardization**: Automated policy deployment across multiple Jamf Pro instances
-- **📱 Device configuration**: Complete device enrollment and configuration workflows
-- **🛡️ Compliance automation**: Standardized, auditable security policies
-- **💾 Disaster recovery**: Rapid Jamf Pro configuration restoration
-
-**🔧 Common Jamf Pro Patterns:**
-```hcl
-# 1. Organizational Foundation
-resource "jamfpro_category" "security" { /* ... */ }
-resource "jamfpro_site" "main_office" { /* ... */ }
-resource "jamfpro_department" "engineering" { /* ... */ }
-
-# 2. Device Grouping
-resource "jamfpro_computer_group" "laptops" { /* ... */ }
-resource "jamfpro_mobile_device_group" "ipads" { /* ... */ }
-
-# 3. Policy Management
-resource "jamfpro_policy" "security_baseline" { /* ... */ }
-resource "jamfpro_configuration_profile" "wifi_settings" { /* ... */ }
-
-# 4. Application Management
-resource "jamfpro_package" "corporate_app" { /* ... */ }
-resource "jamfpro_mobile_device_application" "required_apps" { /* ... */ }
+**Expected Output:**
 ```
+jamfpro_policy.inventory_update: Destroying... [id=789]
+jamfpro_policy.inventory_update: Destruction complete after 2s
+jamfpro_smart_computer_group.test_machines: Destroying... [id=456]
+jamfpro_category.infrastructure: Destroying... [id=123]
+jamfpro_smart_computer_group.test_machines: Destruction complete after 3s
+jamfpro_category.infrastructure: Destruction complete after 1s
+
+Destroy complete! Resources: 3 destroyed.
+```
+
+💡 **Pro Tip**: Notice how Terraform tracks dependencies and creates resources in the correct order!
 
 ---
 
