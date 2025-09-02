@@ -1,6 +1,6 @@
 
 
-# 🔧 Module 28: Terraform Troubleshooting and Debugging
+# 🔧 Module 17: Terraform Troubleshooting and Debugging
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  

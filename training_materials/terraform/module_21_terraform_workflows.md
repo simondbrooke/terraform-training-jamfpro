@@ -1,5 +1,5 @@
 
-## ⚡ Module 28: Terraform Workflows
+## ⚡ Module 21: Terraform Workflows
 *Duration: 2 hours | Labs: 4*
 
 ### 🎯 Learning Objectives

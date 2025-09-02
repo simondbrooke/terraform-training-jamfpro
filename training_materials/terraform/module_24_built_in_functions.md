@@ -1,4 +1,4 @@
-## 🔷 Module 28: Built in Functions
+## 🔷 Module 24: Built in Functions
 *Duration: 2 hours | Labs: 4*
 
 ### 🎯 Learning Objectives

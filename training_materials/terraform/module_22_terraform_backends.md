@@ -1,4 +1,4 @@
-## ⚡ Module 28: Terraform Backends
+## ⚡ Module 22: Terraform Backends
 *Duration: 3 hours | Labs: 6*
 
 ### 🎯 Learning Objectives

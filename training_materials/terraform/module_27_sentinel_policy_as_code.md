@@ -1,4 +1,4 @@
-## 🔷 Module 28: Sentinel and Policy as Code
+## 🔷 Module 27: Sentinel and Policy as Code
 *Duration: 3 hours | Labs: 4*
 
 ### 🎯 Learning Objectives

@@ -1,5 +1,5 @@
 
-## ⚡ Module 4: Terraform Basics
+## ⚡ Module 04: Terraform Basics
 *Duration: 3 hours | Labs: 4* | Difficulty: 🟡 Intermediate*
 
 ### 🎯 Learning Objectives

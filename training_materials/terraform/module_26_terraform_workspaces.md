@@ -1,4 +1,4 @@
-## 🔷 Module 28: Terraform Workspaces
+## 🔷 Module 26: Terraform Workspaces
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives

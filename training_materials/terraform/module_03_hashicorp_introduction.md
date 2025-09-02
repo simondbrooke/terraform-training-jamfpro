@@ -1,5 +1,5 @@
 
-## 🔷 Module 3: HashiCorp Introduction
+# 🔷 Module 03: HashiCorp Introduction
 *Duration: 1 hour | Labs: 1* | Difficulty: 🟢 Beginner*
 
 ### 🎯 Learning Objectives
@@ -37,7 +37,7 @@ HashiCorp is a company focused on **infrastructure automation** and **security**
 #### 📜 HashiCorp Terraform Certification Prerequisites
 
 **🎓 Recommended Background:**
-Before diving into Terraform certification, you should have foundational cloud knowledge:
+Before diving into Terraform certification, you should have foundational cloud knowledge in the tool you're trying to manage :
 
 - **☁️ Cloud Provider Experience**: AWS Solutions Architect Associate, Azure Administrator, or Google Cloud Associate
 - **💻 DevOps Fundamentals**: Understanding of automation, scripting, and infrastructure concepts

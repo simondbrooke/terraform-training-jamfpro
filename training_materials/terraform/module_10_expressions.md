@@ -1,6 +1,6 @@
 
 
-# 🧮 Module 28: Expressions
+# 🧮 Module 10: Expressions
 
 **⏱️ Duration**: 70 minutes  
 **🎯 Difficulty**: Advanced  

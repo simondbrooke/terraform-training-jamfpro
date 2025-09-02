@@ -1,6 +1,6 @@
 
 
-# 📦 Module 28: Finding and Using Terraform Modules
+# 📦 Module 18: Finding and Using Terraform Modules
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate  

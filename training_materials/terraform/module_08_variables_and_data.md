@@ -1,7 +1,7 @@
 
 ---
 
-## 📊 Module 8: Variables and Data
+## 📊 Module 08: Variables and Data
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives

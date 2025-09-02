@@ -184,7 +184,8 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 
 | Module | Topic | Duration | Difficulty | Hands-On Labs |
 |--------|-------|----------|------------|---------------|
-| 1 | 🏗️ Infrastructure as Code Concepts | 2 hours | 🟢 Beginner | 2 labs |
+| 1 | 🏗️ Infrastructure as Code Concepts | 1.5 hours | 🟢 Beginner | 0 labs |
+| 2 | 🔧 Configuration as Code Concepts | 1.5 hours | 🟢 Beginner | 0 lab |
 | 2 | 🔷 HashiCorp Introduction | 1 hour | 🟢 Beginner | 1 lab |
 | 3 | ⚡ Terraform Basics | 3 hours | 🟢 Beginner | 4 labs |
 | 4 | 🛠️ Terraform Provisioners & Modern Infrastructure Configuration | 3 hours | 🟡 Intermediate | 5 labs |

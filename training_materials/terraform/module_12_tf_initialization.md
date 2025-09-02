@@ -1,6 +1,6 @@
 
 
-# 🚀 Module 28: Initialization
+# 🚀 Module 12: Initialization
 
 **⏱️ Duration**: 30 minutes  
 **🎯 Difficulty**: Beginner to Intermediate  

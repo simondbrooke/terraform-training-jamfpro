@@ -1,4 +1,4 @@
-## 🔷 Module 28: Terraform Cloud
+## 🔷 Module 25: Terraform Cloud
 *Duration: 3 hours | Labs: 4*
 
 ### 🎯 Learning Objectives

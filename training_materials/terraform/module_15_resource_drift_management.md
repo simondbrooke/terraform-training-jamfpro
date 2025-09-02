@@ -1,6 +1,6 @@
 
 
-# 🔄 Module 28: Resource Drift Management
+# 🔄 Module 15: Resource Drift Management
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  

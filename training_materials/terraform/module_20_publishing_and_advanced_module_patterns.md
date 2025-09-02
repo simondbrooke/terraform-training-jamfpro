@@ -1,4 +1,4 @@
-# 🚀 Module 28: Publishing and Advanced Module Patterns
+# 🚀 Module 20: Publishing and Advanced Module Patterns
 
 **⏱️ Duration**: 45 minutes  
 **🎯 Difficulty**: Advanced  

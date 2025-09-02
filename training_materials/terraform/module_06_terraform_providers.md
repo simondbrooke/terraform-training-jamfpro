@@ -1,7 +1,7 @@
 
 ---
 
-## 🔌 Module 6: Terraform Providers
+## 🔌 Module 06: Terraform Providers
 *Duration: 2.5 hours | Labs: 4 | Difficulty: 🟡 Intermediate*
 
 ### 🎯 Learning Objectives

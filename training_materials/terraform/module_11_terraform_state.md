@@ -1,6 +1,6 @@
 
 
-# 📁 Module 28: Terraform State
+# 📁 Module 11: Terraform State
 
 **⏱️ Duration**: 45 minutes  
 **🎯 Difficulty**: Intermediate  

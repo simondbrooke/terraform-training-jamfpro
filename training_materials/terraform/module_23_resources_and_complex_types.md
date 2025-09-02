@@ -1,4 +1,4 @@
-## ⚡ Module 28: Resources and Complex Types
+## ⚡ Module 23: Resources and Complex Types
 *Duration: 2.5 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
