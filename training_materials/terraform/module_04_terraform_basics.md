@@ -60,35 +60,37 @@ Execution plans are Terraform's way of showing you exactly what will happen befo
 - **`~`** = Resource will be **modified**
 - **`-/+`** = Resource will be **replaced** (destroyed then created)
 
-**Example Plan Output:**
+**Example Plan Output (Jamf Pro):**
 
 ```bash
 Terraform will perform the following actions:
 
-  # aws_instance.web will be created
-  + resource "aws_instance" "web" {
-      + ami           = "ami-12345"
-      + instance_type = "t2.micro"
-      + tags          = {
-          + "Name" = "WebServer"
+  # jamfpro_policy.software_update will be created
+  + resource "jamfpro_policy" "software_update" {
+      + name                = "Auto Software Updates"
+      + enabled            = true
+      + frequency          = "Once per day"
+      + target_drive       = "/"
+      + category          = {
+          + name = "Software Updates"
         }
     }
 
-  # aws_security_group.web will be modified
-  ~ resource "aws_security_group" "web" {
-        id     = "sg-12345"
-        name   = "web-sg"
-      ~ ingress {
-          + from_port = 443
-          + to_port   = 443
-            protocol  = "tcp"
+  # jamfpro_computer_group.marketing will be modified
+  ~ resource "jamfpro_computer_group" "marketing" {
+        id       = "123"
+        name     = "Marketing Computers"
+      ~ criteria {
+          + criterion = "Department"
+          + operator  = "is"
+          + value     = "Marketing"
         }
     }
 
 Plan: 1 to add, 1 to change, 0 to destroy.
 ```
 
-💡 **Pro Tip**: `terraform plan` is sometimes referred to as a speculative plan. It is used to preview the changes that will be applied to the infrastructure. You can use the optional `-out=FILE` option to save the generated plan to a file on disk, which you can later execute by passing the file to terraform apply as an extra argument. This two-step workflow is primarily intended for when running Terraform in automation.
+💡 **Pro Tip**: `terraform plan` is sometimes referred to as a speculative plan. It is used to preview the changes that will be applied to the infrastructure. You can use the optional `-out=FILE` option to save the generated plan to a file on disk, which you can later execute by passing the file to terraform apply as an extra argument. This two-step workflow is primarily intended for when running Terraform in automation e.g with CI/CD pipelines.
 
 [hashi docs: terraform plan command](https://developer.hashicorp.com/terraform/cli/commands/plan)
 
@@ -132,28 +134,448 @@ sudo yum install graphviz
 - **Execution order**: The sequence Terraform will follow
 - **Data source relationships**: How data flows between resources
 
-**📈 Dependency Graph Example:**
+**📈 Dependency Graph Example (Jamf Pro):**
 ```hcl
 # This configuration creates dependencies
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+resource "jamfpro_category" "software" {
+  name = "Software Management"
 }
 
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.main.id  # Depends on VPC
-  cidr_block = "10.0.1.0/24"
+resource "jamfpro_computer_group" "dev_machines" {
+  name = "Developer Machines"
+  # Group criteria configuration
 }
 
-resource "aws_instance" "web" {
-  subnet_id = aws_subnet.public.id  # Depends on subnet
-  ami       = "ami-12345"
-  instance_type = "t2.micro"
+resource "jamfpro_policy" "install_xcode" {
+  name     = "Install Xcode"
+  category = jamfpro_category.software.name  # Depends on category
+  scope {
+    computer_groups = [jamfpro_computer_group.dev_machines.id]  # Depends on group
+  }
 }
 ```
 
-The graph shows: **VPC → Subnet → Instance** dependency chain.
+The graph shows: **Category → Computer Group → Policy** dependency chain.
 
 💡 **Pro Tip**: Use `terraform graph` to understand complex resource relationships and optimize your configuration for parallel execution!
+
+[hashi docs: terraform graph command](https://developer.hashicorp.com/terraform/cli/commands/graph)
+
+### 💻 **Exercise 3.1**: Visualizing Dependencies with Terraform Graph
+**Duration**: 20 minutes
+
+Let's explore Terraform's dependency graph using Jamf Pro resources to understand how Terraform determines execution order.
+
+**Step 1: Setup Project Structure**
+```bash
+# Create new project directory
+mkdir ~/terraform-graph-example
+cd ~/terraform-graph-example
+
+# Open in VS Code
+code .
+```
+
+**Step 2: Create Variables File**
+
+Create `variables.tf`:
+```hcl
+variable "version_number" {
+  description = "The version number to include in the name and install button text."
+  type        = string
+  default     = "v1.0"
+}
+```
+
+**Step 3: Create Jamf Pro Configuration with Dependencies**
+
+Create `main.tf`:
+```hcl
+terraform {
+  required_version = ">= 1.0"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+  }
+}
+
+variable "version_number" {
+  description = "The version number to include in the name and install button text."
+  type        = string
+  default     = "v1.0"
+}
+
+provider "jamfpro" {
+  jamfpro_instance_fqdn                = "https://your-instance.jamfcloud.com"
+  auth_method                          = "oauth2"
+  client_id                            = "your-client-id"
+  client_secret                        = "your-client-secret"
+  jamfpro_load_balancer_lock           = true
+}
+
+# 1. Categories (no dependencies)
+resource "jamfpro_category" "software" {
+  name     = "Software Management"
+  priority = 10
+}
+
+resource "jamfpro_category" "security" {
+  name     = "Security Policies"
+  priority = 5
+}
+
+# 2. Smart Computer Groups (no dependencies on other resources)
+resource "jamfpro_smart_computer_group" "developer_machines" {
+  name = "Developer Machines - ${var.version_number}"
+  
+  criteria {
+    name          = "Department"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "is"
+    value         = "Engineering"
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+resource "jamfpro_smart_computer_group" "marketing_machines" {
+  name = "Marketing Machines - ${var.version_number}"
+  
+  criteria {
+    name          = "Department"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "is"
+    value         = "Marketing"
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+# 3. Policies (depend on categories and groups)
+resource "jamfpro_policy" "developer_maintenance" {
+  name                        = "Developer Machine Maintenance - ${var.version_number}"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = false
+  trigger_login              = false
+  frequency                  = "Once per computer"
+  target_drive               = "/"
+  category_id                = jamfpro_category.software.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.developer_machines.id]
+  }
+  
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = true
+      byhost                      = false
+      system_cache                = true
+      user_cache                  = false
+      verify                      = true
+    }
+  }
+}
+
+resource "jamfpro_policy" "security_baseline" {
+  name                        = "Security Baseline Configuration - ${var.version_number}"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = true
+  frequency                  = "Ongoing"
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [
+      jamfpro_smart_computer_group.developer_machines.id,
+      jamfpro_smart_computer_group.marketing_machines.id
+    ]
+  }
+  
+  payloads {
+    maintenance {
+      recon                       = true
+      permissions                 = true
+      system_cache                = true
+      verify                      = true
+    }
+  }
+}
+
+# 4. Configuration Profile (depends on computer group and category)
+resource "jamfpro_macos_configuration_profile_plist" "root_ca_cert" {
+  name                = "google root ca cert - ${var.version_number}"
+  description         = "Automatically deploy google root ca"
+  level               = "System"
+  distribution_method = "Install Automatically"
+  redeploy_on_update  = "Newly Assigned"
+  payloads           = file("${path.module}/root-ca.mobileconfig")
+  payload_validate    = true
+  user_removable      = false
+  category_id         = jamfpro_category.software.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.developer_machines.id]
+  }
+}
+
+# 5. Self Service Policy (depends on multiple resources)
+resource "jamfpro_policy" "self_service_apps" {
+  name                  = "Self Service App Installation - ${var.version_number}"
+  enabled               = true
+  trigger_other         = "USER_INITIATED"
+  frequency             = "Ongoing"
+  target_drive          = "/"
+  category_id           = jamfpro_category.software.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [
+      jamfpro_smart_computer_group.developer_machines.id,
+      jamfpro_smart_computer_group.marketing_machines.id
+    ]
+  }
+  
+  self_service {
+    use_for_self_service            = true
+    install_button_text             = "Install Apps - ${var.version_number}"
+    self_service_description        = "Install essential applications for your department"
+    force_users_to_view_description = true
+    feature_on_main_page           = true
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
+  }
+}
+```
+
+**Step 4: Create WiFi Configuration Profile**
+
+Create `root-ca.mobileconfig`:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>PayloadContent</key>
+    <array>
+      <dict>
+        <key>PayloadDisplayName</key>
+        <string>Google Example Root CA</string>
+        <key>PayloadCertificateFileName</key>
+        <string>GTS_Root_G1.cer</string>
+        <key>PayloadContent</key>
+        <data>
+          MIIFYjCCBEqgAwIBAgIQd70NbNs2+RrqIQ/E8FjTDTANBgkqhkiG9w0BAQsFADBX
+          MQswCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xvYmFsU2lnbiBudi1zYTEQMA4GA1UE
+          CxMHUm9vdCBDQTEbMBkGA1UEAxMSR2xvYmFsU2lnbiBSb290IENBMB4XDTIwMDYx
+          OTAwMDA0MloXDTI4MDEyODAwMDA0MlowRzELMAkGA1UEBhMCVVMxIjAgBgNVBAoT
+          GUdvb2dsZSBUcnVzdCBTZXJ2aWNlcyBMTEMxFDASBgNVBAMTC0dUUyBSb290IFIx
+          MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAthECix7joXebO9y/lD63
+          ladAPKH9gvl9MgaCcfb2jH/76Nu8ai6Xl6OMS/kr9rH5zoQdsfnFl97vufKj6bwS
+          iV6nqlKr+CMny6SxnGPb15l+8Ape62im9MZaRw1NEDPjTrETo8gYbEvs/AmQ351k
+          KSUjB6G00j0uYODP0gmHu81I8E3CwnqIiru6z1kZ1q+PsAewnjHxgsHA3y6mbWwZ
+          DrXYfiYaRQM9sHmklCitD38m5agI/pboPGiUU+6DOogrFZYJsuB6jC511pzrp1Zk
+          j5ZPaK49l8KEj8C8QMALXL32h7M1bKwYUH+E4EzNktMg6TO8UpmvMrUpsyUqtEj5
+          cuHKZPfmghCN6J3Cioj6OGaK/GP5Afl4/Xtcd/p2h/rs37EOeZVXtL0m79YB0esW
+          CruOC7XFxYpVq9Os6pFLKcwZpDIlTirxZUTQAs6qzkm06p98g7BAe+dDq6dso499
+          iYH6TKX/1Y7DzkvgtdizjkXPdsDtQCv9Uw+wp9U7DbGKogPeMa3Md+pvez7W35Ei
+          Eua++tgy/BBjFFFy3l3WFpO9KWgz7zpm7AeKJt8T11dleCfeXkkUAKIAf5qoIbap
+          sZWwpbkNFhHax2xIPEDgfg1azVY80ZcFuctL7TlLnMQ/0lUTbiSw1nH69MG6zO0b
+          9f6BQdgAmD06yK56mDcYBZUCAwEAAaOCATgwggE0MA4GA1UdDwEB/wQEAwIBhjAP
+          BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkrysmcRorSCeFL1JmLO/wiRNxPjAf
+          BgNVHSMEGDAWgBRge2YaRQ2XyolQL30EzTSo//z9SzBgBggrBgEFBQcBAQRUMFIw
+          JQYIKwYBBQUHMAGGGWh0dHA6Ly9vY3NwLnBraS5nb29nL2dzcjEwKQYIKwYBBQUH
+          MAKGHWh0dHA6Ly9wa2kuZ29vZy9nc3IxL2dzcjEuY3J0MDIGA1UdHwQrMCkwJ6Al
+          oCOGIWh0dHA6Ly9jcmwucGtpLmdvb2cvZ3NyMS9nc3IxLmNybDA7BgNVHSAENDAy
+          MAgGBmeBDAECATAIBgZngQwBAgIwDQYLKwYBBAHWeQIFAwIwDQYLKwYBBAHWeQIF
+          AwMwDQYJKoZIhvcNAQELBQADggEBADSkHrEoo9C0dhemMXoh6dFSPsjbdBZBiLg9
+          NR3t5P+T4Vxfq7vqfM/b5A3Ri1fyJm9bvhdGaJQ3b2t6yMAYN/olUazsaL+yyEn9
+          WprKASOshIArAoyZl+tJaox118fessmXn1hIVw41oeQa1v1vg4Fv74zPl6/AhSrw
+          9U5pCZEt4Wi4wStz6dTZ/CLANx8LZh1J7QJVj2fhMtfTJr9w4z30Z209fOU0iOMy
+          +qduBmpvvYuR7hZL6Dupszfnw0Skfths18dG9ZKb59UhvmaSGZRVbNQpsg3BZlvi
+          d0lIKO2d1xozclOzgjXPYovJJIultzkMu34qQb9Sz/yilrbCgj8=
+        </data>
+        <key>PayloadDescription</key>
+        <string></string>
+        <key>AllowAllAppsAccess</key>
+        <true/>
+        <key>KeyIsExtractable</key>
+        <false />
+        <key>PayloadEnabled</key>
+        <true/>
+        <key>PayloadIdentifier</key>
+        <string>e0eda400-195d-4e65-9719-ab6ab33910cf</string>
+        <key>PayloadOrganization</key>
+        <string>Example Org</string>
+        <key>PayloadType</key>
+        <string>com.apple.security.pkcs1</string>
+        <key>PayloadUUID</key>
+        <string>e0eda400-195d-4e65-9719-ab6ab33910cf</string>
+        <key>PayloadVersion</key>
+        <integer>1</integer>
+      </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Distributes the Root Example Certificates</string>
+    <key>PayloadDisplayName</key>
+    <string>Example Certs</string>
+    <key>PayloadEnabled</key>
+    <true/>
+    <key>PayloadIdentifier</key>
+    <string>d0fde289-97c3-4d7c-a218-89a70f88c5aa</string>
+    <key>PayloadOrganization</key>
+    <string>Example Org</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/>
+    <key>PayloadScope</key>
+    <string>System</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>d0fde289-97c3-4d7c-a218-89a70f88c5aa</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+  </dict>
+</plist>
+```
+
+**Step 5: Initialize the Project**
+```bash
+# Initialize Terraform
+terraform init
+
+# Validate the configuration
+terraform validate
+```
+
+**Step 6: Generate Basic Dependency Graph**
+```bash
+# Generate the dependency graph in DOT format
+terraform graph
+```
+**expected output**
+
+```bash
+digraph G {
+  rankdir = "RL";
+  node [shape = rect, fontname = "sans-serif"];
+  "jamfpro_category.security" [label="jamfpro_category.security"];
+  "jamfpro_category.software" [label="jamfpro_category.software"];
+  "jamfpro_macos_configuration_profile_plist.root_ca_cert" [label="jamfpro_macos_configuration_profile_plist.root_ca_cert"];
+  "jamfpro_policy.developer_maintenance" [label="jamfpro_policy.developer_maintenance"];
+  "jamfpro_policy.security_baseline" [label="jamfpro_policy.security_baseline"];
+  "jamfpro_policy.self_service_apps" [label="jamfpro_policy.self_service_apps"];
+  "jamfpro_smart_computer_group.developer_machines" [label="jamfpro_smart_computer_group.developer_machines"];
+  "jamfpro_smart_computer_group.marketing_machines" [label="jamfpro_smart_computer_group.marketing_machines"];
+  "local_file.hello" [label="local_file.hello"];
+  "jamfpro_macos_configuration_profile_plist.root_ca_cert" -> "jamfpro_category.software";
+  "jamfpro_macos_configuration_profile_plist.root_ca_cert" -> "jamfpro_smart_computer_group.developer_machines";
+  "jamfpro_policy.developer_maintenance" -> "jamfpro_category.software";
+  "jamfpro_policy.developer_maintenance" -> "jamfpro_smart_computer_group.developer_machines";
+  "jamfpro_policy.security_baseline" -> "jamfpro_category.security";
+  "jamfpro_policy.security_baseline" -> "jamfpro_smart_computer_group.developer_machines";
+  "jamfpro_policy.security_baseline" -> "jamfpro_smart_computer_group.marketing_machines";
+  "jamfpro_policy.self_service_apps" -> "jamfpro_category.software";
+  "jamfpro_policy.self_service_apps" -> "jamfpro_smart_computer_group.developer_machines";
+  "jamfpro_policy.self_service_apps" -> "jamfpro_smart_computer_group.marketing_machines";
+}
+```
+
+**Step 7: Create Visual Graph (Optional - Requires GraphViz)**
+```bash
+# Install GraphViz if not already installed
+# macOS:
+brew install graphviz
+
+# Ubuntu/Debian:
+# sudo apt install graphviz
+
+# Create SVG visualization
+terraform graph | dot -Tsvg > dependency-graph.svg
+
+# Create PNG visualization  
+terraform graph | dot -Tpng > dependency-graph.png
+
+# Open the visualization
+open dependency-graph.svg  # macOS
+# xdg-open dependency-graph.svg  # Linux
+```
+
+**Step 8: Analyze the Graph Output**
+
+Look for these dependency relationships in the graph:
+- **Categories** have no dependencies (created first)
+- **Computer Groups** have no dependencies (created in parallel with categories)  
+- **Policies** depend on both categories and computer groups
+- **Configuration Profiles** depend on both categories and computer groups
+- **Self Service Policy** depends on categories and multiple computer groups
+
+**Step 9: Create Plan to See Execution Order**
+```bash
+# Generate execution plan to see the actual order
+terraform plan
+
+# Notice the order:
+# 1. Categories and Computer Groups (can be created in parallel)
+# 2. Policies and Configuration Profiles (wait for categories and groups)
+# 3. Complex policies with multiple dependencies created last
+```
+
+**Step 10: Understanding Graph Types**
+```bash
+# Different graph types for different scenarios:
+
+# Plan graph (default) - shows what will be created/modified
+terraform graph
+
+# Apply graph - shows execution during apply
+terraform graph -type=plan-destroy
+
+# Refresh graph - shows data source dependencies  
+terraform graph -type=refresh
+```
+
+**🔍 What You Should Observe:**
+
+1. **Parallel Execution**: Categories and Computer Groups can be created simultaneously
+2. **Dependency Chain**: Policies must wait for both categories and groups
+3. **Resource References**: Configuration profile references the mobileconfig file
+4. **Multiple Dependencies**: Self Service policy depends on category and multiple groups
+5. **Variable Dependencies**: All resources using `var.version_number` show implicit dependencies
+
+**💡 Key Learning Points:**
+- Terraform automatically determines the optimal execution order
+- Resources with no dependencies can be created in parallel
+- Complex dependency chains are resolved automatically
+- File references create implicit dependencies on local files
+- Variables create relationships between resources that use them
+- The graph helps identify bottlenecks in large configurations
+
+**🧹 Clean Up (Optional)**
+```bash
+# If you applied the configuration, clean up resources
+terraform destroy -auto-approve
+```
+
+💡 **Pro Tip**: Use `terraform graph | grep -E "jamfpro_"` to filter and see only your Jamf Pro resources in large graphs!
 
 #### 🔄 Resource Replacement with --replace Flag
 
@@ -178,30 +600,31 @@ terraform apply -replace="aws_instance.web"
 terraform apply -replace="aws_instance.web[0]" -replace="aws_instance.web[1]"
 ```
 
-**🔍 Replacement vs Update:**
+**🔍 Replacement vs Update (Jamf Pro):**
 ```hcl
 # This resource configuration
-resource "aws_instance" "web" {
-  ami           = "ami-12345"      # Old AMI
-  instance_type = "t2.micro"
+resource "jamfpro_policy" "software_update" {
+  name      = "Monthly Software Updates"
+  enabled   = true
+  frequency = "Once per month"  # Changing this may require replacement
   
-  tags = {
-    Name = "WebServer"
+  category = {
+    name = "System Maintenance"
   }
 }
 ```
 
-**Example Scenarios:**
+**Example Scenarios (Jamf Pro):**
 ```bash
-# Scenario 1: Force recreation due to corruption
-terraform apply -replace="aws_instance.web"
+# Scenario 1: Force recreation of corrupted policy
+terraform apply -replace="jamfpro_policy.software_update"
 
-# Scenario 2: Replace specific instance in a count/for_each
-terraform apply -replace="aws_instance.web[0]"
-terraform apply -replace='aws_instance.servers["web"]'
+# Scenario 2: Replace specific policy in a count/for_each
+terraform apply -replace="jamfpro_policy.department_policies[0]"
+terraform apply -replace='jamfpro_policy.site_policies["main_office"]'
 
 # Scenario 3: Combine with other changes
-terraform apply -replace="aws_instance.web" -var="instance_type=t3.micro"
+terraform apply -replace="jamfpro_policy.software_update" -var="update_frequency=weekly"
 ```
 
 **🚨 Important Limitations:**
@@ -211,19 +634,19 @@ terraform apply -replace="aws_instance.web" -var="instance_type=t3.micro"
 - **Dependency aware**: Terraform will handle dependent resource updates automatically
 - **State consistency**: Replacement maintains state file consistency
 
-**💡 Modern Best Practices:**
+**💡 Modern Best Practices (Jamf Pro):**
 ```bash
 # ✅ Modern approach
-terraform plan -replace="aws_instance.web"
+terraform plan -replace="jamfpro_policy.software_update"
 
 # ❌ Deprecated approach (don't use)
-terraform taint aws_instance.web
+terraform taint jamfpro_policy.software_update
 terraform plan
 ```
 
 💡 **Pro Tip**: Always run `terraform plan -replace` first to review the replacement impact before applying!
 
-### 💻 **Exercise 3.1**: Core Terraform Workflow
+### 💻 **Exercise 3.2**: Core Terraform Workflow
 **Duration**: 30 minutes
 
 Let's practice the complete Terraform workflow with a real cloud resource.
@@ -402,33 +825,33 @@ terraform show
 
 💡 **Pro Tip**: Notice how Terraform tracks dependencies and creates resources in the correct order!
 
-#### 🎯 Use Cases for Terraform
+#### 🎯 Use Cases for Terraform with Jamf Pro
 
 **🏢 Enterprise Use Cases:**
-- **☁️ Multi-cloud deployments**: Consistent infrastructure across providers
-- **🔄 Environment provisioning**: Dev, staging, production environments
-- **📦 Application infrastructure**: Complete application stacks
-- **🛡️ Compliance automation**: Standardized, auditable infrastructure
-- **💾 Disaster recovery**: Rapid infrastructure recreation
+- **🍎 Multi-environment MDM**: Consistent device management across dev, staging, production
+- **🔄 Policy standardization**: Automated policy deployment across multiple Jamf Pro instances
+- **📱 Device configuration**: Complete device enrollment and configuration workflows
+- **🛡️ Compliance automation**: Standardized, auditable security policies
+- **💾 Disaster recovery**: Rapid Jamf Pro configuration restoration
 
-**🔧 Common Patterns:**
+**🔧 Common Jamf Pro Patterns:**
 ```hcl
-# 1. Network Foundation
-resource "aws_vpc" "main" { /* ... */ }
-resource "aws_subnet" "private" { /* ... */ }
-resource "aws_subnet" "public" { /* ... */ }
+# 1. Organizational Foundation
+resource "jamfpro_category" "security" { /* ... */ }
+resource "jamfpro_site" "main_office" { /* ... */ }
+resource "jamfpro_department" "engineering" { /* ... */ }
 
-# 2. Security Groups
-resource "aws_security_group" "web" { /* ... */ }
-resource "aws_security_group" "database" { /* ... */ }
+# 2. Device Grouping
+resource "jamfpro_computer_group" "laptops" { /* ... */ }
+resource "jamfpro_mobile_device_group" "ipads" { /* ... */ }
 
-# 3. Compute Resources
-resource "aws_instance" "web" { /* ... */ }
-resource "aws_rds_instance" "database" { /* ... */ }
+# 3. Policy Management
+resource "jamfpro_policy" "security_baseline" { /* ... */ }
+resource "jamfpro_configuration_profile" "wifi_settings" { /* ... */ }
 
-# 4. Load Balancing
-resource "aws_lb" "main" { /* ... */ }
-resource "aws_lb_target_group" "web" { /* ... */ }
+# 4. Application Management
+resource "jamfpro_package" "corporate_app" { /* ... */ }
+resource "jamfpro_mobile_device_application" "required_apps" { /* ... */ }
 ```
 
 ---
