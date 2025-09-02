@@ -1246,14 +1246,14 @@ Each evolution **genuinely improves** upon the previous approach:
 
 However, **stages 1-3 all share fundamental architectural limitations** when applied to SaaS API management:
 
-| **Core Limitation** | **GUI Impact** | **Scripts Impact** | **Ansible Impact** |
-|---------------------|----------------|-------------------|-------------------|
-| **Imperative Approach** | Navigate screens, fill forms, click buttons in sequence | Write explicit CREATE/READ/UPDATE/DELETE logic for each resource type | Define task sequences with conditional logic for different scenarios |
-| **State Management** | No tracking of what exists or current configuration | Custom databases/files to track resource IDs and attributes | Manual implementation using facts, registers, and when conditions |
-| **Drift Detection** | Manual verification by comparing screenshots or checking settings | Custom monitoring scripts to compare desired vs actual state | Custom validation tasks that must query and compare all resources |
-| **Resource Dependencies** | Remember and manually coordinate the order of changes | Custom orchestration logic to handle creation/deletion sequences | Manual task ordering with complex dependency chains using handlers |
+| **Core Limitation** | **Stage 1: Manual GUI** | **Stage 2: Custom Scripts** | **Stage 3: Config Management** |
+|---------------------|--------------------------|------------------------------|--------------------------------|
+| **Imperative Approach** | Point & click through screens in sequence | Write explicit CREATE/READ/UPDATE/DELETE logic for each resource type | Define task sequences with conditional logic (YAML/DSL syntax) |
+| **State Management** | Screenshots and email approvals for tracking | Custom databases/files to track resource IDs and attributes | Manual state logic using facts, registers, and when conditions |
+| **Drift Detection** | Manual verification by comparing GUI settings | Custom monitoring scripts to compare desired vs actual state | Custom validation tasks that must query and compare all resources |
+| **Resource Dependencies** | Manual coordination and email approvals for change order | Custom orchestration logic to handle creation/deletion sequences | Manual task ordering with complex dependency chains using handlers |
 | **API Evolution** | Learn new GUI layouts when platforms update interfaces | Update all scripts when APIs change endpoints or authentication | Update all playbooks when API schemas or response formats change |
-| **Idempotency** | Every action is a manual operation with potential for change | Custom logic to check "does this exist?" before every operation | Framework provides structure but requires manual implementation of idempotent checks |
+| **Idempotency** | Every GUI action is a manual operation with potential for change | Custom logic to check "does this exist?" before every operation | Generic HTTP modules require manual implementation of idempotent checks |
 
 **🎯 The Paradigm Shift: Declarative Configuration as Code**
 
