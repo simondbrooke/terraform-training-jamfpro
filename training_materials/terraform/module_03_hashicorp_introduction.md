@@ -365,6 +365,7 @@ terraform destroy
 ```
 
 **expected output**
+
 ```bash
 Changes to Outputs:
   - file_content = "Hello from Terraform! 🚀" -> null
@@ -375,6 +376,7 @@ Do you really want to destroy all resources?
 
   Enter a value: 
 ```
+
 Type 'yes' when prompted
 
 ```bash
@@ -393,9 +395,10 @@ ls -la
 
 ---
 
-## ✅ Module 2 Summary
+## ✅ Module 3 Summary
 
 ### 🎯 Key Takeaways
+
 - **🏢 HashiCorp** builds integrated tools for infrastructure automation
 - **🔷 Terraform** is the infrastructure provisioning tool in their suite
 - **☁️ Multi-cloud support** prevents vendor lock-in and enables best-of-breed approaches
@@ -404,6 +407,7 @@ ls -la
 - **📋 HCL syntax** is human-readable and version-control friendly
 
 ### 🔑 Essential Commands Learned
+
 ```bash
 terraform version        # Check Terraform version
 terraform init          # Initialize working directory
@@ -415,6 +419,7 @@ terraform state list    # List managed resources
 ```
 
 ### 💡 Pro Tips Recap
+
 - Start simple with local resources before moving to cloud providers
 - Always run `terraform plan` before `terraform apply`
 - State files contain sensitive information - protect them!
@@ -422,7 +427,7 @@ terraform state list    # List managed resources
 
 ---
 
-**🎉 Congratulations!** You've completed Module 2 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
+**🎉 Congratulations!** You've completed Module 3 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
 
 ---
 

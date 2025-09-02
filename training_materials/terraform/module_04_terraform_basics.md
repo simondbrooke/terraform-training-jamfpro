@@ -1,9 +1,12 @@
 
-## ⚡ Module 04: Terraform Basics
-*Duration: 3 hours | Labs: 4* | Difficulty: 🟡 Intermediate*
+# ⚡ Module 04: Terraform Basics
 
-### 🎯 Learning Objectives
+*Duration: 3 hours | Labs: 4* | Difficulty: 🟢 Beginner*
+
+## 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Understand the complete Terraform lifecycle and workflow
 - ✅ Master the core Terraform commands (init, plan, apply, destroy)
 - ✅ Explain change automation and execution planning
@@ -51,12 +54,14 @@ Terraform's change automation ensures that infrastructure changes are:
 Execution plans are Terraform's way of showing you exactly what will happen before making any changes.
 
 **🔍 Plan Output Symbols:**
+
 - **`+`** = Resource will be **created**
 - **`-`** = Resource will be **destroyed**  
 - **`~`** = Resource will be **modified**
 - **`-/+`** = Resource will be **replaced** (destroyed then created)
 
 **Example Plan Output:**
+
 ```bash
 Terraform will perform the following actions:
 
@@ -425,9 +430,10 @@ resource "aws_lb_target_group" "web" { /* ... */ }
 
 ---
 
-## ✅ Module 3 Summary
+## ✅ Module 4 Summary
 
 ### 🎯 Key Takeaways
+
 - **🔄 Terraform lifecycle** follows a predictable Write → Plan → Apply → Manage cycle
 - **📋 Execution plans** show exactly what will change before applying
 - **🗺️ Resource graphs** ensure proper dependency resolution and parallel execution
@@ -437,6 +443,7 @@ resource "aws_lb_target_group" "web" { /* ... */ }
 - **📥 Data sources** query existing infrastructure and cloud provider APIs
 
 ### 🔑 Essential Commands Learned
+
 ```bash
 terraform init          # Initialize working directory
 terraform validate      # Check configuration syntax
@@ -451,6 +458,7 @@ terraform state show   # Show specific resource details
 ```
 
 ### 💡 Pro Tips Recap
+
 - Always run `terraform plan` before `terraform apply`
 - Use variables to make configurations reusable
 - Leverage local values for computed and derived values
@@ -468,48 +476,56 @@ Test your understanding of Terraform Basics with these questions:
 ### 📝 Quiz Questions
 
 **1. What is the correct order of the core Terraform workflow?**
+
 - A) Plan → Write → Apply → Destroy
 - B) Write → Plan → Apply → Manage  
 - C) Init → Write → Plan → Apply
 - D) Apply → Plan → Write → Validate
 
 **2. Which symbol in a Terraform plan output indicates a resource will be replaced?**
+
 - A) `+`
-- B) `~` 
+- B) `~`
 - C) `-/+`
 - D) `-`
 
 **3. What command would you use to visualize Terraform's dependency graph?**
+
 - A) `terraform show`
 - B) `terraform graph`
 - C) `terraform state list`
 - D) `terraform validate`
 
 **4. Which type of Terraform value is computed at apply time and cannot be used in resource count?**
+
 - A) Input variables
 - B) Local values
 - C) Output values
 - D) Data source attributes
 
 **5. What is the modern replacement for the deprecated `terraform taint` command?**
+
 - A) `terraform destroy --target`
 - B) `terraform apply --replace`
 - C) `terraform refresh --replace`
 - D) `terraform state rm`
 
 **6. Which block type is used to query existing infrastructure?**
+
 - A) `resource`
 - B) `variable`
 - C) `data`
 - D) `output`
 
 **7. What makes Terraform operations idempotent?**
+
 - A) HCL syntax validation
 - B) Provider version constraints
 - C) State file tracking of current infrastructure
 - D) Execution plan generation
 
 **8. Which validation constraint ensures a variable contains a valid email address?**
+
 - A) `validation { condition = length(var.email) > 0 }`
 - B) `validation { condition = can(regex(".*@.*", var.email)) }`
 - C) `validation { condition = var.email != "" }`
@@ -533,7 +549,7 @@ Test your understanding of Terraform Basics with these questions:
 
 **🎉 Congratulations!** You've completed Module 3 and now understand the core Terraform workflow, variables, outputs, and data sources. You've built real AWS infrastructure and learned to make it flexible and maintainable!
 
-**➡️ Ready for Module 4?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
+**➡️ Ready for Module 5?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
 
 ---
 
