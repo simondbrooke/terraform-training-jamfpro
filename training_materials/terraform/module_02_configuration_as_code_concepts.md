@@ -1,878 +1,1073 @@
 ## 🔧 Module 2: Configuration as Code Concepts
-*Duration: 2.5 hours | Labs: 3*
+*Duration: 2.5 hours | Labs: 3 | 🟢 Beginner*
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:
 - ✅ Define Configuration as Code and distinguish it from Infrastructure as Code
-- ✅ Understand stateful management of SaaS services through APIs
-- ✅ Explain the benefits of managing service configurations declaratively
-- ✅ Implement Microsoft 365 configurations using Terraform
-- ✅ Manage Jamf Pro device management policies as code
-- ✅ Compare traditional GUI-based vs code-based configuration management
-- ✅ Understand configuration drift detection and remediation for SaaS services
-- ✅ Implement GitOps workflows for configuration management
+- ✅ Understand why traditional configuration management tools fail with modern SaaS APIs
+- ✅ Explain the evolution from imperative scripting to declarative configuration management
+- ✅ Demonstrate the benefits of Terraform's idempotent approach for SaaS configuration
+- ✅ Implement Jamf Pro configuration management using both imperative and declarative approaches
+- ✅ Apply Configuration as Code principles to Microsoft 365 and other SaaS platforms
+- ✅ Understand configuration drift detection and remediation for cloud services
+- ✅ Implement GitOps workflows for collaborative SaaS configuration management
 
 ### 📚 Topics Covered
 
 #### 🔍 What is Configuration as Code?
 
-**Configuration as Code (CaC)** extends the Infrastructure as Code paradigm to **service configuration management**. While IaC manages the underlying infrastructure (servers, networks, storage), CaC manages the **configuration and policies** of services, applications, and platforms.
+**Configuration as Code (CaC)** is the practice of managing **SaaS service configurations, policies, and resources** through machine-readable definition files and APIs, rather than manual GUI administration or imperative scripts.
 
-**🔑 Key Distinctions:**
+**🔑 The Fundamental Distinction:**
 
 | Aspect | Infrastructure as Code | Configuration as Code |
 |--------|----------------------|----------------------|
-| **Scope** | Physical/Virtual Resources | Saas Service Settings, Resources & Policies |
-| **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Application settings |
-| **APIs** | Cloud Provider APIs | SaaS Service APIs |
-| **State** | Resource existence & properties | Service configuration & policies |
-| **Drift** | Resource configuration changes | Settings modified via GUI/manual changes and imperatie scripts |
+| **Scope** | Physical/Virtual Infrastructure | SaaS Service Settings & Resources |
+| **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Device configurations |
+| **APIs** | Cloud Provider APIs (AWS, Azure, GCP) | SaaS Platform APIs (Microsoft 365, Jamf Pro, Okta) |
+| **Resources** | Compute, Network, Storage | Users, Groups, Policies, Applications |
+| **Lifecycle** | Provision → Configure → Terminate | Create → Configure → Update → Archive |
+| **Drift** | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions) |
 
-**🎯 Configuration as Code Evolution:**
+**🎯 Configuration as Code Evolution Timeline:**
+
 ```mermaid
 timeline
     title Configuration Management Evolution
     
     section Traditional Era (2000s-2010s)
-        Manual Configuration : GUI-based administration
-                             : Point-and-click management
-                             : Excel spreadsheets for tracking
-                             : Email-based change requests
+        Manual GUI Admin : Click-through web interfaces
+                         : Excel spreadsheets for tracking
+                         : Email-based change requests
+                         : No version control
         
-    section Automation Era (2010s-2015s)
-        Script-Based Config   : PowerShell/Bash scripts
-                             : REST API automation
-                             : Configuration management tools
-                             : Still mostly imperative
+    section Script Automation Era (2010s-2015s)
+        Imperative Scripting : PowerShell/Bash API scripts
+                            : Step-by-step API calls
+                            : Manual error handling
+                            : No state management
+                            : Complex CRUD operations
         
-    section Infrastructure Era (2015s-2020s)
-        Infrastructure as Code : Cloud resource automation
-                              : Terraform for infrastructure
-                              : Declarative infrastructure
-                              : Version controlled infrastructure
+    section Infrastructure Automation Era (2015s-2020s)
+        Infrastructure as Code : Terraform for cloud resources
+                              : Ansible/Chef for server config
+                              : Focused on infrastructure
+                              : Limited SaaS integration
         
-    section Configuration Era (2020s+)
-        Configuration as Code : SaaS service automation
-                             : Terraform for service config
+    section Modern SaaS Era (2020s+)
+        Configuration as Code : Terraform for SaaS platforms
                              : Declarative configuration
-                             : Complete service lifecycle management
+                             : API abstraction layer
+                             : Idempotent operations
+                             : Comprehensive state management
 ```
 
-**📚 Learn More:**
-- 🔗 [Configuration as Code Best Practices](https://www.hashicorp.com/resources/what-is-configuration-as-code)
-- 🔗 [GitOps for Configuration Management](https://www.weave.works/technologies/gitops/)
+#### 🚫 Why Traditional Tools Fall Short for SaaS APIs
 
-#### 🌐 SaaS Service Management: Traditional vs Modern
+**The Problem with Imperative Configuration Management:**
 
-The shift from traditional GUI-based administration to code-based configuration management represents a fundamental change in how we manage modern SaaS services.
+Traditional configuration management tools like Ansible, Chef, and Puppet were designed for **infrastructure configuration** (installing packages, editing files, managing services), but they struggle with modern **SaaS API management** because:
 
-**Traditional vs Modern SaaS Management:**
+1. **🔄 No Natural Idempotency**: SaaS APIs don't behave like file systems
+2. **🧩 Complex State Tracking**: APIs return dynamic IDs and relationships
+3. **🔗 Dependency Management**: SaaS resources have complex interdependencies
+4. **📊 Drift Detection**: No built-in mechanism to detect manual GUI changes
+5. **🛠️ CRUD Complexity**: Create/Read/Update/Delete operations require different API patterns
+
+**Ansible with SaaS APIs - The Limitations:**
+
+```yaml
+# ansible/jamf-policy.yml - IMPERATIVE APPROACH
+# This demonstrates why Ansible struggles with SaaS APIs
+
+- name: "Create Jamf Pro Computer Group"
+  uri:
+    url: "{{ jamf_url }}/JSSResource/computergroups/id/0"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ auth_token }}"
+      Content-Type: "application/xml"
+    body: |
+      <computer_group>
+        <name>Security-Team-Devices</name>
+        <is_smart>false</is_smart>
+      </computer_group>
+  register: group_result
+  
+# PROBLEM 1: Manual ID extraction and state management
+- name: "Extract group ID from response"
+  xml:
+    xmlstring: "{{ group_result.content }}"
+    xpath: "//computer_group/id"
+    content: text
+  register: group_id
+  
+# PROBLEM 2: No idempotency - running twice creates duplicates
+- name: "Create Policy Using Group ID"
+  uri:
+    url: "{{ jamf_url }}/JSSResource/policies/id/0"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ auth_token }}"
+      Content-Type: "application/xml"
+    body: |
+      <policy>
+        <general>
+          <name>Security Update Policy</name>
+        </general>
+        <scope>
+          <computer_groups>
+            <computer_group>
+              <id>{{ group_id.matches[0] }}</id>
+            </computer_group>
+          </computer_groups>
+        </scope>
+      </policy>
+  register: policy_result
+
+# PROBLEM 3: Manual error handling for each API call
+- name: "Handle policy creation failure"
+  debug:
+    msg: "Policy creation failed: {{ policy_result.msg }}"
+  when: policy_result.failed
+
+# PROBLEM 4: No drift detection - can't detect manual changes
+# PROBLEM 5: Complex rollback scenarios require separate playbooks
+# PROBLEM 6: Dependency management is manual and error-prone
+```
+
+**Chef with SaaS APIs - The Struggle:**
+
+```ruby
+# chef/microsoft365_user.rb - IMPERATIVE APPROACH
+# This shows why Chef wasn't designed for SaaS API management
+
+# PROBLEM 1: No native Microsoft Graph API resources
+# Must use custom resources with manual HTTP calls
+
+microsoft365_user 'john.doe@company.com' do
+  given_name 'John'
+  surname 'Doe'
+  department 'Engineering'
+  
+  # PROBLEM 2: Manual authentication token management
+  access_token lazy { get_access_token(node['microsoft365']['tenant_id']) }
+  
+  # PROBLEM 3: Custom CRUD implementation required
+  action :create
+  
+  # PROBLEM 4: No automatic dependency resolution
+  notifies :add_to_group, 'microsoft365_group[Engineering]', :delayed
+end
+
+# Custom resource implementation
+provides :microsoft365_user
+unified_mode true
+
+action :create do
+  # PROBLEM 5: Manual API calls with complex error handling
+  begin
+    response = make_graph_api_call(
+      method: 'POST',
+      endpoint: '/users',
+      body: build_user_payload
+    )
+    
+    # PROBLEM 6: Manual state tracking
+    node.run_state['created_users'] ||= []
+    node.run_state['created_users'] << response['id']
+    
+  rescue => e
+    # PROBLEM 7: Complex rollback logic
+    cleanup_partial_user_creation(e)
+    raise e
+  end
+end
+
+# PROBLEM 8: Separate action needed for updates vs creates
+action :update do
+  # Different API endpoint, different payload structure
+  # Manual comparison of current vs desired state
+end
+
+# PROBLEM 9: No built-in drift detection
+# Must manually compare API state vs configuration
+```
+
+#### 🎯 The Terraform Advantage for SaaS Configuration
+
+**Terraform's Design Philosophy for APIs:**
+
+Terraform was specifically designed to handle **API-driven resource management** with built-in:
+
+1. **🔄 Native Idempotency**: Same configuration = same result, every time
+2. **📊 Comprehensive State Management**: Tracks all resource attributes and relationships
+3. **🧩 Automatic Dependency Resolution**: Handles resource dependencies automatically
+4. **🔍 Built-in Drift Detection**: `terraform plan` compares desired vs actual state
+5. **🛠️ CRUD Abstraction**: Provider handles Create/Read/Update/Delete complexity
+6. **🔗 Resource Relationships**: Manages complex interdependencies seamlessly
+
+**Terraform Configuration as Code Principles:**
+
 ```mermaid
 graph TB
-    subgraph "❌ Traditional Imperative Scripting"
-        SCRIPT_ADMIN["🔧 Imperative Script Administration<br/>• PowerShell/Bash scripts<br/>• Step-by-step API calls<br/>• Manual error handling<br/>• Hardcoded configurations<br/>• No state management"]
-        SCRIPT_PROBLEMS["❌ Problems<br/>• No idempotency<br/>• Complex error handling<br/>• No drift detection<br/>• Fragile dependencies<br/>• Manual rollback<br/>• Credential exposure"]
-        SCRIPT_EXAMPLE["📝 Example Workflow<br/>1. Write imperative script<br/>2. Manual authentication<br/>3. Step-by-step API calls<br/>4. Hope nothing fails<br/>5. Manual verification<br/>6. Different scripts for CRUD"]
+    subgraph "🎯 Desired State (Terraform Configuration)"
+        CONFIG["Terraform Resources<br/>• jamfpro_script<br/>• jamfpro_policy<br/>• jamfpro_computer_group"]
+        VARIABLES["Variables & Dependencies<br/>• Resource references<br/>• Automatic dependency graph<br/>• Type validation"]
     end
     
-    subgraph "✅ Modern Configuration as Code"
-        CAC_ADMIN["📋 Declarative Configuration<br/>• Terraform configurations<br/>• Desired state definition<br/>• Automatic state management<br/>• Version controlled<br/>• Idempotent operations"]
-        CAC_BENEFITS["✅ Benefits<br/>• Idempotent execution<br/>• State drift detection<br/>• Plan before apply<br/>• Automated rollback<br/>• Dependency management<br/>• Secure credential handling"]
-        CAC_EXAMPLE["📝 Example Workflow<br/>1. Define desired state<br/>2. terraform plan (preview)<br/>3. Peer review changes<br/>4. terraform apply<br/>5. Automatic state tracking<br/>6. Drift detection built-in"]
+    subgraph "🔌 Terraform Provider Layer"
+        PROVIDER["Jamf Pro Provider<br/>• API authentication<br/>• CRUD operations<br/>• Error handling<br/>• State mapping"]
+        ABSTRACTION["API Abstraction<br/>• HTTP calls<br/>• JSON/XML parsing<br/>• Response validation<br/>• Error translation"]
     end
     
-    SCRIPT_ADMIN --> SCRIPT_PROBLEMS
-    SCRIPT_PROBLEMS --> SCRIPT_EXAMPLE
+    subgraph "🌐 SaaS Platform (Jamf Pro)"
+        API["Jamf Pro REST API<br/>• Authentication endpoints<br/>• Resource endpoints<br/>• CRUD operations<br/>• Response formats"]
+        PLATFORM["Jamf Pro Platform<br/>• Scripts<br/>• Policies<br/>• Computer Groups<br/>• Configuration Profiles"]
+    end
     
-    CAC_ADMIN --> CAC_BENEFITS
-    CAC_BENEFITS --> CAC_EXAMPLE
+    subgraph "📊 State Management"
+        STATE["Terraform State<br/>• Resource attributes<br/>• Resource relationships<br/>• Provider metadata<br/>• Dependency tracking"]
+        DRIFT["Drift Detection<br/>• terraform plan<br/>• Compare state vs reality<br/>• Show differences<br/>• Plan remediation"]
+    end
     
-    style SCRIPT_ADMIN fill:#ffebee
-    style SCRIPT_PROBLEMS fill:#ffcdd2
-    style CAC_ADMIN fill:#e8f5e8
-    style CAC_BENEFITS fill:#c8e6c9
+    CONFIG --> VARIABLES
+    VARIABLES --> PROVIDER
+    PROVIDER --> ABSTRACTION
+    ABSTRACTION --> API
+    API --> PLATFORM
+    
+    PROVIDER --> STATE
+    STATE --> DRIFT
+    DRIFT -.-> CONFIG
+    PLATFORM -.-> DRIFT
+    
+    style CONFIG fill:#e3f2fd
+    style PROVIDER fill:#fff3e0
+    style API fill:#e8f5e8
+    style STATE fill:#f3e5f5
 ```
 
-**❌ Traditional Imperative Scripting (What we're moving away from):**
-```powershell
-# Traditional PowerShell script approach - IMPERATIVE AUTOMATION
-# Based on Microsoft.Graph.Authentication module
+#### 📱 Real-World Example: Jamf Pro Script Management
 
-[CmdletBinding()]
-param (
-    [Parameter(Mandatory=$true)]
-    [string]$TenantId,
-    
-    [Parameter(Mandatory=$true)]
-    [string]$ClientId,
-    
-    [Parameter(Mandatory=$true)]
-    [string]$ClientSecret,
-    
-    [Parameter(Mandatory=$false)]
-    [string]$PolicyNameSuffix = "PowerShell-Creation-Test"
-)
+Let's demonstrate the difference between imperative API scripting and declarative Terraform management using Jamf Pro script management as our example.
 
-# Import required modules - dependency management nightmare
-Import-Module Microsoft.Graph.Authentication
-Import-Module Microsoft.Graph.Identity.SignIns
+**The Challenge:** Managing a security compliance script across multiple Jamf Pro environments with proper version control, deployment tracking, and rollback capabilities.
 
-# Manual authentication setup - credentials scattered
-$secureClientSecret = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
-$clientSecretCredential = New-Object System.Management.Automation.PSCredential($ClientId, $secureClientSecret)
-Connect-MgGraph -ClientSecretCredential $clientSecretCredential -TenantId $TenantId
+#### 🔧 The Imperative Approach: Manual CRUD Operations
 
-# Hardcoded policy payload - no reusability
-$testPolicyPayload = @'
-{
-    "displayName": "TEST-PowerShell-Creation-Test",
-    "state": "disabled",
-    "conditions": {
-        "applications": {
-            "includeApplications": ["All"]
-        },
-        "users": {
-            "includeUsers": ["All"],
-            "excludeGroups": ["11111111-1111-1111-1111-111111111111"]
-        },
-        "clientAppTypes": ["browser", "mobileAppsAndDesktopClients"],
-        "locations": {
-            "includeLocations": ["All"]
-        }
-    },
-    "grantControls": {
-        "operator": "OR",
-        "builtInControls": ["mfa"]
-    }
-}
-'@
+**Script 1: CREATE - Jamf Pro Script via API**
 
-# Imperative step-by-step execution - error-prone
-try {
-    Write-Host "🔄 Creating conditional access policy..." -ForegroundColor Cyan
-    
-    # Manual JSON manipulation - fragile
-    $policyObject = $testPolicyPayload | ConvertFrom-Json
-    $policyObject.displayName = "TEST-$PolicyNameSuffix"
-    $finalPayload = $policyObject | ConvertTo-Json -Depth 10
-    
-    # Direct API call - no state management
-    $uri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies"
-    $response = Invoke-MgGraphRequest -Method POST -Uri $uri -Body $finalPayload -ContentType "application/json"
-    
-    Write-Host "✅ Policy creation request completed!" -ForegroundColor Green
-    
-    # Manual verification - no drift detection
-    Start-Sleep -Seconds 5
-    $checkUri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies"
-    $allPolicies = Invoke-MgGraphRequest -Method GET -Uri $checkUri
-    $foundPolicy = $allPolicies.value | Where-Object { $_.displayName -eq "TEST-$PolicyNameSuffix" }
-    
-    if ($foundPolicy) {
-        Write-Host "✅ Found created policy: $($foundPolicy.id)" -ForegroundColor Green
-        
-        # Manual cleanup decision - no lifecycle management
-        $deleteChoice = Read-Host "Delete test policy? (y/N)"
-        if ($deleteChoice -eq "y") {
-            $deleteUri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies/$($foundPolicy.id)"
-            Invoke-MgGraphRequest -Method DELETE -Uri $deleteUri
-            Write-Host "✅ Test policy deleted" -ForegroundColor Green
-        }
-    }
-}
-catch {
-    Write-Host "❌ Script failed: $_" -ForegroundColor Red
-    # No rollback mechanism - partial state left behind
-    exit 1
-}
-finally {
-    # Manual cleanup - connection management
-    Disconnect-MgGraph 2>$null
-}
-
-# Problems with this imperative PowerShell approach:
-# 1. No state management - can't detect drift or changes
-# 2. No idempotency - running twice creates duplicates or errors
-# 3. Hard-coded values scattered throughout script
-# 4. Manual error handling and rollback procedures
-# 5. Difficult to version control the actual configuration
-# 6. No dependency management between resources
-# 7. Scripts become complex and unmaintainable at scale
-# 8. No plan/preview capability - changes are immediate
-# 9. Credential management is manual and insecure
-# 10. Different scripts for create/update/delete operations
-
-Write-Host "Configuration applied - hope nothing broke and no duplicates created!"
-```
-
-**🔧 Traditional Jamf Pro Bash Scripting (What we're evolving from):**
 ```bash
 #!/bin/bash
-# Traditional Jamf Pro bash script approach - IMPERATIVE AUTOMATION
-# Based on Jamf Pro API recipes: https://developer.jamf.com/jamf-pro/recipes
+# create_jamf_script.sh - IMPERATIVE CREATE OPERATION
+# Demonstrates the complexity of manual API management
 
-# Script parameters - scattered configuration
-JAMF_URL="${1}"
-API_USERNAME="${2}"
-API_PASSWORD="${3}"
-POLICY_NAME="${4:-Test-Bash-Policy}"
+set -e  # Exit on any error
 
-# Manual authentication - credential exposure
+# Configuration variables
+JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
+USERNAME="${2:-api_user}"
+PASSWORD="${3:-api_password}"
+SCRIPT_NAME="${4:-Security Compliance Check}"
+
 echo "🔐 Authenticating with Jamf Pro API..."
-AUTH_TOKEN=$(curl -s -u "${API_USERNAME}:${API_PASSWORD}" \
+
+# Step 1: Manual authentication - credential exposure risk
+AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
     "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    plutil -extract token raw -)
+    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
+
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "❌ Authentication failed - check credentials"
+    exit 1
+fi
+
+echo "✅ Authentication successful"
+
+# Step 2: Manual XML payload construction - error-prone
+SCRIPT_PAYLOAD=$(cat << 'EOF'
+<script>
+    <name>Security Compliance Check</name>
+    <category>Security</category>
+    <filename>security_compliance.sh</filename>
+    <info>Checks system compliance against corporate security standards</info>
+    <notes>Deployed via API - Version 1.0</notes>
+    <priority>Before</priority>
+    <parameters/>
+    <os_requirements>macOS 12.0</os_requirements>
+    <script_contents><![CDATA[#!/bin/bash
+
+# Security Compliance Check Script
+# Version: 1.0
+# Purpose: Validate corporate security settings
+
+echo "🔍 Starting security compliance check..."
+
+# Check FileVault status
+FILEVAULT_STATUS=$(fdesetup status | head -1)
+if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+    echo "✅ FileVault: Enabled"
+    FILEVAULT_COMPLIANT=1
+else
+    echo "❌ FileVault: Disabled"
+    FILEVAULT_COMPLIANT=0
+fi
+
+# Check firewall status  
+FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+if [[ "$FIREWALL_STATUS" == "1" ]]; then
+    echo "✅ Firewall: Enabled"
+    FIREWALL_COMPLIANT=1
+else
+    echo "❌ Firewall: Disabled" 
+    FIREWALL_COMPLIANT=0
+fi
+
+# Check for required software
+REQUIRED_APPS=("Google Chrome" "Microsoft Office" "CrowdStrike Falcon")
+APPS_COMPLIANT=1
+
+for app in "${REQUIRED_APPS[@]}"; do
+    if [[ -d "/Applications/${app}.app" ]]; then
+        echo "✅ Required App: $app installed"
+    else
+        echo "❌ Required App: $app missing"
+        APPS_COMPLIANT=0
+    fi
+done
+
+# Calculate overall compliance score
+TOTAL_CHECKS=3
+PASSED_CHECKS=$((FILEVAULT_COMPLIANT + FIREWALL_COMPLIANT + APPS_COMPLIANT))
+COMPLIANCE_PERCENTAGE=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+
+echo "📊 Compliance Score: ${COMPLIANCE_PERCENTAGE}%"
+
+# Report to Jamf Pro
+/usr/local/jamf/bin/jamf recon -endUsername "system"
+
+if [[ $COMPLIANCE_PERCENTAGE -ge 80 ]]; then
+    echo "✅ Device is compliant"
+    exit 0
+else
+    echo "❌ Device requires remediation"  
+    exit 1
+fi
+]]></script_contents>
+</script>
+EOF
+)
+
+echo "🔄 Creating script in Jamf Pro..."
+
+# Step 3: Manual API call with complex error handling
+RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Content-Type: application/xml" \
+    -X POST "${JAMF_URL}/JSSResource/scripts/id/0" \
+    -d "${SCRIPT_PAYLOAD}")
+
+# Extract HTTP status code
+HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+
+# Step 4: Manual response parsing and error handling
+case $HTTP_STATUS in
+    201)
+        echo "✅ Script created successfully"
+        
+        # Extract script ID - fragile XML parsing
+        SCRIPT_ID=$(echo "$RESPONSE_BODY" | grep -o '<id>[0-9]*</id>' | head -1 | grep -o '[0-9]*')
+        
+        if [ ! -z "$SCRIPT_ID" ]; then
+            echo "📋 Script ID: $SCRIPT_ID"
+            echo "🔗 Script URL: ${JAMF_URL}/policies.html?id=${SCRIPT_ID}"
+            
+            # Save script ID for future operations - manual state management
+            echo "$SCRIPT_ID" > ".jamf_script_id"
+            echo "💾 Script ID saved to .jamf_script_id"
+        else
+            echo "⚠️  Script created but couldn't extract ID"
+        fi
+        ;;
+    409)
+        echo "❌ Script with name '$SCRIPT_NAME' already exists"
+        echo "💡 Use update_jamf_script.sh to modify existing script"
+        exit 1
+        ;;
+    401)
+        echo "❌ Authentication failed - token may have expired"
+        exit 1
+        ;;
+    403)
+        echo "❌ Insufficient permissions to create scripts"
+        exit 1
+        ;;
+    *)
+        echo "❌ Script creation failed with HTTP $HTTP_STATUS"
+        echo "📄 Response: $RESPONSE_BODY"
+        exit 1
+        ;;
+esac
+
+# Step 5: Manual cleanup - token invalidation
+echo "🧹 Cleaning up authentication token..."
+curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+
+echo "🎉 Script creation process complete!"
+
+# PROBLEMS WITH THIS IMPERATIVE APPROACH:
+# 1. Manual authentication and token management
+# 2. Complex XML payload construction
+# 3. Fragile response parsing and error handling  
+# 4. No idempotency - running twice fails with 409 conflict
+# 5. Manual state management (saving script ID to file)
+# 6. No dependency management or validation
+# 7. No drift detection capabilities
+# 8. Different scripts needed for different operations (CRUD)
+# 9. Credential exposure in command line arguments
+# 10. No rollback mechanism if creation partially succeeds
+```
+
+**Script 2: READ - Jamf Pro Script via API**
+
+```bash
+#!/bin/bash
+# read_jamf_script.sh - IMPERATIVE READ OPERATION
+# Demonstrates the complexity of manual API querying
+
+set -e
+
+# Configuration variables
+JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
+USERNAME="${2:-api_user}" 
+PASSWORD="${3:-api_password}"
+SCRIPT_IDENTIFIER="${4}"  # Can be ID or name
+
+if [ -z "$SCRIPT_IDENTIFIER" ]; then
+    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id_or_name>"
+    exit 1
+fi
+
+echo "🔐 Authenticating with Jamf Pro API..."
+
+# Manual authentication
+AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
+    "${JAMF_URL}/api/v1/auth/token" -X POST | \
+    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
 
 if [ -z "$AUTH_TOKEN" ]; then
     echo "❌ Authentication failed"
     exit 1
 fi
 
-echo "✅ Authentication successful"
+# Determine if identifier is numeric (ID) or string (name)
+if [[ "$SCRIPT_IDENTIFIER" =~ ^[0-9]+$ ]]; then
+    ENDPOINT="${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_IDENTIFIER}"
+    IDENTIFIER_TYPE="ID"
+else
+    # URL encode the name for API call
+    ENCODED_NAME=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SCRIPT_IDENTIFIER'))")
+    ENDPOINT="${JAMF_URL}/JSSResource/scripts/name/${ENCODED_NAME}"
+    IDENTIFIER_TYPE="Name"
+fi
 
-# Hardcoded XML payload - no reusability
-COMPUTER_GROUP_XML='<computer_group>
-    <name>Finance-Computers-Bash</name>
-    <is_smart>false</is_smart>
-    <site>
-        <id>-1</id>
-        <name>None</name>
-    </site>
-</computer_group>'
+echo "🔍 Retrieving script by $IDENTIFIER_TYPE: $SCRIPT_IDENTIFIER"
 
-POLICY_XML='<policy>
-    <general>
-        <name>'${POLICY_NAME}'</name>
-        <enabled>true</enabled>
-        <frequency>Once per computer</frequency>
-        <category>
-            <id>-1</id>
-        </category>
-    </general>
-    <scope>
-        <all_computers>false</all_computers>
-        <computers/>
-        <computer_groups>
-            <computer_group>
-                <id>REPLACE_GROUP_ID</id>
-            </computer_group>
-        </computer_groups>
-    </scope>
-    <package_configuration>
-        <packages>
-            <size>1</size>
-            <package>
-                <id>123</id>
-                <name>Security-Tool</name>
-                <action>Install</action>
-            </package>
-        </packages>
-    </package_configuration>
-</policy>'
+# Manual API call with error handling
+RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/xml" \
+    -X GET "$ENDPOINT")
 
-# Imperative step-by-step execution - fragile
-echo "🔄 Creating computer group..."
-GROUP_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Content-Type: application/xml" \
-    -X POST "${JAMF_URL}/JSSResource/computergroups/id/0" \
-    -d "${COMPUTER_GROUP_XML}")
+HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
 
-# Manual XML parsing - error-prone
-GROUP_ID=$(echo "${GROUP_RESPONSE}" | xpath '/computer_group/id/text()' 2>/dev/null)
+# Handle different response scenarios
+case $HTTP_STATUS in
+    200)
+        echo "✅ Script retrieved successfully"
+        echo ""
+        
+        # Manual XML parsing - fragile and complex
+        echo "📋 Script Details:"
+        echo "=================="
+        
+        # Extract basic information
+        SCRIPT_ID=$(echo "$RESPONSE_BODY" | grep -o '<id>[0-9]*</id>' | head -1 | sed 's/<[^>]*>//g')
+        SCRIPT_NAME=$(echo "$RESPONSE_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
+        CATEGORY=$(echo "$RESPONSE_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
+        FILENAME=$(echo "$RESPONSE_BODY" | grep -o '<filename>.*</filename>' | head -1 | sed 's/<[^>]*>//g')
+        PRIORITY=$(echo "$RESPONSE_BODY" | grep -o '<priority>.*</priority>' | head -1 | sed 's/<[^>]*>//g')
+        
+        echo "ID: ${SCRIPT_ID:-N/A}"
+        echo "Name: ${SCRIPT_NAME:-N/A}"  
+        echo "Category: ${CATEGORY:-N/A}"
+        echo "Filename: ${FILENAME:-N/A}"
+        echo "Priority: ${PRIORITY:-N/A}"
+        
+        # Extract info and notes - handling potential missing elements
+        INFO=$(echo "$RESPONSE_BODY" | grep -o '<info>.*</info>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
+        NOTES=$(echo "$RESPONSE_BODY" | grep -o '<notes>.*</notes>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
+        OS_REQUIREMENTS=$(echo "$RESPONSE_BODY" | grep -o '<os_requirements>.*</os_requirements>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
+        
+        echo "Info: $INFO"
+        echo "Notes: $NOTES"
+        echo "OS Requirements: $OS_REQUIREMENTS"
+        echo ""
+        
+        # Extract script contents - complex CDATA handling
+        echo "📜 Script Contents:"
+        echo "==================="
+        
+        # This is fragile - CDATA parsing in bash is problematic
+        SCRIPT_CONTENTS=$(echo "$RESPONSE_BODY" | sed -n '/<script_contents>/,/<\/script_contents>/p' | \
+            sed 's/<script_contents><!\[CDATA\[//' | sed 's/\]\]><\/script_contents>//' | \
+            sed '1d;$d' 2>/dev/null || echo "Could not extract script contents")
+        
+        if [ "$SCRIPT_CONTENTS" != "Could not extract script contents" ]; then
+            echo "$SCRIPT_CONTENTS"
+        else
+            echo "⚠️  Script contents could not be parsed from XML response"
+        fi
+        
+        # Save to file for potential future use
+        echo "$RESPONSE_BODY" > "script_${SCRIPT_ID}.xml"
+        echo ""
+        echo "💾 Full XML response saved to script_${SCRIPT_ID}.xml"
+        
+        ;;
+    404)
+        echo "❌ Script not found: $SCRIPT_IDENTIFIER"
+        echo "💡 Check the script ID/name and try again"
+        exit 1
+        ;;
+    401)
+        echo "❌ Authentication failed - check credentials"
+        exit 1
+        ;;
+    403)
+        echo "❌ Insufficient permissions to read scripts"
+        exit 1
+        ;;
+    *)
+        echo "❌ Failed to retrieve script with HTTP $HTTP_STATUS"
+        echo "📄 Response: $RESPONSE_BODY"
+        exit 1
+        ;;
+esac
 
-if [ -z "$GROUP_ID" ]; then
-    echo "❌ Failed to create computer group"
-    # Manual cleanup - no rollback mechanism
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+# Manual token cleanup
+curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+
+echo "✅ Script retrieval complete"
+
+# PROBLEMS WITH THIS IMPERATIVE READ APPROACH:
+# 1. Manual XML parsing with sed/grep - extremely fragile
+# 2. Complex handling of different identifier types (ID vs name)
+# 3. No validation of retrieved data structure
+# 4. CDATA parsing is problematic and error-prone
+# 5. Manual error handling for each possible HTTP response
+# 6. No caching or performance optimization
+# 7. Output format is inconsistent and hard to parse programmatically
+# 8. No filtering or query capabilities
+# 9. Manual token management for each operation
+# 10. Different scripts needed for different data formats (JSON vs XML)
+```
+
+**Script 3: UPDATE - Jamf Pro Script via API**
+
+```bash
+#!/bin/bash
+# update_jamf_script.sh - IMPERATIVE UPDATE OPERATION  
+# Demonstrates the complexity of manual API updates
+
+set -e
+
+# Configuration variables
+JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
+USERNAME="${2:-api_user}"
+PASSWORD="${3:-api_password}"
+SCRIPT_ID="${4}"
+UPDATE_VERSION="${5:-2.0}"
+
+if [ -z "$SCRIPT_ID" ]; then
+    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id> [version]"
+    echo "💡 Get script ID using read_jamf_script.sh first"
     exit 1
 fi
 
-echo "✅ Computer group created with ID: ${GROUP_ID}"
+echo "🔐 Authenticating with Jamf Pro API..."
 
-# Manual string replacement - fragile
-UPDATED_POLICY_XML=$(echo "${POLICY_XML}" | sed "s/REPLACE_GROUP_ID/${GROUP_ID}/g")
+AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
+    "${JAMF_URL}/api/v1/auth/token" -X POST | \
+    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
 
-echo "🔄 Creating policy..."
-POLICY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Content-Type: application/xml" \
-    -X POST "${JAMF_URL}/JSSResource/policies/id/0" \
-    -d "${UPDATED_POLICY_XML}")
-
-# Manual verification - no state tracking
-POLICY_ID=$(echo "${POLICY_RESPONSE}" | xpath '/policy/id/text()' 2>/dev/null)
-
-if [ -z "$POLICY_ID" ]; then
-    echo "❌ Failed to create policy"
-    # Partial cleanup - manual and incomplete
-    echo "🗑️ Cleaning up computer group..."
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X DELETE "${JAMF_URL}/JSSResource/computergroups/id/${GROUP_ID}"
-    
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "❌ Authentication failed"
     exit 1
 fi
 
-echo "✅ Policy created with ID: ${POLICY_ID}"
+# Step 1: Read current script to get existing data - required for update
+echo "🔍 Reading current script configuration..."
 
-# Manual status check - no drift detection
-echo "🔍 Verifying configuration..."
-VERIFY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X GET "${JAMF_URL}/JSSResource/policies/id/${POLICY_ID}")
+CURRENT_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/xml" \
+    -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
 
-if echo "${VERIFY_RESPONSE}" | grep -q "${POLICY_NAME}"; then
-    echo "✅ Policy verification successful"
-else
-    echo "⚠️ Policy verification failed - manual check required"
+CURRENT_HTTP_STATUS=$(echo "$CURRENT_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+CURRENT_BODY=$(echo "$CURRENT_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+
+if [ "$CURRENT_HTTP_STATUS" != "200" ]; then
+    echo "❌ Failed to read current script (HTTP $CURRENT_HTTP_STATUS)"
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+    exit 1
 fi
 
-# Manual cleanup decision - no lifecycle management
-echo "❓ Delete test resources? (y/N): "
-read -r DELETE_CHOICE
+# Step 2: Extract current values - fragile XML parsing
+CURRENT_NAME=$(echo "$CURRENT_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
+CURRENT_CATEGORY=$(echo "$CURRENT_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
+CURRENT_FILENAME=$(echo "$CURRENT_BODY" | grep -o '<filename>.*</filename>' | head -1 | sed 's/<[^>]*>//g')
 
-if [ "$DELETE_CHOICE" = "y" ] || [ "$DELETE_CHOICE" = "Y" ]; then
-    echo "🗑️ Deleting test policy..."
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X DELETE "${JAMF_URL}/JSSResource/policies/id/${POLICY_ID}"
+echo "📋 Current script: $CURRENT_NAME"
+
+# Step 3: Create updated script payload - manual XML construction
+UPDATED_PAYLOAD=$(cat << EOF
+<script>
+    <name>${CURRENT_NAME} - Updated</name>
+    <category>${CURRENT_CATEGORY}</category>
+    <filename>${CURRENT_FILENAME}</filename>
+    <info>Enhanced security compliance check with additional validations</info>
+    <notes>Updated via API - Version ${UPDATE_VERSION} - $(date)</notes>
+    <priority>Before</priority>
+    <parameters/>
+    <os_requirements>macOS 12.0</os_requirements>
+    <script_contents><![CDATA[#!/bin/bash
+
+# Security Compliance Check Script - UPDATED VERSION
+# Version: ${UPDATE_VERSION}
+# Purpose: Enhanced corporate security validation
+
+echo "🔍 Starting enhanced security compliance check..."
+echo "📅 Script version: ${UPDATE_VERSION}"
+echo "🕒 Execution time: \$(date)"
+
+# Enhanced FileVault check with recovery key validation
+echo "🔐 Checking FileVault status..."
+FILEVAULT_STATUS=\$(fdesetup status | head -1)
+if [[ "\$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+    echo "✅ FileVault: Enabled"
     
-    echo "🗑️ Deleting test computer group..."
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X DELETE "${JAMF_URL}/JSSResource/computergroups/id/${GROUP_ID}"
-    
-    echo "✅ Cleanup completed"
+    # NEW: Check for institutional recovery key
+    RECOVERY_KEY_CHECK=\$(fdesetup list -extended | grep -c "Recovery Key")
+    if [[ \$RECOVERY_KEY_CHECK -gt 0 ]]; then
+        echo "✅ Institutional recovery key: Present"
+        FILEVAULT_COMPLIANT=1
+    else
+        echo "⚠️  Institutional recovery key: Missing"
+        FILEVAULT_COMPLIANT=0
+    fi
 else
-    echo "⚠️ Test resources left in place:"
-    echo "   Policy ID: ${POLICY_ID}"
-    echo "   Computer Group ID: ${GROUP_ID}"
-    echo "   Manual cleanup required"
+    echo "❌ FileVault: Disabled"
+    FILEVAULT_COMPLIANT=0
 fi
+
+# Enhanced firewall check with stealth mode validation
+echo "🔥 Checking firewall configuration..."
+FIREWALL_STATUS=\$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+STEALTH_MODE=\$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
+
+if [[ "\$FIREWALL_STATUS" == "1" ]]; then
+    echo "✅ Firewall: Enabled"
+    if [[ "\$STEALTH_MODE" == "1" ]]; then
+        echo "✅ Stealth mode: Enabled"
+        FIREWALL_COMPLIANT=1
+    else
+        echo "⚠️  Stealth mode: Disabled"
+        FIREWALL_COMPLIANT=0
+    fi
+else
+    echo "❌ Firewall: Disabled"
+    FIREWALL_COMPLIANT=0
+fi
+
+# Enhanced application check with version validation
+echo "📱 Checking required applications..."
+REQUIRED_APPS_DATA='
+Google Chrome|/Applications/Google Chrome.app|100.0
+Microsoft Office|/Applications/Microsoft Excel.app|16.0  
+CrowdStrike Falcon|/Applications/Falcon.app|6.0
+'
+
+APPS_COMPLIANT=1
+while IFS='|' read -r app_name app_path min_version; do
+    if [[ -z "\$app_name" ]]; then continue; fi
+    
+    if [[ -d "\$app_path" ]]; then
+        echo "✅ Required App: \$app_name installed"
+        
+        # NEW: Version checking (simplified)
+        APP_VERSION=\$(defaults read "\$app_path/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unknown")
+        echo "   Version: \$APP_VERSION"
+    else
+        echo "❌ Required App: \$app_name missing"
+        APPS_COMPLIANT=0
+    fi
+done <<< "\$REQUIRED_APPS_DATA"
+
+# NEW: Password policy check
+echo "🔑 Checking password policy compliance..."
+PWD_MIN_LENGTH=\$(pwpolicy -n /Local/Default -getglobalpolicy | grep -o 'minChars=[0-9]*' | cut -d'=' -f2)
+if [[ \$PWD_MIN_LENGTH -ge 8 ]]; then
+    echo "✅ Password policy: Compliant (min \$PWD_MIN_LENGTH chars)"
+    PASSWORD_COMPLIANT=1
+else
+    echo "❌ Password policy: Non-compliant (min \$PWD_MIN_LENGTH chars)"
+    PASSWORD_COMPLIANT=0
+fi
+
+# NEW: Screen saver lock check
+echo "🔒 Checking screen saver security..."
+SCREENSAVER_DELAY=\$(defaults read /Library/Preferences/com.apple.screensaver idleTime 2>/dev/null || echo "0")
+ASK_FOR_PASSWORD=\$(defaults read /Library/Preferences/com.apple.screensaver askForPassword 2>/dev/null || echo "0")
+
+if [[ \$SCREENSAVER_DELAY -le 600 && \$ASK_FOR_PASSWORD == "1" ]]; then
+    echo "✅ Screen saver: Secure (locks in \$SCREENSAVER_DELAY seconds)"
+    SCREENSAVER_COMPLIANT=1
+else
+    echo "❌ Screen saver: Insecure"
+    SCREENSAVER_COMPLIANT=0
+fi
+
+# Calculate enhanced compliance score
+TOTAL_CHECKS=5
+PASSED_CHECKS=\$((FILEVAULT_COMPLIANT + FIREWALL_COMPLIANT + APPS_COMPLIANT + PASSWORD_COMPLIANT + SCREENSAVER_COMPLIANT))
+COMPLIANCE_PERCENTAGE=\$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+
+echo "📊 Enhanced Compliance Score: \${COMPLIANCE_PERCENTAGE}% (\$PASSED_CHECKS/\$TOTAL_CHECKS checks passed)"
+
+# NEW: Detailed reporting to Jamf Pro with extension attributes
+echo "📡 Updating Jamf Pro inventory..."
+/usr/local/jamf/bin/jamf recon \
+    -endUsername "system" \
+    -verbose
+
+# NEW: Create compliance report
+REPORT_FILE="/tmp/compliance_report_\$(date +%Y%m%d_%H%M%S).log"
+cat > "\$REPORT_FILE" << REPORT
+Security Compliance Report - Version ${UPDATE_VERSION}
+Generated: \$(date)
+Device: \$(hostname)
+
+FileVault Status: \$([ \$FILEVAULT_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
+Firewall Status: \$([ \$FIREWALL_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")  
+Applications Status: \$([ \$APPS_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
+Password Policy: \$([ \$PASSWORD_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
+Screen Saver Security: \$([ \$SCREENSAVER_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
+
+Overall Compliance: \${COMPLIANCE_PERCENTAGE}%
+REPORT
+
+echo "📄 Report saved to: \$REPORT_FILE"
+
+if [[ \$COMPLIANCE_PERCENTAGE -ge 90 ]]; then
+    echo "✅ Device is highly compliant"
+    exit 0
+elif [[ \$COMPLIANCE_PERCENTAGE -ge 70 ]]; then
+    echo "⚠️  Device is minimally compliant - improvements recommended"
+    exit 0  
+else
+    echo "❌ Device requires immediate remediation"
+    exit 1
+fi
+]]></script_contents>
+</script>
+EOF
+)
+
+# Step 4: Execute update API call
+echo "🔄 Updating script in Jamf Pro..."
+
+UPDATE_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Content-Type: application/xml" \
+    -X PUT "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}" \
+    -d "${UPDATED_PAYLOAD}")
+
+UPDATE_HTTP_STATUS=$(echo "$UPDATE_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+UPDATE_BODY=$(echo "$UPDATE_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+
+# Step 5: Handle update response
+case $UPDATE_HTTP_STATUS in
+    201)
+        echo "✅ Script updated successfully"
+        echo "📋 Script ID: $SCRIPT_ID"
+        echo "🔗 View in Jamf Pro: ${JAMF_URL}/computerManagement.html?id=${SCRIPT_ID}&o=r&v=scripts"
+        
+        # Verify update by reading back the script
+        echo "🔍 Verifying update..."
+        VERIFY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -H "Accept: application/xml" \
+            -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
+        
+        UPDATED_NAME=$(echo "$VERIFY_RESPONSE" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
+        echo "✅ Updated script name: $UPDATED_NAME"
+        ;;
+    404)
+        echo "❌ Script with ID $SCRIPT_ID not found"
+        exit 1
+        ;;
+    401)
+        echo "❌ Authentication failed"
+        exit 1
+        ;;
+    403)
+        echo "❌ Insufficient permissions to update script"
+        exit 1
+        ;;
+    *)
+        echo "❌ Script update failed with HTTP $UPDATE_HTTP_STATUS"
+        echo "📄 Response: $UPDATE_BODY"
+        exit 1
+        ;;
+esac
 
 # Token cleanup
 curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token"
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
 
-# Problems with this imperative bash approach:
-# 1. No state management - can't track or detect changes
-# 2. No idempotency - running twice creates duplicates
-# 3. Manual XML manipulation and string replacement
-# 4. Complex error handling and partial rollback scenarios
-# 5. Hard to version control the actual configuration
-# 6. No dependency management between API calls
-# 7. Credential management is manual and insecure
-# 8. No plan/preview - changes are immediate and irreversible
-# 9. Different scripts needed for CRUD operations
-# 10. Difficult to maintain and scale across environments
+echo "🎉 Script update process complete!"
 
-echo "Configuration applied - hope the XML was valid and nothing broke!"
+# PROBLEMS WITH THIS IMPERATIVE UPDATE APPROACH:
+# 1. Must read current state before updating - multiple API calls
+# 2. Complex XML manipulation and template construction
+# 3. Manual state comparison and merge logic
+# 4. No rollback if update fails partway through
+# 5. Fragile XML parsing of current state
+# 6. No validation of updated data before sending
+# 7. Manual verification step needed after update
+# 8. Different update strategy needed for partial vs full updates
+# 9. No dependency checking if script is used by policies
+# 10. No conflict resolution if script was modified by another admin
 ```
 
-#### 🏢 Microsoft 365 Configuration as Code
+**Script 4: DELETE - Jamf Pro Script via API**
 
-Microsoft 365 provides extensive APIs that can be managed through Terraform, enabling declarative management of users, groups, applications, and security policies.
+```bash
+#!/bin/bash
+# delete_jamf_script.sh - IMPERATIVE DELETE OPERATION
+# Demonstrates the complexity and risks of manual API deletion
 
-**Microsoft 365 Configuration Architecture:**
-```mermaid
-flowchart TD
-    subgraph "🔧 Terraform Configuration"
-        TF_CONFIG["terraform/microsoft365/<br/>• main.tf<br/>• variables.tf<br/>• outputs.tf"]
-        TF_MODULES["Terraform Modules<br/>• users.tf<br/>• groups.tf<br/>• applications.tf<br/>• security-policies.tf"]
-    end
+set -e
+
+# Configuration variables
+JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
+USERNAME="${2:-api_user}"
+PASSWORD="${3:-api_password}" 
+SCRIPT_ID="${4}"
+FORCE_DELETE="${5:-false}"
+
+if [ -z "$SCRIPT_ID" ]; then
+    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id> [force_delete]"
+    echo "💡 Get script ID using read_jamf_script.sh first"
+    exit 1
+fi
+
+echo "🔐 Authenticating with Jamf Pro API..."
+
+AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
+    "${JAMF_URL}/api/v1/auth/token" -X POST | \
+    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
+
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "❌ Authentication failed"
+    exit 1
+fi
+
+# Step 1: Pre-deletion validation - check if script exists and get details
+echo "🔍 Validating script before deletion..."
+
+SCRIPT_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/xml" \
+    -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
+
+SCRIPT_HTTP_STATUS=$(echo "$SCRIPT_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+SCRIPT_BODY=$(echo "$SCRIPT_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+
+if [ "$SCRIPT_HTTP_STATUS" != "200" ]; then
+    echo "❌ Script with ID $SCRIPT_ID not found or inaccessible"
+    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+    exit 1
+fi
+
+# Extract script details for confirmation
+SCRIPT_NAME=$(echo "$SCRIPT_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
+SCRIPT_CATEGORY=$(echo "$SCRIPT_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
+
+echo "📋 Script to delete:"
+echo "   ID: $SCRIPT_ID"
+echo "   Name: $SCRIPT_NAME"
+echo "   Category: $SCRIPT_CATEGORY"
+
+# Step 2: Check for dependencies - scripts used by policies
+# This is complex because we need to check all policies for script references
+echo "🔍 Checking for policy dependencies..."
+
+POLICIES_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/xml" \
+    -X GET "${JAMF_URL}/JSSResource/policies")
+
+if [ $? -eq 0 ]; then
+    # Extract policy IDs that might use this script - very fragile
+    DEPENDENT_POLICIES=$(echo "$POLICIES_RESPONSE" | grep -B5 -A5 "<script_id>${SCRIPT_ID}</script_id>" | grep -o '<id>[0-9]*</id>' | head -10 | sed 's/<[^>]*>//g' || echo "")
     
-    subgraph "🌐 Microsoft Graph API"
-        GRAPH_API["Microsoft Graph API<br/>• Authentication endpoint<br/>• User management<br/>• Group management<br/>• Application registration<br/>• Security policies"]
-        API_RESOURCES["API Resources<br/>• /users<br/>• /groups<br/>• /applications<br/>• /policies<br/>• /conditionalAccess"]
-    end
+    if [ ! -z "$DEPENDENT_POLICIES" ]; then
+        echo "⚠️  WARNING: Script is referenced by policies:"
+        echo "$DEPENDENT_POLICIES" | while read policy_id; do
+            if [ ! -z "$policy_id" ]; then
+                # Get policy name - another API call for each dependency
+                POLICY_INFO=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+                    -X GET "${JAMF_URL}/JSSResource/policies/id/${policy_id}" | \
+                    grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g' 2>/dev/null || echo "Policy ID: $policy_id")
+                echo "   - $POLICY_INFO"
+            fi
+        done
+        
+        if [ "$FORCE_DELETE" != "true" ]; then
+            echo "❌ Cannot delete script with policy dependencies"
+            echo "💡 Options:"
+            echo "   1. Remove script from dependent policies first"
+            echo "   2. Use 'force_delete=true' parameter to ignore dependencies"
+            curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+                -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+            exit 1
+        else
+            echo "⚠️  Proceeding with forced deletion despite dependencies!"
+        fi
+    else
+        echo "✅ No policy dependencies found"
+    fi
+else
+    echo "⚠️  Could not check policy dependencies - proceeding with caution"
+fi
+
+# Step 3: Create backup before deletion
+echo "💾 Creating backup of script before deletion..."
+
+BACKUP_DIR="./jamf_script_backups"
+mkdir -p "$BACKUP_DIR"
+
+BACKUP_FILE="${BACKUP_DIR}/script_${SCRIPT_ID}_$(date +%Y%m%d_%H%M%S).xml"
+echo "$SCRIPT_BODY" > "$BACKUP_FILE"
+echo "✅ Backup saved to: $BACKUP_FILE"
+
+# Step 4: Final confirmation (if not forced)
+if [ "$FORCE_DELETE" != "true" ]; then
+    echo ""
+    echo "⚠️  FINAL WARNING: You are about to permanently delete this script!"
+    echo "📋 Script: $SCRIPT_NAME (ID: $SCRIPT_ID)"
+    echo "💾 Backup: $BACKUP_FILE"
+    echo ""
+    read -p "🤔 Are you absolutely sure? Type 'DELETE' to confirm: " CONFIRMATION
     
-    subgraph "☁️ Microsoft 365 Services"
-        M365_SERVICES["Microsoft 365 Services<br/>• Azure Active Directory<br/>• Exchange Online<br/>• SharePoint Online<br/>• Microsoft Teams<br/>• Intune"]
-        SERVICE_CONFIG["Service Configurations<br/>• User accounts & licenses<br/>• Security groups<br/>• Conditional access policies<br/>• Application permissions<br/>• Device compliance"]
-    end
-    
-    subgraph "🔄 State Management"
-        TF_STATE["Terraform State<br/>• Current configuration<br/>• Resource dependencies<br/>• Change tracking"]
-        DRIFT_DETECT["Drift Detection<br/>• terraform plan<br/>• Compare desired vs actual<br/>• Identify manual changes"]
-    end
-    
-    %% Connections
-    TF_CONFIG --> TF_MODULES
-    TF_MODULES --> GRAPH_API
-    GRAPH_API --> API_RESOURCES
-    API_RESOURCES --> M365_SERVICES
-    M365_SERVICES --> SERVICE_CONFIG
-    
-    %% State management
-    TF_MODULES --> TF_STATE
-    TF_STATE --> DRIFT_DETECT
-    DRIFT_DETECT -.-> TF_CONFIG
-    
-    %% Feedback loop for drift remediation
-    SERVICE_CONFIG -.-> DRIFT_DETECT
-    
-    style TF_CONFIG fill:#e3f2fd
-    style GRAPH_API fill:#fff3e0
-    style M365_SERVICES fill:#e8f5e8
-    style TF_STATE fill:#f3e5f5
+    if [ "$CONFIRMATION" != "DELETE" ]; then
+        echo "❌ Deletion cancelled by user"
+        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+        exit 0
+    fi
+fi
+
+# Step 5: Execute deletion
+echo "🗑️  Deleting script from Jamf Pro..."
+
+DELETE_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X DELETE "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
+
+DELETE_HTTP_STATUS=$(echo "$DELETE_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+DELETE_BODY=$(echo "$DELETE_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+
+# Step 6: Handle deletion response and cleanup
+case $DELETE_HTTP_STATUS in
+    200)
+        echo "✅ Script deleted successfully"
+        echo "🗑️  Script '$SCRIPT_NAME' (ID: $SCRIPT_ID) has been removed from Jamf Pro"
+        echo "💾 Backup available at: $BACKUP_FILE"
+        
+        # Verify deletion by attempting to read the script
+        echo "🔍 Verifying deletion..."
+        VERIFY_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+            -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
+        
+        VERIFY_STATUS=$(echo "$VERIFY_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+        
+        if [ "$VERIFY_STATUS" == "404" ]; then
+            echo "✅ Deletion verified - script no longer exists"
+        else
+            echo "⚠️  Deletion may not have completed properly (HTTP $VERIFY_STATUS)"
+        fi
+        
+        # Log deletion event
+        echo "$(date): Deleted script '$SCRIPT_NAME' (ID: $SCRIPT_ID) by $USERNAME" >> "${BACKUP_DIR}/deletion_log.txt"
+        ;;
+    404)
+        echo "❌ Script with ID $SCRIPT_ID not found (may have been already deleted)"
+        ;;
+    401)
+        echo "❌ Authentication failed during deletion"
+        exit 1
+        ;;
+    403)
+        echo "❌ Insufficient permissions to delete script"
+        exit 1
+        ;;
+    409)
+        echo "❌ Cannot delete script - it may be in use by active policies"
+        echo "💡 Remove the script from all policies before deletion"
+        exit 1
+        ;;
+    *)
+        echo "❌ Script deletion failed with HTTP $DELETE_HTTP_STATUS"
+        echo "📄 Response: $DELETE_BODY"
+        exit 1
+        ;;
+esac
+
+# Token cleanup
+curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+
+echo "🎉 Script deletion process complete!"
+
+# PROBLEMS WITH THIS IMPERATIVE DELETE APPROACH:
+# 1. Complex dependency checking requires multiple API calls
+# 2. Manual backup creation and management
+# 3. No atomic transaction - partial failures leave inconsistent state
+# 4. Fragile dependency parsing from XML responses  
+# 5. Manual confirmation process is not suitable for automation
+# 6. No rollback mechanism if deletion causes issues
+# 7. Risk of cascade failures if dependencies weren't properly identified
+# 8. Manual logging and audit trail creation
+# 9. No integration with change management processes
+# 10. Different deletion strategies needed for different resource types
 ```
 
-**🏢 Microsoft 365 Configuration Examples:**
+#### ✅ The Declarative Approach: Terraform Configuration
 
-**1. User and Group Management:**
+Now let's see how Terraform transforms this complex CRUD nightmare into simple, declarative configuration management:
+
 ```hcl
-# microsoft365/users-and-groups.tf
-# Configuration as Code for Microsoft 365 user and group management
-
-terraform {
-  required_providers {
-    microsoft365 = {
-      source  = "deploymenttheory/microsoft365"
-      version = "~> 0.27"
-    }
-  }
-}
-
-# Configure the Microsoft 365 provider
-provider "microsoft365" {
-  # Authentication handled via environment variables:
-  # MICROSOFT365_CLIENT_ID, MICROSOFT365_CLIENT_SECRET, MICROSOFT365_TENANT_ID
-  # Supports multiple auth methods: client secret, certificate, device code, etc.
-}
-
-# Create security groups for different departments
-resource "microsoft365_group" "departments" {
-  for_each = toset([
-    "Engineering",
-    "Marketing", 
-    "Sales",
-    "HR",
-    "Finance"
-  ])
-  
-  display_name         = "${each.key} Department"
-  description          = "${each.key} department security group - managed by Terraform"
-  mail_enabled         = false
-  security_enabled     = true
-  mail_nickname        = lower("${each.key}-dept")
-  
-  # Configuration as Code: Consistent group settings
-  visibility = "Private"
-  
-  # Group types for different purposes
-  group_types = []  # Empty for security groups
-}
-
-# Create Microsoft 365 users with standardized configuration
-resource "microsoft365_user" "employees" {
-  for_each = var.employees
-  
-  # User principal name follows company standard
-  user_principal_name = "${each.value.username}@${var.tenant_domain}"
-  display_name        = each.value.display_name
-  mail_nickname       = each.value.username
-  
-  # Configuration as Code: Standardized user settings
-  given_name = each.value.first_name
-  surname    = each.value.last_name
-  job_title  = each.value.job_title
-  department = each.value.department
-  
-  # Office location and contact info
-  office_location = each.value.office
-  mobile_phone    = each.value.mobile_phone
-  
-  # Account settings
-  account_enabled = true
-  
-  # Password policy
-  password_profile {
-    password                      = each.value.temporary_password
-    force_change_password_next_sign_in = true
-  }
-  
-  # Usage location for license assignment
-  usage_location = "US"
-  
-  # Lifecycle management
-  lifecycle {
-    # Prevent accidental user deletion
-    prevent_destroy = true
-    # Ignore password changes made outside Terraform
-    ignore_changes = [password_profile[0].password]
-  }
-}
-
-# Assign users to department groups
-resource "microsoft365_group_member" "department_memberships" {
-  for_each = var.employees
-  
-  group_id = microsoft365_group.departments[each.value.department].id
-  member_id = microsoft365_user.employees[each.key].id
-  
-  # Configuration as Code: Automated group assignment
-  # No manual clicking through admin portals!
-}
-
-# Administrative group with elevated permissions
-resource "microsoft365_group" "global_admins" {
-  display_name     = "Terraform Managed Admins"
-  description      = "Administrative users managed by Terraform - elevated permissions"
-  mail_enabled     = false
-  security_enabled = true
-  mail_nickname    = "terraform-admins"
-  visibility       = "Private"
-  
-  # Restrict group membership to prevent unauthorized access
-  group_types = []
-}
-
-# Assign admin users to administrative group
-resource "microsoft365_group_member" "admin_memberships" {
-  for_each = {
-    for user_key, user_data in var.employees : user_key => user_data
-    if user_data.is_admin == true
-  }
-  
-  group_id  = microsoft365_group.global_admins.id
-  member_id = microsoft365_user.employees[each.key].id
-}
-
-# Variables definition
-variable "employees" {
-  description = "Map of employees to create in Microsoft 365"
-  type = map(object({
-    username           = string
-    display_name       = string
-    first_name         = string
-    last_name          = string
-    job_title          = string
-    department         = string
-    office             = string
-    mobile_phone       = optional(string)
-    temporary_password = string
-    is_admin           = optional(bool, false)
-  }))
-  
-  # Example usage in terraform.tfvars:
-  # employees = {
-  #   "jdoe" = {
-  #     username           = "jdoe"
-  #     display_name       = "John Doe"
-  #     first_name         = "John"
-  #     last_name          = "Doe"
-  #     job_title          = "Software Engineer"
-  #     department         = "Engineering"
-  #     office             = "New York"
-  #     mobile_phone       = "+1-555-0123"
-  #     temporary_password = "TempPass123!"
-  #     is_admin           = false
-  #   }
-  # }
-}
-
-variable "tenant_domain" {
-  description = "Microsoft 365 tenant domain"
-  type        = string
-  default     = "company.onmicrosoft.com"
-}
-
-# Outputs for other modules or verification
-output "created_users" {
-  description = "List of created users with their IDs"
-  value = {
-    for key, user in microsoft365_user.employees : key => {
-      id                  = user.id
-      user_principal_name = user.user_principal_name
-      display_name        = user.display_name
-    }
-  }
-}
-
-output "department_groups" {
-  description = "Department groups with member counts"
-  value = {
-    for name, group in microsoft365_group.departments : name => {
-      id           = group.id
-      display_name = group.display_name
-      member_count = length([
-        for user_key, user_data in var.employees : user_key
-        if user_data.department == name
-      ])
-    }
-  }
-}
-
-# Benefits of this Configuration as Code approach:
-# 1. Consistent user creation across environments
-# 2. Automated group membership based on department
-# 3. Version controlled user and group definitions
-# 4. Easy to replicate entire org structure
-# 5. Audit trail of all changes
-# 6. Drift detection - terraform plan shows manual changes
-# 7. Scalable - add 100 users as easily as 1 user
-# 8. Multi-cloud and government cloud support
-```
-
-**2. Conditional Access Policies:**
-```hcl
-# microsoft365/conditional-access.tf
-# Configuration as Code for Microsoft 365 security policies
-
-# Conditional Access Policy: Require MFA for all users
-resource "azuread_conditional_access_policy" "require_mfa" {
-  display_name = "Require MFA for All Users"
-  state        = "enabled"  # Can be: enabled, disabled, enabledForReportingButNotEnforced
-  
-  # Configuration as Code: Define exactly who this applies to
-  conditions {
-    users {
-      included_users = ["All"]
-      # Exclude emergency access accounts
-      excluded_users = [azuread_user.emergency_access.object_id]
-    }
-    
-    applications {
-      included_applications = ["All"]
-      # Exclude specific apps if needed
-      excluded_applications = []
-    }
-    
-    # Apply to all locations except trusted networks
-    locations {
-      included_locations = ["All"]
-      excluded_locations = [azuread_named_location.corporate_network.id]
-    }
-    
-    # Apply to all platforms
-    platforms {
-      included_platforms = ["all"]
-    }
-    
-    # Risk-based conditions
-    sign_in_risk_levels = ["medium", "high"]
-    user_risk_levels    = ["medium", "high"]
-  }
-  
-  # Configuration as Code: Explicit grant controls
-  grant_controls {
-    operator          = "OR"  # User must satisfy ONE of these requirements
-    built_in_controls = ["mfa"]  # Require multi-factor authentication
-    
-    # Additional controls can be added
-    # built_in_controls = ["mfa", "compliantDevice", "domainJoinedDevice"]
-  }
-  
-  # Session controls for additional security
-  session_controls {
-    application_enforced_restrictions_enabled = true
-    cloud_app_security_policy                = "monitorOnly"
-    sign_in_frequency                        = 24  # Hours
-    sign_in_frequency_period                 = "hours"
-  }
-}
-
-# Conditional Access Policy: Block legacy authentication
-resource "azuread_conditional_access_policy" "block_legacy_auth" {
-  display_name = "Block Legacy Authentication"
-  state        = "enabled"
-  
-  conditions {
-    users {
-      included_users = ["All"]
-      # Exclude service accounts that might need legacy auth temporarily
-      excluded_users = var.legacy_auth_service_accounts
-    }
-    
-    applications {
-      included_applications = ["All"]
-    }
-    
-    # Target legacy authentication protocols
-    client_app_types = [
-      "exchangeActiveSync",
-      "other"  # Covers IMAP, POP, SMTP, etc.
-    ]
-  }
-  
-  # Configuration as Code: Explicit block control
-  grant_controls {
-    operator          = "OR"
-    built_in_controls = ["block"]  # Block access entirely
-  }
-}
-
-# Conditional Access Policy: Require compliant devices for sensitive apps
-resource "azuread_conditional_access_policy" "compliant_devices_sensitive_apps" {
-  display_name = "Require Compliant Devices for Sensitive Applications"
-  state        = "enabled"
-  
-  conditions {
-    users {
-      # Apply to specific high-privilege groups
-      included_groups = [
-        azuread_group.global_admins.object_id,
-        azuread_group.departments["Finance"].object_id,
-        azuread_group.departments["HR"].object_id
-      ]
-    }
-    
-    applications {
-      # Sensitive applications requiring device compliance
-      included_applications = [
-        "00000003-0000-0000-c000-000000000000",  # Microsoft Graph
-        "00000002-0000-0ff1-ce00-000000000000"   # Exchange Online
-      ]
-    }
-    
-    platforms {
-      included_platforms = ["android", "iOS", "windows", "macOS"]
-    }
-  }
-  
-  grant_controls {
-    operator = "AND"  # User must satisfy ALL requirements
-    built_in_controls = [
-      "mfa",
-      "compliantDevice"  # Device must be Intune compliant
-    ]
-  }
-}
-
-# Named location for corporate network (trusted location)
-resource "azuread_named_location" "corporate_network" {
-  display_name = "Corporate Network"
-  
-  ip {
-    ip_ranges_ipv4 = [
-      "203.0.113.0/24",  # Main office
-      "198.51.100.0/24"  # Branch office
-    ]
-    trusted = true  # Mark as trusted location
-  }
-}
-
-# Emergency access account (break-glass account)
-resource "azuread_user" "emergency_access" {
-  user_principal_name   = "emergency@${data.azuread_domains.company.domains[0].domain_name}"
-  display_name          = "Emergency Access Account"
-  mail_nickname         = "emergency"
-  password              = var.emergency_account_password
-  force_password_change = false  # Don't force password change for emergency account
-  
-  # Configuration as Code: Specific settings for emergency account
-  account_enabled = true
-  
-  # Lifecycle management for critical account
-  lifecycle {
-    prevent_destroy = true  # Never accidentally delete emergency access
-    ignore_changes  = [password]  # Manage password outside Terraform
-  }
-}
-
-# Variables for conditional access policies
-variable "legacy_auth_service_accounts" {
-  description = "List of service account object IDs that need legacy auth temporarily"
-  type        = list(string)
-  default     = []
-}
-
-variable "emergency_account_password" {
-  description = "Password for emergency access account"
-  type        = string
-  sensitive   = true
-}
-
-# Outputs for monitoring and compliance
-output "conditional_access_policies" {
-  description = "Created conditional access policies"
-  value = {
-    mfa_policy = {
-      id           = azuread_conditional_access_policy.require_mfa.id
-      display_name = azuread_conditional_access_policy.require_mfa.display_name
-      state        = azuread_conditional_access_policy.require_mfa.state
-    }
-    legacy_auth_block = {
-      id           = azuread_conditional_access_policy.block_legacy_auth.id
-      display_name = azuread_conditional_access_policy.block_legacy_auth.display_name
-      state        = azuread_conditional_access_policy.block_legacy_auth.state
-    }
-    compliant_devices = {
-      id           = azuread_conditional_access_policy.compliant_devices_sensitive_apps.id
-      display_name = azuread_conditional_access_policy.compliant_devices_sensitive_apps.display_name
-      state        = azuread_conditional_access_policy.compliant_devices_sensitive_apps.state
-    }
-  }
-}
-
-# Benefits of Configuration as Code for Conditional Access:
-# 1. Consistent security policies across environments
-# 2. Version controlled security configuration
-# 3. Peer review of security policy changes
-# 4. Automated deployment of security policies
-# 5. Easy replication for new tenants
-# 6. Audit trail of all policy changes
-# 7. Drift detection for unauthorized policy modifications
-# 8. Documentation embedded in code comments
-```
-
-**📚 Learn More:**
-- 🔗 [Microsoft Graph API Documentation](https://docs.microsoft.com/en-us/graph/)
-- 🔗 [Microsoft 365 Terraform Provider](https://github.com/deploymenttheory/terraform-provider-microsoft365)
-- 🔗 [Microsoft 365 Provider Registry](https://registry.terraform.io/providers/deploymenttheory/microsoft365/latest)
-
-#### 📱 Jamf Pro Configuration as Code
-
-Jamf Pro provides comprehensive APIs for managing Apple device configurations, policies, and compliance. Terraform enables declarative management of the entire Jamf Pro environment.
-
-**Jamf Pro Configuration Architecture:**
-```mermaid
-flowchart TD
-    subgraph "🔧 Terraform Configuration"
-        JAMF_CONFIG["terraform/jamfpro/<br/>• main.tf<br/>• policies.tf<br/>• profiles.tf<br/>• groups.tf"]
-        JAMF_MODULES["Terraform Modules<br/>• device-groups.tf<br/>• configuration-profiles.tf<br/>• policies.tf<br/>• applications.tf"]
-    end
-    
-    subgraph "🌐 Jamf Pro API"
-        JAMF_API["Jamf Pro REST API<br/>• Authentication<br/>• Device management<br/>• Policy management<br/>• Configuration profiles<br/>• Application deployment"]
-        API_ENDPOINTS["API Endpoints<br/>• /JSSResource/computergroups<br/>• /JSSResource/policies<br/>• /JSSResource/osxconfigurationprofiles<br/>• /JSSResource/packages<br/>• /JSSResource/scripts"]
-    end
-    
-    subgraph "📱 Managed Devices"
-        DEVICES["Apple Devices<br/>• macOS computers<br/>• iOS devices<br/>• iPadOS devices<br/>• tvOS devices"]
-        DEVICE_CONFIG["Device Configurations<br/>• Security policies<br/>• Application installations<br/>• System preferences<br/>• Compliance settings"]
-    end
-    
-    subgraph "🔄 State Management"
-        JAMF_STATE["Terraform State<br/>• Policy definitions<br/>• Profile configurations<br/>• Group memberships"]
-        CONFIG_DRIFT["Configuration Drift<br/>• terraform plan detection<br/>• Policy modifications<br/>• Profile changes"]
-    end
-    
-    %% Connections
-    JAMF_CONFIG --> JAMF_MODULES
-    JAMF_MODULES --> JAMF_API
-    JAMF_API --> API_ENDPOINTS
-    API_ENDPOINTS --> DEVICES
-    DEVICES --> DEVICE_CONFIG
-    
-    %% State management
-    JAMF_MODULES --> JAMF_STATE
-    JAMF_STATE --> CONFIG_DRIFT
-    CONFIG_DRIFT -.-> JAMF_CONFIG
-    
-    %% Feedback loop
-    DEVICE_CONFIG -.-> CONFIG_DRIFT
-    
-    style JAMF_CONFIG fill:#e3f2fd
-    style JAMF_API fill:#fff3e0
-    style DEVICES fill:#e8f5e8
-    style JAMF_STATE fill:#f3e5f5
-```
-
-**📱 Jamf Pro Configuration Examples:**
-
-**1. Device Groups and Smart Groups:**
-```hcl
-# jamfpro/device-groups.tf
-# Configuration as Code for Jamf Pro device organization
+# jamfpro/security_script.tf - DECLARATIVE CONFIGURATION AS CODE
+# This single file replaces all four imperative scripts above!
 
 terraform {
   required_providers {
@@ -883,909 +1078,739 @@ terraform {
   }
 }
 
-# Configure Jamf Pro provider
+# Provider configuration - handles authentication automatically
 provider "jamfpro" {
-  # Authentication via environment variables:
+  # Credentials via environment variables:
   # JAMFPRO_INSTANCE_FQDN, JAMFPRO_CLIENT_ID, JAMFPRO_CLIENT_SECRET
   jamfpro_load_balancer_lock = true
   log_level                  = "INFO"
 }
 
-# Static computer groups for organizational structure
-resource "jamfpro_static_computer_group" "departments" {
-  for_each = toset([
-    "Engineering",
-    "Marketing",
-    "Sales", 
-    "HR",
-    "Finance",
-    "Executive"
-  ])
+# Single resource definition - Terraform handles all CRUD operations!
+resource "jamfpro_script" "security_compliance_check" {
+  name     = "Security Compliance Check - Terraform Managed"
+  filename = "security_compliance_check.sh"
+  category_id = -1  # Default category
+  info        = "Corporate security compliance validation script - managed via Terraform"
+  notes       = "Version controlled via Terraform - DO NOT MODIFY MANUALLY"
+  priority    = "Before"
+  parameter4  = var.environment_type
+  parameter5  = var.compliance_threshold
   
-  name = "${each.key} Computers"
+  # OS requirements
+  os_requirements = "macOS 12.0"
   
-  # Configuration as Code: Consistent group settings
-  site_id = -1  # Default site
-  
-  # Optional: Pre-assign specific computers to static groups
-  assigned_computer_ids = var.department_computer_assignments[each.key]
+  # Script contents with proper variable interpolation
+  script_contents = templatefile("${path.module}/scripts/security_compliance.sh", {
+    environment_type       = var.environment_type
+    compliance_threshold   = var.compliance_threshold
+    required_apps         = var.required_applications
+    min_password_length   = var.password_policy.min_length
+    screensaver_timeout   = var.security_settings.screensaver_timeout
+    company_name          = var.company_name
+    report_webhook_url    = var.monitoring.webhook_url
+  })
   
   # Lifecycle management
   lifecycle {
-    prevent_destroy = true  # Prevent accidental deletion of department groups
+    # Prevent accidental deletion of critical security script
+    prevent_destroy = var.environment_type == "production"
+    
+    # Ignore manual changes to notes field (for emergency updates)
+    ignore_changes = [notes]
   }
 }
 
-# Smart group for macOS version compliance
-resource "jamfpro_smart_computer_group" "macos_compliance" {
-  name    = "macOS Version Compliance"
-  site_id = -1
-  
-  # Configuration as Code: Define compliance criteria declaratively
-  criteria {
-    name          = "Operating System Version"
-    priority      = 0
-    and_or        = "and"
-    search_type   = "greater than or equal"
-    value         = var.minimum_macos_version
-    opening_paren = false
-    closing_paren = false
-  }
-  
-  criteria {
-    name          = "Computer Group"
-    priority      = 1
-    and_or        = "and"
-    search_type   = "not member of"
-    value         = "Test Devices"  # Exclude test devices
-    opening_paren = false
-    closing_paren = false
-  }
-}
-
-# Smart group for devices needing security updates
-resource "jamfpro_smart_computer_group" "security_update_needed" {
-  name    = "Security Updates Required"
-  site_id = -1
-  
-  # Configuration as Code: Automated security update detection
-  criteria {
-    name          = "Number of Available Updates"
-    priority      = 0
-    and_or        = "and"
-    search_type   = "greater than"
-    value         = "0"
-    opening_paren = false
-    closing_paren = false
-  }
-}
-
-# Smart group for FileVault encryption compliance
-resource "jamfpro_smart_computer_group" "filevault_non_compliant" {
-  name    = "FileVault Not Enabled"
-  site_id = -1
-  
-  # Configuration as Code: Encryption compliance monitoring
-  criteria {
-    name          = "FileVault 2 Status"
-    priority      = 0
-    and_or        = "and"
-    search_type   = "is not"
-    value         = "Encrypted"
-    opening_paren = false
-    closing_paren = false
-  }
-  
-  criteria {
-    name          = "Computer Group"
-    priority      = 1
-    and_or        = "and"
-    search_type   = "member of"
-    value         = "Finance Computers"  # Target specific department
-    opening_paren = false
-    closing_paren = false
-  }
-}
-
-# Smart group for high-risk users (executives)
-resource "jamfpro_smart_computer_group" "executive_devices" {
-  name    = "Executive Devices - High Security"
-  site_id = -1
-  
-  # Configuration as Code: Risk-based device grouping
-  criteria {
-    name          = "Computer Group"
-    priority      = 0
-    and_or        = "and"
-    search_type   = "member of"
-    value         = "Executive Computers"
-    opening_paren = false
-    closing_paren = false
-  }
-}
-
-# Variables for group configuration
-variable "minimum_macos_version" {
-  description = "Minimum required macOS version for compliance"
+# Variables for configuration
+variable "environment_type" {
+  description = "Environment type (development, staging, production)"
   type        = string
-  default     = "13.0"  # macOS Ventura
+  default     = "development"
+  
+  validation {
+    condition     = contains(["development", "staging", "production"], var.environment_type)
+    error_message = "Environment type must be development, staging, or production."
+  }
 }
 
-variable "department_computer_assignments" {
-  description = "Computer IDs assigned to each department"
-  type        = map(list(number))
+variable "compliance_threshold" {
+  description = "Minimum compliance percentage required"
+  type        = number
+  default     = 80
+  
+  validation {
+    condition     = var.compliance_threshold >= 50 && var.compliance_threshold <= 100
+    error_message = "Compliance threshold must be between 50 and 100."
+  }
+}
+
+variable "required_applications" {
+  description = "List of required applications with minimum versions"
+  type = list(object({
+    name         = string
+    path         = string
+    min_version  = string
+    critical     = bool
+  }))
+  default = [
+    {
+      name         = "Google Chrome"
+      path         = "/Applications/Google Chrome.app"
+      min_version  = "100.0"
+      critical     = true
+    },
+    {
+      name         = "Microsoft Excel"
+      path         = "/Applications/Microsoft Excel.app"  
+      min_version  = "16.0"
+      critical     = true
+    },
+    {
+      name         = "CrowdStrike Falcon"
+      path         = "/Applications/Falcon.app"
+      min_version  = "6.0"
+      critical     = true
+    }
+  ]
+}
+
+variable "password_policy" {
+  description = "Password policy requirements"
+  type = object({
+    min_length              = number
+    require_special_chars   = bool
+    require_numbers         = bool
+    max_age_days           = number
+  })
   default = {
-    Engineering = [1, 2, 3]
-    Marketing   = [4, 5]
-    Sales       = [6, 7, 8, 9]
-    HR          = [10, 11]
-    Finance     = [12, 13, 14]
-    Executive   = [15, 16]
+    min_length              = 8
+    require_special_chars   = true
+    require_numbers         = true  
+    max_age_days           = 90
   }
 }
 
-# Outputs for policy targeting
-output "computer_groups" {
-  description = "Created computer groups for policy targeting"
+variable "security_settings" {
+  description = "Security configuration settings"
+  type = object({
+    screensaver_timeout    = number
+    require_filevault      = bool
+    require_firewall       = bool
+    require_stealth_mode   = bool
+    auto_lock_enabled      = bool
+  })
+  default = {
+    screensaver_timeout    = 300  # 5 minutes
+    require_filevault      = true
+    require_firewall       = true
+    require_stealth_mode   = true
+    auto_lock_enabled      = true
+  }
+}
+
+variable "company_name" {
+  description = "Company name for reporting"
+  type        = string
+  default     = "Your Company"
+}
+
+variable "monitoring" {
+  description = "Monitoring and alerting configuration"
+  type = object({
+    webhook_url           = string
+    enable_slack_alerts   = bool
+    enable_email_reports  = bool
+    report_schedule       = string
+  })
+  default = {
+    webhook_url           = ""
+    enable_slack_alerts   = false
+    enable_email_reports  = true
+    report_schedule       = "daily"
+  }
+}
+
+# Outputs for integration with other resources
+output "security_script" {
+  description = "Security compliance script details"
   value = {
-    static_groups = {
-      for name, group in jamfpro_static_computer_group.departments : name => {
-        id   = group.id
-        name = group.name
-      }
-    }
-    smart_groups = {
-      macos_compliance = {
-        id   = jamfpro_smart_computer_group.macos_compliance.id
-        name = jamfpro_smart_computer_group.macos_compliance.name
-      }
-      security_updates = {
-        id   = jamfpro_smart_computer_group.security_update_needed.id
-        name = jamfpro_smart_computer_group.security_update_needed.name
-      }
-      filevault_non_compliant = {
-        id   = jamfpro_smart_computer_group.filevault_non_compliant.id
-        name = jamfpro_smart_computer_group.filevault_non_compliant.name
-      }
-      executive_devices = {
-        id   = jamfpro_smart_computer_group.executive_devices.id
-        name = jamfpro_smart_computer_group.executive_devices.name
-      }
-    }
+    id       = jamfpro_script.security_compliance_check.id
+    name     = jamfpro_script.security_compliance_check.name
+    category = jamfpro_script.security_compliance_check.category_id
   }
 }
 
-# Benefits of Configuration as Code for device groups:
-# 1. Consistent group structure across Jamf Pro instances
-# 2. Version controlled group definitions and criteria
-# 3. Automated smart group creation with complex criteria
-# 4. Easy replication of group structure for new environments
-# 5. Documentation of group purpose embedded in code
-# 6. Drift detection for unauthorized group modifications
-# 7. Scalable group management for large device fleets
-```
-
-**2. Security Policies and Configuration Profiles:**
-```hcl
-# jamfpro/security-policies.tf
-# Configuration as Code for Jamf Pro security policies and profiles
-
-# FileVault encryption configuration profile using plist source
-resource "jamfpro_macos_configuration_profile_plist" "filevault_encryption" {
-  name                = "FileVault Full Disk Encryption"
-  description         = "Enforces FileVault encryption on all managed devices"
-  level               = "System"
-  distribution_method = "Install Automatically"
-  redeploy_on_update  = "Newly Assigned"
-  user_removable      = false
-  payload_validate    = true
-  
-  # Configuration as Code: Load FileVault profile from file
-  payloads = file("${path.module}/profiles/filevault.mobileconfig")
-  
-  # Target specific device groups
-  scope {
-    all_computers      = false
-    computer_group_ids = [
-      jamfpro_static_computer_group.departments["Finance"].id,
-      jamfpro_static_computer_group.departments["HR"].id,
-      jamfpro_smart_computer_group.executive_devices.id
-    ]
-  }
-  
-  # Lifecycle management
-  lifecycle {
-    prevent_destroy = true  # Critical security profile
+output "script_reference_for_policies" {
+  description = "Script reference for use in Jamf Pro policies"
+  value = {
+    script_id   = jamfpro_script.security_compliance_check.id
+    script_name = jamfpro_script.security_compliance_check.name
   }
 }
 
-# Firewall configuration profile
-resource "jamfpro_macos_configuration_profile_plist" "firewall_config" {
-  name                = "macOS Firewall Configuration"
-  description         = "Configures and enables macOS application firewall"
-  level               = "System"
-  distribution_method = "Install Automatically"
-  redeploy_on_update  = "Newly Assigned"
-  user_removable      = false
-  payload_validate    = true
-  
-  # Load firewall configuration from file
-  payloads = file("${path.module}/profiles/firewall.mobileconfig")
-  
-  scope {
-    all_computers = true  # Apply to all managed devices
-  }
-}
-
-# Password policy configuration profile
-resource "jamfpro_macos_configuration_profile_plist" "password_policy" {
-  name                = "Password Policy - Corporate Standard"
-  description         = "Enforces corporate password requirements"
-  level               = "System"
-  distribution_method = "Install Automatically"
-  redeploy_on_update  = "Newly Assigned"
-  user_removable      = false
-  payload_validate    = true
-  
-  # Load password policy from file
-  payloads = file("${path.module}/profiles/password-policy.mobileconfig")
-  
-  scope {
-    all_computers      = false
-    computer_group_ids = [
-      jamfpro_static_computer_group.departments["Finance"].id,
-      jamfpro_static_computer_group.departments["HR"].id,
-      jamfpro_smart_computer_group.executive_devices.id
-    ]
-  }
-}
-
-# Software update policy with comprehensive configuration
-resource "jamfpro_policy" "software_updates" {
-  name                        = "Automated Software Updates"
+# Example policy that uses this script (dependency management!)
+resource "jamfpro_policy" "security_compliance_enforcement" {
+  name                        = "Security Compliance Enforcement"
   enabled                     = true
   trigger_checkin             = true
-  trigger_enrollment_complete = false
-  trigger_login               = false
-  trigger_startup             = false
+  trigger_enrollment_complete = true
   frequency                   = "Once per day"
-  retry_event                 = "none"
-  category_id                 = -1
-  site_id                     = -1
   
-  # Configuration as Code: Define update scope and timing
-  scope {
-    all_computers      = false
-    computer_group_ids = [jamfpro_smart_computer_group.security_update_needed.id]
-  }
-  
-  # User interaction settings
-  user_interaction {
-    message_start            = "Corporate security updates are being installed. Please save your work."
-    allow_users_to_defer     = true
-    allow_deferral_minutes   = 60  # Allow 1 hour deferral
-    message_finish           = "Security updates have been installed successfully."
-  }
-  
-  # Maintenance payload for updates
-  payloads {
-    maintenance {
-      recon                       = true
-      install_all_cached_packages = true
-      permissions                 = false
-      heal                        = false
-    }
-  }
-}
-
-# FileVault enforcement policy with disk encryption payload
-resource "jamfpro_policy" "filevault_enforcement" {
-  name                        = "FileVault Encryption Enforcement"
-  enabled                     = true
-  trigger_checkin             = true
-  trigger_enrollment_complete = true
-  frequency                   = "Once per computer"
-  retry_event                 = "none"
-  category_id                 = -1
-  site_id                     = -1
-  
-  scope {
-    all_computers      = false
-    computer_group_ids = [jamfpro_smart_computer_group.filevault_non_compliant.id]
-  }
-  
-  # FileVault enforcement settings
-  payloads {
-    disk_encryption {
-      action                                     = "apply"
-      disk_encryption_configuration_id           = 1  # Reference to disk encryption config
-      auth_restart                               = false
-      remediate_key_type                         = "Individual"
-      remediate_disk_encryption_configuration_id = 1
-    }
-  }
-  
-  user_interaction {
-    message_start            = "FileVault encryption is required for security compliance. Your device will restart after encryption begins."
-    allow_users_to_defer     = true
-    allow_deferral_minutes   = 240  # Allow 4 hours to prepare
-  }
-}
-
-# Application deployment policy for security tools
-resource "jamfpro_policy" "security_tools_deployment" {
-  name                        = "Deploy Security Tools"
-  enabled                     = true
-  trigger_checkin             = true
-  trigger_enrollment_complete = true
-  frequency                   = "Once per computer"
-  retry_event                 = "none"
-  category_id                 = -1
-  site_id                     = -1
-  
-  scope {
-    all_computers = true
-  }
-  
-  # Package deployment
-  payloads {
-    packages {
-      distribution_point = "default"
-      package {
-        id                          = 123  # Package ID for security tool
-        action                      = "Install"
-        fill_user_template          = false
-        fill_existing_user_template = false
-      }
-    }
-  }
-  
-  # Run security configuration script after installation
+  # Terraform automatically handles the dependency relationship!
   payloads {
     scripts {
-      id         = 456  # Script ID for security configuration
-      priority   = "After"
-      parameter4 = var.security_config_param
+      id         = jamfpro_script.security_compliance_check.id
+      priority   = "Before"
+      parameter4 = var.environment_type
+      parameter5 = tostring(var.compliance_threshold)
     }
   }
   
-  user_interaction {
-    message_start = "Installing required security tools. This may take a few minutes."
-    message_finish = "Security tools have been installed successfully."
+  scope {
+    all_computers = var.environment_type != "production"
+    # In production, target specific groups for gradual rollout
+    computer_group_ids = var.environment_type == "production" ? var.production_target_groups : []
   }
 }
 
-# Variables for policy configuration
-variable "security_config_param" {
-  description = "Configuration parameter for security script"
-  type        = string
-  default     = "production"
-}
-
-# Outputs for monitoring and compliance reporting
-output "security_policies" {
-  description = "Deployed security policies and profiles"
-  value = {
-    configuration_profiles = {
-      filevault = {
-        id   = jamfpro_macos_configuration_profile_plist.filevault_encryption.id
-        name = jamfpro_macos_configuration_profile_plist.filevault_encryption.name
-      }
-      firewall = {
-        id   = jamfpro_macos_configuration_profile_plist.firewall_config.id
-        name = jamfpro_macos_configuration_profile_plist.firewall_config.name
-      }
-      password_policy = {
-        id   = jamfpro_macos_configuration_profile_plist.password_policy.id
-        name = jamfpro_macos_configuration_profile_plist.password_policy.name
-      }
-    }
-    policies = {
-      software_updates = {
-        id   = jamfpro_policy.software_updates.id
-        name = jamfpro_policy.software_updates.name
-      }
-      filevault_enforcement = {
-        id   = jamfpro_policy.filevault_enforcement.id
-        name = jamfpro_policy.filevault_enforcement.name
-      }
-      security_tools = {
-        id   = jamfpro_policy.security_tools_deployment.id
-        name = jamfpro_policy.security_tools_deployment.name
-      }
-    }
-  }
-}
-
-# Benefits of Configuration as Code for Jamf Pro security:
-# 1. Consistent security policies across all environments
-# 2. Version controlled security configuration changes
-# 3. Automated deployment of security updates
-# 4. Standardized compliance enforcement
-# 5. Easy replication of security posture for new Jamf instances
-# 6. Audit trail of all security policy changes
-# 7. Drift detection for unauthorized policy modifications
-# 8. Documentation of security requirements in code
-# 9. Scalable security management for large device fleets
-# 10. Integration with CI/CD for security policy testing
+# BENEFITS OF THIS DECLARATIVE TERRAFORM APPROACH:
+# 
+# 🎯 SINGLE SOURCE OF TRUTH:
+# - One configuration file manages entire script lifecycle
+# - All CRUD operations handled automatically by Terraform
+# - Configuration and deployment logic combined
+#
+# 🔄 IDEMPOTENCY BUILT-IN:
+# - Running 'terraform apply' multiple times = same result
+# - No duplicate creation, no failed updates
+# - Automatic state reconciliation
+#
+# 📊 COMPREHENSIVE STATE MANAGEMENT:
+# - Terraform tracks all resource attributes
+# - Automatic drift detection with 'terraform plan'
+# - No manual state files or ID tracking
+#
+# 🧩 AUTOMATIC DEPENDENCY MANAGEMENT:
+# - Policy automatically references script ID
+# - Terraform calculates dependency graph
+# - Handles creation/deletion order automatically
+#
+# 🔍 BUILT-IN DRIFT DETECTION:
+# - 'terraform plan' shows any manual changes
+# - Compare desired state vs actual state
+# - Clear remediation path with 'terraform apply'
+#
+# 🛠️ API ABSTRACTION:
+# - No manual HTTP calls or XML parsing
+# - Provider handles authentication, retries, errors
+# - Consistent interface across all resources
+#
+# ✅ VALIDATION & TYPE SAFETY:
+# - Variable validation at plan time
+# - Type checking prevents configuration errors
+# - Clear error messages for invalid configurations
+#
+# 🔒 LIFECYCLE MANAGEMENT:
+# - prevent_destroy for production safety
+# - ignore_changes for operational flexibility
+# - Proper resource dependencies and ordering
+#
+# 📋 DECLARATIVE SYNTAX:
+# - Describe WHAT you want, not HOW to get it
+# - Self-documenting configuration
+# - Version control friendly
+#
+# 🎯 OPERATIONAL BENEFITS:
+# - Same workflow for all environments
+# - Easy rollbacks with version control
+# - Integration with CI/CD pipelines
+# - Collaborative change management
 ```
 
-**📚 Learn More:**
-- 🔗 [Jamf Pro API Documentation](https://developer.jamf.com/jamf-pro/reference)
-- 🔗 [Jamf Pro Terraform Provider](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs)
+#### 🔄 Script Template with Dynamic Configuration
 
-#### 🔄 Configuration Drift Detection and Remediation
+The referenced script template (`scripts/security_compliance.sh`) shows how Terraform enables dynamic, parameterized configuration:
 
-One of the most powerful aspects of Configuration as Code is the ability to detect and remediate configuration drift in SaaS services, just like we do with infrastructure.
-
-**Configuration Drift Management Workflow:**
-```mermaid
-flowchart TD
-    subgraph "📝 Desired State (Code)"
-        TERRAFORM_CONFIG["Terraform Configuration<br/>• Service policies<br/>• User accounts<br/>• Security settings<br/>• Application configs"]
-        VERSION_CONTROL["Version Control<br/>• Git repository<br/>• Peer review process<br/>• Change approval<br/>• Audit trail"]
-    end
-    
-    subgraph "☁️ Actual State (SaaS Service)"
-        SAAS_STATE["SaaS Service State<br/>• Current policies<br/>• Existing users<br/>• Active settings<br/>• Live configurations"]
-        MANUAL_CHANGES["Manual Changes<br/>• GUI modifications<br/>• API changes<br/>• Emergency fixes<br/>• Unauthorized changes"]
-    end
-    
-    subgraph "🔍 Drift Detection"
-        TERRAFORM_PLAN["terraform plan<br/>• Compare desired vs actual<br/>• Identify differences<br/>• Show proposed changes<br/>• Calculate impact"]
-        DRIFT_REPORT["Drift Report<br/>• Changed resources<br/>• Modified attributes<br/>• Risk assessment<br/>• Remediation options"]
-    end
-    
-    subgraph "🛠️ Drift Remediation"
-        REMEDIATION_CHOICE{Remediation Strategy}
-        APPLY_CHANGES["terraform apply<br/>• Revert to desired state<br/>• Override manual changes<br/>• Restore compliance"]
-        UPDATE_CODE["Update Configuration<br/>• Accept manual changes<br/>• Update Terraform code<br/>• Commit new desired state"]
-        HYBRID_APPROACH["Hybrid Approach<br/>• Import some changes<br/>• Revert others<br/>• Document decisions"]
-    end
-    
-    subgraph "📊 Monitoring & Alerting"
-        SCHEDULED_CHECKS["Scheduled Drift Checks<br/>• Daily/weekly terraform plan<br/>• Automated reporting<br/>• CI/CD integration<br/>• Slack/email alerts"]
-        COMPLIANCE_DASHBOARD["Compliance Dashboard<br/>• Drift status<br/>• Policy compliance<br/>• Change history<br/>• Risk metrics"]
-    end
-    
-    %% Workflow connections
-    TERRAFORM_CONFIG --> VERSION_CONTROL
-    VERSION_CONTROL --> TERRAFORM_PLAN
-    
-    SAAS_STATE --> MANUAL_CHANGES
-    MANUAL_CHANGES --> TERRAFORM_PLAN
-    
-    TERRAFORM_PLAN --> DRIFT_REPORT
-    DRIFT_REPORT --> REMEDIATION_CHOICE
-    
-    REMEDIATION_CHOICE -->|Revert Changes| APPLY_CHANGES
-    REMEDIATION_CHOICE -->|Accept Changes| UPDATE_CODE
-    REMEDIATION_CHOICE -->|Selective| HYBRID_APPROACH
-    
-    APPLY_CHANGES --> SAAS_STATE
-    UPDATE_CODE --> TERRAFORM_CONFIG
-    HYBRID_APPROACH --> SAAS_STATE
-    HYBRID_APPROACH --> TERRAFORM_CONFIG
-    
-    %% Monitoring connections
-    TERRAFORM_PLAN --> SCHEDULED_CHECKS
-    DRIFT_REPORT --> COMPLIANCE_DASHBOARD
-    SCHEDULED_CHECKS --> COMPLIANCE_DASHBOARD
-    
-    %% Feedback loops
-    COMPLIANCE_DASHBOARD -.-> TERRAFORM_CONFIG
-    SCHEDULED_CHECKS -.-> REMEDIATION_CHOICE
-    
-    style TERRAFORM_CONFIG fill:#e3f2fd
-    style SAAS_STATE fill:#fff3e0
-    style DRIFT_REPORT fill:#ffebee
-    style APPLY_CHANGES fill:#e8f5e8
-    style COMPLIANCE_DASHBOARD fill:#f3e5f5
-```
-
-**🔍 Configuration Drift Examples:**
-
-**Microsoft 365 Drift Detection:**
 ```bash
 #!/bin/bash
-# Configuration drift detection for Microsoft 365
+# scripts/security_compliance.sh - TERRAFORM TEMPLATE
+# This script is dynamically generated by Terraform with proper parameterization
 
-# Run terraform plan to detect configuration drift
-echo "🔍 Checking for Microsoft 365 configuration drift..."
-terraform plan -detailed-exitcode -out=drift-check.tfplan
+# Security Compliance Check Script - Terraform Managed
+# Environment: ${environment_type}
+# Company: ${company_name}
+# Generated: $(date)
 
-# Capture the exit code
-PLAN_EXIT_CODE=$?
+echo "🔍 Starting ${company_name} security compliance check..."
+echo "🏷️  Environment: ${environment_type}"
+echo "🎯 Compliance threshold: ${compliance_threshold}%"
 
-case $PLAN_EXIT_CODE in
-  0)
-    echo "✅ No configuration drift detected - all configurations match desired state"
-    ;;
-  1)
-    echo "❌ Terraform plan failed - check configuration syntax and authentication"
-    exit 1
-    ;;
-  2)
-    echo "⚠️  Configuration drift detected!"
-    echo "📋 Generating detailed drift report..."
+# FileVault validation
+check_filevault() {
+    echo "🔐 Checking FileVault encryption..."
     
-    # Show the planned changes
-    terraform show drift-check.tfplan
-    
-    # Extract specific drift information
-    echo "🔍 Drift Summary:"
-    terraform show -json drift-check.tfplan | jq -r '
-      .resource_changes[] | 
-      select(.change.actions[] | contains("update")) |
-      "Resource: \(.address)\nChanges: \(.change.before // {}) -> \(.change.after // {})\n"
-    '
-    
-    # Common drift scenarios in Microsoft 365
-    echo "📝 Common causes of Microsoft 365 configuration drift:"
-    echo "  • Manual changes in Microsoft 365 Admin Center"
-    echo "  • Security policies modified by other admins"
-    echo "  • Conditional access policies changed via PowerShell"
-    echo "  • User group memberships modified manually"
-    echo "  • Application permissions granted outside of Terraform"
-    
-    # Remediation options
-    echo "🛠️  Remediation Options:"
-    echo "  1. Run 'terraform apply' to revert to desired state"
-    echo "  2. Update Terraform configuration to accept changes"
-    echo "  3. Use 'terraform import' for resources created manually"
-    
-    # Send alert (example with Slack webhook)
-    if [ ! -z "$SLACK_WEBHOOK_URL" ]; then
-      curl -X POST -H 'Content-type: application/json' \
-        --data '{"text":"⚠️ Microsoft 365 Configuration Drift Detected! Check Terraform pipeline for details."}' \
-        $SLACK_WEBHOOK_URL
+    FILEVAULT_STATUS=$(fdesetup status | head -1)
+    if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+        echo "✅ FileVault: Enabled"
+        return 0
+    else
+        echo "❌ FileVault: Disabled"
+        return 1
     fi
-    ;;
-esac
+}
 
-# Clean up plan file
-rm -f drift-check.tfplan
-```
-
-**Jamf Pro Drift Detection:**
-```bash
-#!/bin/bash
-# Configuration drift detection for Jamf Pro
-
-echo "🔍 Checking for Jamf Pro configuration drift..."
-
-# Set Jamf Pro credentials from environment variables
-export JAMFPRO_INSTANCE_FQDN="${JAMF_INSTANCE_URL}"
-export JAMFPRO_CLIENT_ID="${JAMF_CLIENT_ID}"
-export JAMFPRO_CLIENT_SECRET="${JAMF_CLIENT_SECRET}"
-
-# Run terraform plan with detailed output
-terraform plan -detailed-exitcode -var-file="jamfpro.tfvars" -out=jamf-drift.tfplan
-
-PLAN_EXIT_CODE=$?
-
-case $PLAN_EXIT_CODE in
-  0)
-    echo "✅ No Jamf Pro configuration drift detected"
-    ;;
-  1)
-    echo "❌ Terraform plan failed - check Jamf Pro connectivity and credentials"
-    exit 1
-    ;;
-  2)
-    echo "⚠️  Jamf Pro configuration drift detected!"
+# Firewall validation with stealth mode check
+check_firewall() {
+    echo "🔥 Checking firewall configuration..."
     
-    # Show detailed changes
-    terraform show jamf-drift.tfplan
+    FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+    %{ if security_settings.require_stealth_mode }
+    STEALTH_MODE=$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
+    %{ endif }
     
-    # Parse specific Jamf Pro drift patterns
-    echo "🔍 Jamf Pro Drift Analysis:"
-    terraform show -json jamf-drift.tfplan | jq -r '
-      .resource_changes[] |
-      select(.change.actions[] | contains("update")) |
-      select(.type | startswith("jamfpro_")) |
-      "Resource Type: \(.type)\nResource Name: \(.name)\nChanges: \(.change.before // {}) -> \(.change.after // {})\n---"
-    '
+    if [[ "$FIREWALL_STATUS" == "1" ]]; then
+        echo "✅ Firewall: Enabled"
+        %{ if security_settings.require_stealth_mode }
+        if [[ "$STEALTH_MODE" == "1" ]]; then
+            echo "✅ Stealth mode: Enabled"
+            return 0
+        else
+            echo "❌ Stealth mode: Required but disabled"
+            return 1
+        fi
+        %{ else }
+        return 0
+        %{ endif }
+    else
+        echo "❌ Firewall: Disabled"
+        return 1
+    fi
+}
+
+# Application compliance check
+check_applications() {
+    echo "📱 Checking required applications..."
     
-    # Common Jamf Pro drift scenarios
-    echo "📝 Common causes of Jamf Pro configuration drift:"
-    echo "  • Policies modified in Jamf Pro GUI"
-    echo "  • Configuration profiles updated manually"
-    echo "  • Computer groups changed via web interface"
-    echo "  • Smart group criteria modified by other admins"
-    echo "  • Application deployment settings changed"
-    echo "  • Security policies updated outside of Terraform"
+    local apps_compliant=1
     
-    # Generate compliance report
-    echo "📊 Generating compliance report..."
-    cat > jamf-drift-report.md << EOF
-# Jamf Pro Configuration Drift Report
-**Date:** $(date)
-**Environment:** ${JAMF_INSTANCE_URL}
+    %{ for app in required_apps }
+    echo "🔍 Checking: ${app.name}"
+    if [[ -d "${app.path}" ]]; then
+        APP_VERSION=$(defaults read "${app.path}/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unknown")
+        echo "✅ ${app.name}: Installed (v$APP_VERSION)"
+        
+        # Version comparison (simplified)
+        if [[ "$APP_VERSION" != "unknown" ]]; then
+            REQUIRED_VERSION="${app.min_version}"
+            echo "   Required version: $REQUIRED_VERSION"
+        fi
+    else
+        echo "❌ ${app.name}: Missing"
+        %{ if app.critical }
+        echo "   ⚠️  CRITICAL APPLICATION MISSING!"
+        apps_compliant=0
+        %{ endif }
+    fi
+    %{ endfor }
+    
+    return $apps_compliant
+}
 
-## Drift Summary
-$(terraform show jamf-drift.tfplan | grep -E "^\s*[~+-]" | head -20)
+# Password policy validation  
+check_password_policy() {
+    echo "🔑 Checking password policy..."
+    
+    PWD_MIN_LENGTH=$(pwpolicy -n /Local/Default -getglobalpolicy | grep -o 'minChars=[0-9]*' | cut -d'=' -f2 2>/dev/null || echo "0")
+    REQUIRED_LENGTH=${min_password_length}
+    
+    if [[ $PWD_MIN_LENGTH -ge $REQUIRED_LENGTH ]]; then
+        echo "✅ Password policy: Compliant (min $PWD_MIN_LENGTH chars, required $REQUIRED_LENGTH)"
+        return 0
+    else
+        echo "❌ Password policy: Non-compliant (min $PWD_MIN_LENGTH chars, required $REQUIRED_LENGTH)"
+        return 1
+    fi
+}
 
-## Recommended Actions
-1. Review changes with Jamf Pro administrators
-2. Determine if changes should be accepted or reverted
-3. Update Terraform configuration if changes are approved
-4. Run \`terraform apply\` to remediate unauthorized changes
+# Screen saver security check
+check_screensaver() {
+    echo "🔒 Checking screen saver security..."
+    
+    SCREENSAVER_DELAY=$(defaults read /Library/Preferences/com.apple.screensaver idleTime 2>/dev/null || echo "0")
+    ASK_FOR_PASSWORD=$(defaults read /Library/Preferences/com.apple.screensaver askForPassword 2>/dev/null || echo "0")
+    REQUIRED_TIMEOUT=${screensaver_timeout}
+    
+    if [[ $SCREENSAVER_DELAY -le $REQUIRED_TIMEOUT && $ASK_FOR_PASSWORD == "1" ]]; then
+        echo "✅ Screen saver: Secure (locks in $SCREENSAVER_DELAY seconds, required ≤$REQUIRED_TIMEOUT)"
+        return 0
+    else
+        echo "❌ Screen saver: Insecure (timeout: $SCREENSAVER_DELAY, password required: $ASK_FOR_PASSWORD)"
+        return 1
+    fi
+}
 
-## Resources Affected
-$(terraform show -json jamf-drift.tfplan | jq -r '.resource_changes[].address' | sort)
+# Execute compliance checks
+FILEVAULT_OK=0
+FIREWALL_OK=0  
+APPS_OK=0
+PASSWORD_OK=0
+SCREENSAVER_OK=0
+
+%{ if security_settings.require_filevault }
+check_filevault && FILEVAULT_OK=1
+%{ else }
+FILEVAULT_OK=1  # Not required, count as passing
+%{ endif }
+
+%{ if security_settings.require_firewall }
+check_firewall && FIREWALL_OK=1
+%{ else }
+FIREWALL_OK=1   # Not required, count as passing
+%{ endif }
+
+check_applications && APPS_OK=1
+check_password_policy && PASSWORD_OK=1
+
+%{ if security_settings.auto_lock_enabled }
+check_screensaver && SCREENSAVER_OK=1
+%{ else }
+SCREENSAVER_OK=1  # Not required, count as passing
+%{ endif }
+
+# Calculate compliance score
+TOTAL_CHECKS=5
+PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK + APPS_OK + PASSWORD_OK + SCREENSAVER_OK))
+COMPLIANCE_PERCENTAGE=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+
+echo ""
+echo "📊 ${company_name} Compliance Report"
+echo "===================================="
+echo "Environment: ${environment_type}"
+echo "Device: $(hostname)"
+echo "Timestamp: $(date)"
+echo ""
+echo "FileVault Encryption: $([ $FILEVAULT_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
+echo "Firewall Protection: $([ $FIREWALL_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
+echo "Required Applications: $([ $APPS_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
+echo "Password Policy: $([ $PASSWORD_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
+echo "Screen Lock Security: $([ $SCREENSAVER_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
+echo ""
+echo "Overall Compliance: $COMPLIANCE_PERCENTAGE% ($PASSED_CHECKS/$TOTAL_CHECKS checks passed)"
+echo "Required Threshold: ${compliance_threshold}%"
+
+# Webhook notification (if configured)
+%{ if webhook_url != "" }
+if command -v curl >/dev/null 2>&1; then
+    WEBHOOK_PAYLOAD=$(cat << EOF
+{
+    "text": "${company_name} Security Compliance Report",
+    "attachments": [{
+        "color": "$([ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ] && echo "good" || echo "danger")",
+        "fields": [
+            {"title": "Device", "value": "$(hostname)", "short": true},
+            {"title": "Environment", "value": "${environment_type}", "short": true},
+            {"title": "Compliance Score", "value": "$COMPLIANCE_PERCENTAGE%", "short": true},
+            {"title": "Status", "value": "$([ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ] && echo "COMPLIANT" || echo "NON-COMPLIANT")", "short": true}
+        ],
+        "timestamp": $(date +%s)
+    }]
+}
 EOF
+    )
     
-    echo "📄 Drift report saved to jamf-drift-report.md"
-    
-    # Send alert to monitoring system
-    if [ ! -z "$MONITORING_WEBHOOK" ]; then
-      curl -X POST "$MONITORING_WEBHOOK" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "alert": "Jamf Pro Configuration Drift",
-          "severity": "warning",
-          "message": "Configuration drift detected in Jamf Pro. Review required.",
-          "environment": "'$JAMF_INSTANCE_URL'",
-          "timestamp": "'$(date -Iseconds)'"
-        }'
-    fi
-    ;;
-esac
+    curl -X POST -H 'Content-type: application/json' \
+        --data "$WEBHOOK_PAYLOAD" \
+        "${webhook_url}" >/dev/null 2>&1 || echo "⚠️  Failed to send webhook notification"
+fi
+%{ endif }
 
-# Cleanup
-rm -f jamf-drift.tfplan
+# Update Jamf Pro inventory
+echo "📡 Updating inventory..."
+/usr/local/jamf/bin/jamf recon
 
-# Exit with the plan exit code for CI/CD integration
-exit $PLAN_EXIT_CODE
+# Exit with appropriate code
+if [[ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ]]; then
+    echo "✅ Device meets compliance requirements"
+    exit 0
+else
+    echo "❌ Device requires remediation"
+    exit 1
+fi
+
+# BENEFITS OF TERRAFORM TEMPLATE APPROACH:
+# 1. Dynamic configuration based on environment
+# 2. Type-safe variable interpolation  
+# 3. Conditional logic based on Terraform variables
+# 4. Consistent parameterization across environments
+# 5. Version controlled alongside infrastructure configuration
+# 6. Easy testing with different variable values
+# 7. Integration with Terraform's validation system
+# 8. Self-documenting through variable definitions
 ```
 
-#### 🚀 GitOps Workflows for Configuration Management
+#### 🎯 Configuration as Code: Use Cases and Benefits
 
-GitOps brings the power of Git-based workflows to configuration management, enabling collaborative, auditable, and automated configuration changes.
+**Microsoft 365 Configuration as Code Use Cases:**
 
-**GitOps Configuration Management Workflow:**
-```mermaid
-flowchart TD
-    subgraph "👨‍💻 Development Process"
-        DEV_CHANGE["Configuration Change Request<br/>• New security policy<br/>• User group modification<br/>• Application deployment"]
-        FEATURE_BRANCH["Create Feature Branch<br/>• git checkout -b feature/new-policy<br/>• Isolated development<br/>• Safe experimentation"]
-        CODE_CHANGES["Update Terraform Code<br/>• Modify .tf files<br/>• Update variables<br/>• Add documentation"]
-    end
-    
-    subgraph "🔍 Review & Validation"
-        PULL_REQUEST["Create Pull Request<br/>• Describe changes<br/>• Link to requirements<br/>• Request reviewers"]
-        AUTOMATED_TESTS["Automated Testing<br/>• terraform fmt -check<br/>• terraform validate<br/>• terraform plan<br/>• Security scanning"]
-        PEER_REVIEW["Peer Review<br/>• Security team approval<br/>• Technical review<br/>• Compliance check"]
-        APPROVAL["Change Approval<br/>• All checks passed<br/>• Reviewers approved<br/>• Ready to merge"]
-    end
-    
-    subgraph "🚀 Deployment Pipeline"
-        MERGE_MAIN["Merge to Main Branch<br/>• git merge<br/>• Trigger CI/CD<br/>• Deploy to staging"]
-        STAGING_DEPLOY["Staging Deployment<br/>• terraform plan<br/>• terraform apply<br/>• Integration tests"]
-        PRODUCTION_GATE["Production Gate<br/>• Manual approval<br/>• Change window<br/>• Stakeholder sign-off"]
-        PROD_DEPLOY["Production Deployment<br/>• terraform apply<br/>• Monitor changes<br/>• Rollback ready"]
-    end
-    
-    subgraph "📊 Monitoring & Feedback"
-        CHANGE_MONITORING["Change Monitoring<br/>• Configuration compliance<br/>• Service health checks<br/>• User impact assessment"]
-        DRIFT_DETECTION["Continuous Drift Detection<br/>• Scheduled terraform plan<br/>• Alert on drift<br/>• Auto-remediation options"]
-        FEEDBACK_LOOP["Feedback Loop<br/>• Lessons learned<br/>• Process improvements<br/>• Update procedures"]
-    end
-    
-    %% Development flow
-    DEV_CHANGE --> FEATURE_BRANCH
-    FEATURE_BRANCH --> CODE_CHANGES
-    CODE_CHANGES --> PULL_REQUEST
-    
-    %% Review flow
-    PULL_REQUEST --> AUTOMATED_TESTS
-    AUTOMATED_TESTS --> PEER_REVIEW
-    PEER_REVIEW --> APPROVAL
-    
-    %% Deployment flow
-    APPROVAL --> MERGE_MAIN
-    MERGE_MAIN --> STAGING_DEPLOY
-    STAGING_DEPLOY --> PRODUCTION_GATE
-    PRODUCTION_GATE --> PROD_DEPLOY
-    
-    %% Monitoring flow
-    PROD_DEPLOY --> CHANGE_MONITORING
-    CHANGE_MONITORING --> DRIFT_DETECTION
-    DRIFT_DETECTION --> FEEDBACK_LOOP
-    
-    %% Feedback loops
-    FEEDBACK_LOOP -.-> DEV_CHANGE
-    DRIFT_DETECTION -.-> FEATURE_BRANCH
-    AUTOMATED_TESTS -.->|Failed| CODE_CHANGES
-    PEER_REVIEW -.->|Changes Requested| CODE_CHANGES
-    
-    style DEV_CHANGE fill:#e3f2fd
-    style APPROVAL fill:#e8f5e8
-    style PROD_DEPLOY fill:#fff3e0
-    style DRIFT_DETECTION fill:#ffebee
+1. **🏢 Infrastructure as Code for Microsoft 365**
+   - Manage Microsoft 365 configuration (users, groups, policies, device management) as code
+   - Enable version control, peer review, and repeatable deployments
+   - Same principles as cloud infrastructure in Azure or GCP
+
+2. **🔄 Automated, Auditable Change Management**  
+   - Use Terraform's plan and apply in GitOps workflows
+   - Preview, approve, and track changes to Microsoft 365 environment
+   - Ensure all modifications are intentional, reviewed, and logged
+
+3. **🌐 Environment Replication and Drift Detection**
+   - Reproduce Microsoft 365 tenant configurations across multiple environments
+   - Support for development, staging, production tenants
+   - Detect configuration drift over time using Terraform's state management
+
+4. **🛡️ Disaster Recovery and Rapid Rebuilds**
+   - Store Microsoft 365 configuration in code for rapid recovery
+   - Enable migration of tenant settings, policies, and assignments
+   - Protect against accidental changes or tenant loss
+
+5. **👥 Collaboration and Delegation**
+   - Empower teams to collaborate on Microsoft 365 configuration
+   - Use pull requests, code reviews, and CI/CD pipelines
+   - Reduce bottlenecks and enable safe delegation of administrative tasks
+
+6. **📋 Bulk and Consistent Policy Enforcement**
+   - Apply security, compliance, and device management policies at scale
+   - Ensure consistency and reduce manual configuration errors
+   - Support for large organizations or multiple tenants
+
+7. **🔧 Self-Service via Terraform Modules**
+   - Build reusable Terraform modules for common Microsoft 365 workloads
+   - Enable service-owning teams to provide self-service provisioning
+   - Maintain standards and reduce manual effort for engineering teams
+
+8. **🛡️ Integration with Policy-as-Code (OPA/Conftest)**
+   - Integrate with Open Policy Agent (OPA) or Conftest
+   - Enforce organizational standards, compliance, and guardrails
+   - Ensure only approved configurations are applied in production
+
+9. **🚨 Guardrailed Deployments**
+   - Implement automated checks and guardrails in CI/CD pipelines
+   - Prevent misconfiguration and enforce best practices
+   - Reduce risk and improve governance for Microsoft 365 administration
+
+### 💻 **Exercise 2.1**: Imperative vs Declarative Comparison
+**Duration**: 30 minutes
+
+**Task**: Compare the imperative script approach with the Terraform declarative approach for Jamf Pro script management.
+
+**Analysis Questions:**
+
+1. **🔧 CRUD Operations Complexity:**
+   - Count the lines of code in the 4 imperative scripts vs the Terraform configuration
+   - How many API calls are required for each approach?
+   - What happens if you need to modify the script content?
+
+2. **🔄 Idempotency:**
+   - What happens if you run the imperative CREATE script twice?
+   - What happens if you run `terraform apply` twice?
+   - How does each approach handle existing resources?
+
+3. **📊 State Management:**
+   - How do the imperative scripts track resource IDs and relationships?
+   - How does Terraform manage state and dependencies?
+   - Which approach is more reliable for managing complex configurations?
+
+4. **🔍 Error Handling:**
+   - How do the imperative scripts handle API errors and failures?
+   - How does Terraform handle errors and partial failures?
+   - Which approach provides better recovery mechanisms?
+
+**📝 Comparison Template:**
+
+```markdown
+## Imperative vs Declarative Analysis
+
+### Code Complexity
+- **Imperative Scripts**: ___ lines total
+- **Terraform Configuration**: ___ lines total  
+- **Maintenance Overhead**: ___
+
+### Operational Differences
+| Aspect | Imperative Scripts | Terraform |
+|--------|-------------------|-----------|
+| **Idempotency** | | |
+| **State Management** | | |
+| **Error Handling** | | |
+| **Dependency Management** | | |
+| **Rollback Capability** | | |
+
+### Key Advantages
+**Imperative:**
+- 
+- 
+
+**Declarative (Terraform):**
+- 
+- 
+
+### Recommendation
+___
 ```
 
-### 💻 **Exercise 2.1**: Configuration as Code Concepts Quiz
-**Duration**: 20 minutes
-
-Test your understanding of Configuration as Code concepts:
-
-1. **What is the primary difference between Infrastructure as Code and Configuration as Code?**
-   - A) IaC uses Terraform, CaC uses Ansible
-   - B) IaC manages infrastructure resources, CaC manages service configurations
-   - C) IaC is for cloud, CaC is for on-premises
-   - D) There is no difference
-
-2. **Which of the following is an example of Configuration as Code?**
-   - A) Creating an EC2 instance with Terraform
-   - B) Managing Microsoft 365 user accounts with Terraform
-   - C) Setting up a VPC with CloudFormation
-   - D) Installing Docker on a server
-
-3. **What is configuration drift in the context of SaaS services?**
-   - A) Moving services between cloud providers
-   - B) When service configurations differ from what's defined in code
-   - C) Network latency affecting service performance
-   - D) Version control conflicts in configuration files
-
-4. **How does GitOps improve configuration management?**
-   - A) It makes configurations faster to deploy
-   - B) It provides version control, peer review, and audit trails
-   - C) It reduces the cost of configuration changes
-   - D) It eliminates the need for testing
-
-<details>
-<summary>🔍 Click for Answers</summary>
-
-1. **B** - IaC manages infrastructure resources (servers, networks), while CaC manages service configurations (policies, users, settings)
-2. **B** - Managing Microsoft 365 user accounts with Terraform is Configuration as Code
-3. **B** - Configuration drift occurs when actual service configurations differ from what's defined in your code
-4. **B** - GitOps provides version control, peer review, and complete audit trails for configuration changes
-
-</details>
-
-### 💻 **Exercise 2.2**: Microsoft 365 Configuration Planning
+### 💻 **Exercise 2.2**: Configuration Drift Simulation
 **Duration**: 45 minutes
 
-**Scenario**: Your company is implementing Configuration as Code for Microsoft 365 management.
+**Scenario**: Simulate configuration drift in a Jamf Pro environment and demonstrate detection and remediation.
 
-**Task**: Design a Terraform configuration structure for managing:
+**Setup Steps:**
 
-1. **👥 User Management**
-   - Create a plan for managing 50 users across 5 departments
-   - Define consistent user attributes and group memberships
-   - Plan for automated user provisioning/deprovisioning
+1. **Deploy Initial Configuration**
+```bash
+# Deploy the Terraform-managed script
+terraform init
+terraform plan -out=initial.tfplan
+terraform apply initial.tfplan
+```
 
-2. **🔒 Security Policies**
-   - Design conditional access policies for different user types
-   - Plan multi-factor authentication requirements
-   - Define device compliance requirements
+2. **Simulate Manual Changes**
+   - Use Jamf Pro GUI to modify the script (change name, notes, or content)
+   - This simulates the "manual drift" that occurs in real environments
 
-3. **📊 Monitoring and Compliance**
-   - Plan for configuration drift detection
-   - Design compliance reporting
-   - Define rollback procedures
+3. **Detect Drift**
+```bash
+# Run terraform plan to detect drift
+terraform plan -detailed-exitcode
 
-**📝 Template**:
+# Analyze the output - what changes does Terraform detect?
+```
+
+4. **Remediate Drift**
+```bash
+# Option 1: Revert manual changes
+terraform apply
+
+# Option 2: Accept manual changes (import them)
+terraform import jamfpro_script.security_compliance_check <script_id>
+terraform plan  # Should show no changes after import
+```
+
+**Analysis Questions:**
+- How quickly did Terraform detect the manual changes?
+- What specific attributes did Terraform identify as changed?
+- How would you handle this drift in a production environment?
+- What policies would you implement to prevent unauthorized manual changes?
+
+### 💻 **Exercise 2.3**: Multi-Environment Configuration Management
+**Duration**: 60 minutes
+
+**Scenario**: Design a Configuration as Code setup that manages the same security script across development, staging, and production environments with different parameters.
+
+**Task**: Create environment-specific configurations that demonstrate:
+
+1. **Environment-Specific Variables**
 ```hcl
-# microsoft365/main.tf
-# Your Microsoft 365 Configuration as Code structure
-
-terraform {
-  required_providers {
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
+# environments/development.tfvars
+environment_type = "development"
+compliance_threshold = 60
+required_applications = [
+  {
+    name = "Google Chrome"
+    path = "/Applications/Google Chrome.app"
+    min_version = "90.0"
+    critical = false
   }
-}
+]
 
-# TODO: Add your user management configuration
-resource "azuread_user" "employees" {
-  # Your implementation here
-}
-
-# TODO: Add your security policies
-resource "azuread_conditional_access_policy" "mfa_policy" {
-  # Your implementation here
-}
-
-# TODO: Add monitoring and outputs
-output "deployment_summary" {
-  # Your implementation here
+security_settings = {
+  screensaver_timeout = 600  # 10 minutes for development
+  require_filevault = false  # Not required in dev
+  require_firewall = true
+  require_stealth_mode = false
+  auto_lock_enabled = false
 }
 ```
 
-### 💻 **Exercise 2.3**: Jamf Pro Policy Configuration
-**Duration**: 45 minutes
-
-**Scenario**: Design a Jamf Pro Configuration as Code setup for a company with 200 macOS devices.
-
-**Task**: Create Terraform configurations for:
-
-1. **📱 Device Organization**
-   - Smart groups for different device types and compliance states
-   - Department-based static groups
-   - Security-focused device groupings
-
-2. **🔐 Security Policies**
-   - FileVault encryption enforcement
-   - Software update automation
-   - Security configuration profiles
-
-3. **📋 Compliance Monitoring**
-   - Configuration drift detection
-   - Policy compliance reporting
-   - Automated remediation
-
-**📝 Template**:
 ```hcl
-# jamfpro/main.tf
-# Your Jamf Pro Configuration as Code structure
-
-terraform {
-  required_providers {
-    jamfpro = {
-      source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.49"
-    }
+# environments/production.tfvars  
+environment_type = "production"
+compliance_threshold = 95
+required_applications = [
+  {
+    name = "Google Chrome"
+    path = "/Applications/Google Chrome.app"
+    min_version = "100.0"
+    critical = true
+  },
+  {
+    name = "CrowdStrike Falcon"
+    path = "/Applications/Falcon.app"
+    min_version = "6.0"
+    critical = true
   }
-}
+]
 
-# TODO: Add device groups
-resource "jamfpro_computer_group" "departments" {
-  # Your implementation here
-}
-
-# TODO: Add security policies
-resource "jamfpro_policy" "security_updates" {
-  # Your implementation here
-}
-
-# TODO: Add configuration profiles
-resource "jamfpro_macos_configuration_profile" "security_baseline" {
-  # Your implementation here
+security_settings = {
+  screensaver_timeout = 300  # 5 minutes for production
+  require_filevault = true   # Required in production
+  require_firewall = true
+  require_stealth_mode = true
+  auto_lock_enabled = true
 }
 ```
+
+2. **Deployment Workflow**
+```bash
+# Development deployment
+terraform workspace select development
+terraform plan -var-file="environments/development.tfvars"
+terraform apply -var-file="environments/development.tfvars"
+
+# Production deployment (with approval process)
+terraform workspace select production  
+terraform plan -var-file="environments/production.tfvars" -out=prod.tfplan
+# Review plan, get approval, then apply
+terraform apply prod.tfplan
+```
+
+3. **Configuration Validation**
+   - Ensure production has stricter requirements than development
+   - Validate that critical applications are enforced in production
+   - Confirm that security settings escalate appropriately across environments
 
 ---
 
 ## ✅ Module 2 Summary
 
 ### 🎯 Key Takeaways
-- **🔧 Configuration as Code extends IaC principles** to service and application configuration management
-- **🌐 SaaS services can be managed declaratively** through APIs and Terraform providers
-- **🔍 Configuration drift detection** is crucial for maintaining compliance and consistency
-- **🚀 GitOps workflows** enable collaborative, auditable configuration management
-- **📊 Automated monitoring** provides continuous compliance and security oversight
+- **🔧 Configuration as Code** extends declarative principles to **SaaS platform management**
+- **🚫 Traditional tools** like Ansible and Chef **struggle with modern SaaS APIs** due to lack of idempotency and state management
+- **📊 Terraform's API-first design** provides **native idempotency, state management, and drift detection** for SaaS services
+- **🔄 Imperative scripting** requires complex CRUD operations, while **declarative configuration** handles all operations automatically
+- **🌐 SaaS platforms** benefit from the same IaC principles as cloud infrastructure: version control, peer review, and automated deployment
 
 ### 🔑 Essential Concepts Learned
-- **Configuration vs Infrastructure**: Understanding the distinction and overlap
-- **API-Driven Management**: Leveraging service APIs for declarative configuration
-- **State Management**: Tracking configuration state across SaaS services
-- **Drift Remediation**: Strategies for handling configuration drift
-- **GitOps Integration**: Implementing collaborative configuration workflows
+- **API-Driven Management**: Using Terraform providers to abstract SaaS platform APIs
+- **Declarative Configuration**: Describing desired state vs imperative step-by-step operations
+- **State Management**: Automatic tracking of resource attributes and relationships
+- **Drift Detection**: Built-in comparison of desired vs actual configuration state
+- **Idempotency**: Same configuration produces same result regardless of current state
+
+### 🛠️ Practical Skills Developed
+- **CRUD vs Declarative**: Understanding the complexity difference between manual API management and Terraform resources
+- **Template Configuration**: Using Terraform's templating capabilities for dynamic script generation
+- **Multi-Environment Management**: Applying the same configuration patterns across different environments
+- **Configuration Drift**: Detecting and remediating unauthorized manual changes
 
 ### 💡 Pro Tips Recap
-- Always use Configuration as Code for critical service configurations
-- Implement continuous drift detection for compliance monitoring
-- Use GitOps workflows for collaborative configuration management
+- Use Configuration as Code for any system with a REST API and meaningful state
+- Terraform's provider ecosystem covers most major SaaS platforms
+- Always implement drift detection for critical configuration management
+- Treat SaaS configuration with the same rigor as infrastructure configuration
 - Document configuration decisions and rationale in code comments
-- Plan for rollback scenarios and emergency access procedures
 
 ---
 
-**🎉 Congratulations!** You've completed Module 2. You now understand how to extend Infrastructure as Code principles to service configuration management, enabling declarative, version-controlled management of SaaS services like Microsoft 365 and Jamf Pro.
+**🎉 Congratulations!** You've completed Module 2 and now understand how Configuration as Code extends Infrastructure as Code principles to SaaS platform management. You've seen the dramatic difference between imperative API scripting and declarative resource management, and understand why Terraform's approach is superior for managing modern cloud services.
 
----
-
-## 🔗 **Next Steps**
-
-Ready to continue your Terraform journey? Proceed to the next module:
-
-**➡️ [Module 3: HashiCorp Introduction](./module_03_hashicorp_introduction.md)**
-
-Learn about HashiCorp's ecosystem, tools, and how Terraform fits into the broader infrastructure automation landscape.
+**➡️ Ready for Module 3?** Let me know when you'd like to continue with HashiCorp Introduction, where we'll explore the broader HashiCorp ecosystem and Terraform's role within it!
 
 ---

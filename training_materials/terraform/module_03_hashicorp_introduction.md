@@ -1,8 +1,6 @@
 
----
-
 ## 🔷 Module 3: HashiCorp Introduction
-*Duration: 1 hour | Labs: 1*
+*Duration: 1 hour | Labs: 1* | Difficulty: 🟢 Beginner*
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:

@@ -1,5 +1,7 @@
-## 🏗️ Module 1: Infrastructure as Code Concepts
-*Duration: 2 hours | Labs: 2*
+
+# 🏗️ Module 1: Infrastructure as Code Concepts
+
+*Duration: 2 hours | Labs: 2* | Difficulty: 🟢 Beginner*
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:

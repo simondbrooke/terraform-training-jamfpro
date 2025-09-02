@@ -212,6 +212,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 26 | 📝 Sentinel and Policy as Code | 3 hours | 🔴 Advanced | 4 labs |
 
 
+
 **Total Course Time**: ~53 hours of content + ~84 hands-on labs
 
 ---
@@ -308,6 +309,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 - [Terraform AWS Examples](https://github.com/terraform-aws-modules)
 - [r/Terraform Subreddit](https://www.reddit.com/r/Terraform/)
 - [awesome TF](https://github.com/shuaibiyy/awesome-tf)
+- [weeekly.TF](https://weekly.tf/)
 
 ---
 
