@@ -1433,7 +1433,7 @@ Now let's see how Terraform transforms this complex CRUD nightmare into simple, 
 
 ```hcl
 # jamfpro/security_script.tf - DECLARATIVE CONFIGURATION AS CODE
-# This single file replaces all four imperative scripts above!
+# This single file replaces all the imperative scripts above!
 
 terraform {
   required_providers {
@@ -1454,243 +1454,82 @@ provider "jamfpro" {
 
 # Single resource definition - Terraform handles all CRUD operations!
 resource "jamfpro_script" "security_compliance_check" {
-  name     = "Security Compliance Check - Terraform Managed"
-  filename = "security_compliance_check.sh"
-  category_id = -1  # Default category
-  info        = "Corporate security compliance validation script - managed via Terraform"
-  notes       = "Version controlled via Terraform - DO NOT MODIFY MANUALLY"
-  priority    = "Before"
-  parameter4  = var.environment_type
-  parameter5  = var.compliance_threshold
+  name            = "Security Compliance Check"
+  category_id     = -1
+  info            = "Security compliance validation script"
+  notes           = "Created via Terraform - DO NOT MODIFY MANUALLY"
+  priority        = "BEFORE"
+  parameter4      = "environment_type"
+  parameter5      = "compliance_threshold"
+  os_requirements = "13"
   
-  # OS requirements
-  os_requirements = "macOS 12.0"
-  
-  # Script contents with proper variable interpolation
-  script_contents = templatefile("${path.module}/scripts/security_compliance.sh", {
-    environment_type       = var.environment_type
-    compliance_threshold   = var.compliance_threshold
-    required_apps         = var.required_applications
-    min_password_length   = var.password_policy.min_length
-    screensaver_timeout   = var.security_settings.screensaver_timeout
-    company_name          = var.company_name
-    report_webhook_url    = var.monitoring.webhook_url
-  })
-  
-  # Lifecycle management
-  lifecycle {
-    # Prevent accidental deletion of critical security script
-    prevent_destroy = var.environment_type == "production"
-    
-    # Ignore manual changes to notes field (for emergency updates)
-    ignore_changes = [notes]
-  }
-}
+  # Embedded script contents - same as Python/Ansible examples
+  script_contents = <<-EOF
+    #!/bin/bash
+    echo "🔍 Starting security compliance check..."
 
-# Variables for configuration
-variable "environment_type" {
-  description = "Environment type (development, staging, production)"
-  type        = string
-  default     = "development"
-  
-  validation {
-    condition     = contains(["development", "staging", "production"], var.environment_type)
-    error_message = "Environment type must be development, staging, or production."
-  }
-}
+    # FileVault validation
+    FILEVAULT_STATUS=$(fdesetup status | head -1)
+    if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+        echo "✅ FileVault: Enabled"
+        FILEVAULT_OK=1
+    else
+        echo "❌ FileVault: Disabled"
+        FILEVAULT_OK=0
+    fi
 
-variable "compliance_threshold" {
-  description = "Minimum compliance percentage required"
-  type        = number
-  default     = 80
-  
-  validation {
-    condition     = var.compliance_threshold >= 50 && var.compliance_threshold <= 100
-    error_message = "Compliance threshold must be between 50 and 100."
-  }
-}
+    # Firewall validation
+    FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+    if [[ "$FIREWALL_STATUS" == "1" ]]; then
+        echo "✅ Firewall: Enabled"
+        FIREWALL_OK=1
+    else
+        echo "❌ Firewall: Disabled"  
+        FIREWALL_OK=0
+    fi
 
-variable "required_applications" {
-  description = "List of required applications with minimum versions"
-  type = list(object({
-    name         = string
-    path         = string
-    min_version  = string
-    critical     = bool
-  }))
-  default = [
-    {
-      name         = "Google Chrome"
-      path         = "/Applications/Google Chrome.app"
-      min_version  = "100.0"
-      critical     = true
-    },
-    {
-      name         = "Microsoft Excel"
-      path         = "/Applications/Microsoft Excel.app"  
-      min_version  = "16.0"
-      critical     = true
-    },
-    {
-      name         = "CrowdStrike Falcon"
-      path         = "/Applications/Falcon.app"
-      min_version  = "6.0"
-      critical     = true
-    }
-  ]
-}
+    # Calculate compliance
+    TOTAL_CHECKS=2
+    PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK))
+    COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+    echo "📊 Compliance Score: ${COMPLIANCE_PCT}%"
 
-variable "password_policy" {
-  description = "Password policy requirements"
-  type = object({
-    min_length              = number
-    require_special_chars   = bool
-    require_numbers         = bool
-    max_age_days           = number
-  })
-  default = {
-    min_length              = 8
-    require_special_chars   = true
-    require_numbers         = true  
-    max_age_days           = 90
-  }
-}
-
-variable "security_settings" {
-  description = "Security configuration settings"
-  type = object({
-    screensaver_timeout    = number
-    require_filevault      = bool
-    require_firewall       = bool
-    require_stealth_mode   = bool
-    auto_lock_enabled      = bool
-  })
-  default = {
-    screensaver_timeout    = 300  # 5 minutes
-    require_filevault      = true
-    require_firewall       = true
-    require_stealth_mode   = true
-    auto_lock_enabled      = true
-  }
-}
-
-variable "company_name" {
-  description = "Company name for reporting"
-  type        = string
-  default     = "Your Company"
-}
-
-variable "monitoring" {
-  description = "Monitoring and alerting configuration"
-  type = object({
-    webhook_url           = string
-    enable_slack_alerts   = bool
-    enable_email_reports  = bool
-    report_schedule       = string
-  })
-  default = {
-    webhook_url           = ""
-    enable_slack_alerts   = false
-    enable_email_reports  = true
-    report_schedule       = "daily"
-  }
-}
-
-# Outputs for integration with other resources
-output "security_script" {
-  description = "Security compliance script details"
-  value = {
-    id       = jamfpro_script.security_compliance_check.id
-    name     = jamfpro_script.security_compliance_check.name
-    category = jamfpro_script.security_compliance_check.category_id
-  }
-}
-
-output "script_reference_for_policies" {
-  description = "Script reference for use in Jamf Pro policies"
-  value = {
-    script_id   = jamfpro_script.security_compliance_check.id
-    script_name = jamfpro_script.security_compliance_check.name
-  }
-}
-
-# Example policy that uses this script (dependency management!)
-resource "jamfpro_policy" "security_compliance_enforcement" {
-  name                        = "Security Compliance Enforcement"
-  enabled                     = true
-  trigger_checkin             = true
-  trigger_enrollment_complete = true
-  frequency                   = "Once per day"
-  
-  # Terraform automatically handles the dependency relationship!
-  payloads {
-    scripts {
-      id         = jamfpro_script.security_compliance_check.id
-      priority   = "Before"
-      parameter4 = var.environment_type
-      parameter5 = tostring(var.compliance_threshold)
-    }
-  }
-  
-  scope {
-    all_computers = var.environment_type != "production"
-    # In production, target specific groups for gradual rollout
-    computer_group_ids = var.environment_type == "production" ? var.production_target_groups : []
-  }
+    if [[ $COMPLIANCE_PCT -ge 80 ]]; then
+        echo "✅ Device is compliant"
+        exit 0
+    else
+        echo "❌ Device requires remediation"
+        exit 1
+    fi
+  EOF
 }
 
 # BENEFITS OF THIS DECLARATIVE TERRAFORM APPROACH:
-# 
+
 # 🎯 SINGLE SOURCE OF TRUTH:
 # - One configuration file manages entire script lifecycle
 # - All CRUD operations handled automatically by Terraform
 # - Configuration and deployment logic combined
-#
+
 # 🔄 IDEMPOTENCY BUILT-IN:
 # - Running 'terraform apply' multiple times = same result
 # - No duplicate creation, no failed updates
 # - Automatic state reconciliation
-#
+
 # 📊 COMPREHENSIVE STATE MANAGEMENT:
 # - Terraform tracks all resource attributes
 # - Automatic drift detection with 'terraform plan'
 # - No manual state files or ID tracking
-#
-# 🧩 AUTOMATIC DEPENDENCY MANAGEMENT:
-# - Policy automatically references script ID
-# - Terraform calculates dependency graph
-# - Handles creation/deletion order automatically
-#
-# 🔍 BUILT-IN DRIFT DETECTION:
-# - 'terraform plan' shows any manual changes
-# - Compare desired state vs actual state
-# - Clear remediation path with 'terraform apply'
-#
+
 # 🛠️ API ABSTRACTION:
-# - No manual HTTP calls or XML parsing
+# - No manual HTTP calls or JSON parsing
 # - Provider handles authentication, retries, errors
 # - Consistent interface across all resources
-#
-# ✅ VALIDATION & TYPE SAFETY:
-# - Variable validation at plan time
-# - Type checking prevents configuration errors
-# - Clear error messages for invalid configurations
-#
-# 🔒 LIFECYCLE MANAGEMENT:
-# - prevent_destroy for production safety
-# - ignore_changes for operational flexibility
-# - Proper resource dependencies and ordering
-#
+
 # 📋 DECLARATIVE SYNTAX:
 # - Describe WHAT you want, not HOW to get it
 # - Self-documenting configuration
 # - Version control friendly
-#
-# 🎯 OPERATIONAL BENEFITS:
-# - Same workflow for all environments
-# - Easy rollbacks with version control
-# - Integration with CI/CD pipelines
-# - Collaborative change management
 ```
 
 
