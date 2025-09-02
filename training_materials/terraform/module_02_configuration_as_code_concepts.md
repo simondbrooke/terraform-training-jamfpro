@@ -554,16 +554,9 @@ Organizations using traditional approaches typically end up with:
 
 #### 🔧 The Imperative Approach: Manual CRUD Operations
 
-**⚠️ The Pain Points We'll Observe:**
-- **Complex lifecycle management** requiring multiple coordinated operations
-- **Manual state checking** to determine create vs. update operations
-- **Fragile JSON/response parsing** that breaks on API changes
-- **No automatic rollback** when operations fail partway
-- **Authentication token management** in every script operation
-- **Error handling** that must be implemented from scratch
-- **No idempotency guarantees** without extensive custom logic
+Having recognized the limitations of manual GUI administration and basic configuration management tools, many organizations turn to custom scripting as their next evolution. This approach represents a significant step forward in automation, allowing teams to interact directly with SaaS platform APIs to perform programmatic configuration management. However, as we'll see, this imperative approach introduces its own complex set of challenges that ultimately highlight why declarative Configuration as Code became necessary.
 
-Here's how organizations might implement a solution to this challenge with Python scripts that seek to implement atomic operations using the Jamf Pro API:
+The following Python script demonstrates how organizations typically implement comprehensive resource lifecycle management when working directly with APIs like Jamf Pro. This example illustrates the intricate complexity required to handle what should be simple operations: creating, reading, updating, and deleting a single script resource. Notice how the majority of the code deals with authentication, state checking, error handling, and pagination rather than the actual business logic of managing the script itself.
 
 <details>
 <summary>🔍 Python Script Example: Jamf Pro Script Lifecycle Management</summary>
