@@ -321,17 +321,70 @@ cat hello.txt
 ```bash
 # View current state
 terraform show
+```
 
+**expected output**
+
+```bash
+# local_file.hello:
+resource "local_file" "hello" {
+    content              = "Hello from Terraform! 🚀"
+    content_base64sha256 = "+on+nbr8KDyrfOYumpDGky9eF4uICt6hVdyQXNGO4/0="
+    content_base64sha512 = "DD3oVIM29KZ3qo7ONRmhdfzgoYi1v8GxCSPiuo9FVgHyWYebb+IqRZIC+ul0E9FMWkjWeFgEdauBL5CLDzeylA=="
+    content_md5          = "bee53481d330a69eaec861f8a3277ef0"
+    content_sha1         = "3d3a4083913dfdd5890d12ef12a42e55c6e49235"
+    content_sha256       = "fa89fe9dbafc283cab7ce62e9a90c6932f5e178b880adea155dc905cd18ee3fd"
+    content_sha512       = "0c3de8548336f4a677aa8ece3519a175fce0a188b5bfc1b10923e2ba8f455601f259879b6fe22a459202fae97413d14c5a48d678580475ab812f908b0f37b294"
+    directory_permission = "0777"
+    file_permission      = "0777"
+    filename             = "hello.txt"
+    id                   = "3d3a4083913dfdd5890d12ef12a42e55c6e49235"
+}
+
+
+Outputs:
+
+file_content = "Hello from Terraform! 🚀"
+```
+
+```bash
 # List resources in state
 terraform state list
+```
+
+**expected output**
+
+```bash
+local_file.hello
 ```
 
 **Step 7: Clean Up**
 ```bash
 # Destroy resources
 terraform destroy
-# Type 'yes' when prompted
+```
 
+**expected output**
+```bash
+Changes to Outputs:
+  - file_content = "Hello from Terraform! 🚀" -> null
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: 
+```
+Type 'yes' when prompted
+
+```bash
+local_file.hello: Destroying... [id=3d3a4083913dfdd5890d12ef12a42e55c6e49235]
+local_file.hello: Destruction complete after 0s
+
+Destroy complete! Resources: 1 destroyed.
+```
+
+```bash
 # Verify file was deleted
 ls -la
 ```
