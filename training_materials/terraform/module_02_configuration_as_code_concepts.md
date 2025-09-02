@@ -218,6 +218,7 @@ The challenge is **how** each approach handles this lifecycle - with varying deg
 | **Time to Deploy** | Hours/Days | Minutes/Hours | Minutes/Hours | Minutes |
 | **Maintenance Overhead** | High - manual effort | High - custom code | Medium - tool maintenance | Low - provider updates |
 | **Risk of Human Error** | Very High | Medium | Low | Very Low |
+| **Peer Review** | Only if saas tools offers this feature | Code reviews (GitOps) | Code reviews (GitOps) | Code reviews (GitOps)|
 | **Compliance/Governance** | Manual processes | Custom validation | Custom validation | Policy as Code integration |
 | **Documentation** | Screenshots/docs | Script documentation | playbook documentation | hcl is self-documenting |
 
