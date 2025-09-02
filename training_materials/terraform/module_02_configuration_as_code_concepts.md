@@ -1378,7 +1378,7 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.49"
+      version = "~> 0.25.0"
     }
   }
 }
@@ -1774,36 +1774,43 @@ Focus on cultural change management (shifting from GUI to code workflows), skill
 ## ✅ Module 2 Summary
 
 ### 🎯 Key Takeaways
-- **🔧 Configuration as Code** extends declarative principles to **SaaS platform management**
-- **🚫 Traditional tools** like Ansible and Chef **struggle with modern SaaS APIs** due to lack of idempotency and state management
-- **📊 Terraform's API-first design** provides **native idempotency, state management, and drift detection** for SaaS services
-- **🔄 Imperative scripting** requires complex CRUD operations, while **declarative configuration** handles all operations automatically
-- **🌐 SaaS platforms** benefit from the same IaC principles as cloud infrastructure: version control, peer review, and automated deployment
+- **🔧 Configuration as Code** manages SaaS service configurations through declarative code instead of manual GUI administration
+- **📈 SaaS Evolution**: Traditional on-premises tools migrated to cloud-based APIs, enabling programmable configuration management  
+- **🚫 Manual GUI Limitations**: Point-and-click administration fails at scale due to human error, time consumption, and inability to track changes
+- **⚙️ Traditional Automation Challenges**: Custom scripts and Ansible require extensive imperative logic for basic SaaS resource management
+- **📊 Terraform's Paradigm Shift**: Declarative resource definitions with built-in state management, idempotency, and drift detection
 
 ### 🔑 Essential Concepts Learned
-- **API-Driven Management**: Using Terraform providers to abstract SaaS platform APIs
-- **Declarative Configuration**: Describing desired state vs imperative step-by-step operations
-- **State Management**: Automatic tracking of resource attributes and relationships
-- **Drift Detection**: Built-in comparison of desired vs actual configuration state
-- **Idempotency**: Same configuration produces same result regardless of current state
+- **Infrastructure vs Configuration as Code**: IaC manages infrastructure (servers, networks), CaC manages service settings (policies, users)
+- **Imperative vs Declarative**: Imperative tells "how" step-by-step, declarative describes "what" the end result should be
+- **SaaS Resource Lifecycle**: Universal CREATE → TEST → DEPLOY → UPDATE → DELETE pattern across all platforms
+- **State Management**: Terraform automatically tracks resource attributes and relationships vs manual custom tracking
+- **Drift Detection**: Built-in comparison of desired configuration vs actual SaaS platform state
 
 ### 🛠️ Practical Skills Developed
-- **CRUD vs Declarative**: Understanding the complexity difference between manual API management and Terraform resources
-- **Template Configuration**: Using Terraform's templating capabilities for dynamic script generation
-- **Multi-Environment Management**: Applying the same configuration patterns across different environments
-- **Configuration Drift**: Detecting and remediating unauthorized manual changes
+- **API Evolution Understanding**: How SaaS platforms evolved from on-premises GUI tools to API-driven cloud services
+- **Complexity Analysis**: Comparing 400+ line Python scripts vs 50-line Terraform configurations for identical outcomes
+- **Traditional Tool Limitations**: Why Ansible's generic HTTP modules struggle with SaaS-specific resource semantics
+- **Terraform Architecture**: How providers abstract API complexity while Core manages state and dependencies
+- **Use Case Identification**: When Configuration as Code provides maximum organizational benefit
 
 ### 💡 Pro Tips Recap
-- Use Configuration as Code for any system with a REST API and meaningful state
-- Terraform's provider ecosystem covers most major SaaS platforms
-- Always implement drift detection for critical configuration management
-- Treat SaaS configuration with the same rigor as infrastructure configuration
-- Document configuration decisions and rationale in code comments
+- Configuration as Code is most valuable for API-driven SaaS platforms with complex interdependent resources
+- Manual GUI administration becomes exponentially problematic as organizations scale beyond dozens of resources
+- Custom scripting trades GUI problems for development/maintenance burdens without solving core architectural issues
+- Terraform's declarative approach eliminates entire classes of problems rather than just improving existing solutions
+- Start with non-critical resources when adopting Configuration as Code to build team confidence and skills
 
 ---
 
 **🎉 Congratulations!** You've completed Module 2 and now understand how Configuration as Code extends Infrastructure as Code principles to SaaS platform management. You've seen the dramatic difference between imperative API scripting and declarative resource management, and understand why Terraform's approach is superior for managing modern cloud services.
 
-**➡️ Ready for Module 3?** Let me know when you'd like to continue with HashiCorp Introduction, where we'll explore the broader HashiCorp ecosystem and Terraform's role within it!
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 3: HashiCorp Introduction](./module_03_hashicorp_introduction.md)**
+
+where we'll explore the broader HashiCorp ecosystem and Terraform's role within it.
 
 ---
