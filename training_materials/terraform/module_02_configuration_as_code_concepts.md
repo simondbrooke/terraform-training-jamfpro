@@ -1,8 +1,10 @@
-## 🔧 Module 2: Configuration as Code Concepts
+# 🔧 Module 2: Configuration as Code Concepts
 *Duration: 2.5 hours | Labs: 3 | 🟢 Beginner*
 
-### 🎯 Learning Objectives
+## 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Define Configuration as Code and distinguish it from Infrastructure as Code
 - ✅ Understand why traditional configuration management tools fail with modern SaaS APIs
 - ✅ Explain the evolution from imperative scripting to declarative configuration management
@@ -336,71 +338,232 @@ Traditional configuration management tools were designed for **infrastructure co
 - **Error handling** that must be implemented from scratch
 - **No idempotency guarantees** without extensive custom logic
 
-Here's how organizations might implement a solution to this challenge with bash scripts that mirror the same lifecycle as the Ansible approach:
+Here's how organizations might implement a solution to this challenge with Python scripts that seek to implement atomic operations using the Jamf Pro API:
 
-**Bash Script: Complete Jamf Pro Script Lifecycle Management**
+**Python Script: Complete Jamf Pro Script Lifecycle Management (Modular Version)**
 
-```bash
-#!/bin/bash
-# manage_jamf_script.sh - Complete Script Lifecycle Management
-# Demonstrates the complexity of imperative API management matching Ansible approach
+```python
+#!/usr/bin/env python3
+"""
+manage_jamf_script_lifecycle.py
+Demonstrates imperative API management challenges in Python
+"""
 
-set -e  # Exit on any error
+import urllib.request
+import urllib.parse
+import urllib.error
+import json
+import time
+import sys
 
-# Configuration variables
-JAMF_URL="${JAMF_PRO_URL:-https://your-jamf-instance.jamfcloud.com}"
-USERNAME="${JAMF_PRO_USERNAME:-api_user}"
-PASSWORD="${JAMF_PRO_PASSWORD:-api_password}"
-SCRIPT_NAME="Security Compliance Check"
+#==============================================================================
+# CONFIGURATION
+#==============================================================================
 
-echo "🚀 Starting Jamf Pro Script Lifecycle Management..."
-echo "📋 Script: $SCRIPT_NAME"
-echo "🌐 Instance: $JAMF_URL"
+JAMF_URL = "https://some_jamf_pro_url"
+CLIENT_ID = "some_jamf_pro_client_id"
+CLIENT_SECRET = "some_jamf_pro_client_secret"
+SCRIPT_NAME = "Security Compliance Check"
 
-# Step 1: Authentication - required for every operation
-echo "🔐 Authenticating with Jamf Pro API..."
-AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
-    "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
+# Global state
+access_token = None
+token_expiration = 0
 
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "❌ Authentication failed - check credentials"
-    exit 1
-fi
-echo "✅ Authentication successful"
+#==============================================================================
+# AUTHENTICATION BLOCK
+#==============================================================================
 
-# Step 2: Manual state checking - check if script already exists
-echo "🔍 Checking for existing script..."
-EXISTING_SCRIPTS=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/json" \
-    "${JAMF_URL}/api/v1/scripts")
+def get_oauth_token():
+    """Get OAuth access token from Jamf Pro API"""
+    global access_token, token_expiration
+    
+    print("🔐 Requesting OAuth token...")
+    
+    url = f"{JAMF_URL}/api/oauth/token"
+    data = urllib.parse.urlencode({
+        "client_id": CLIENT_ID,
+        "grant_type": "client_credentials",
+        "client_secret": CLIENT_SECRET
+    }).encode('utf-8')
+    
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            response_data = response.read().decode('utf-8')
+            token_data = json.loads(response_data)
+            
+            access_token = token_data.get("access_token")
+            expires_in = token_data.get("expires_in", 1800)
+            token_expiration = int(time.time()) + expires_in - 60
+            
+            print(f"✅ OAuth token acquired")
+            return True
+        
+    except Exception as e:
+        print(f"❌ Authentication failed: {e}")
+        return False
 
-# Extract existing script ID if found - fragile JSON parsing
-EXISTING_SCRIPT_ID=$(echo "$EXISTING_SCRIPTS" | \
-    python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    for script in data.get('results', []):
-        if script.get('name') == '${SCRIPT_NAME}':
-            print(script.get('id', ''))
+def invalidate_token():
+    """Invalidate the current OAuth token"""
+    global access_token
+    
+    if not access_token:
+        return
+    
+    print("🧹 Invalidating token...")
+    
+    url = f"{JAMF_URL}/api/v1/auth/invalidate-token"
+    req = urllib.request.Request(
+        url,
+        method='POST',
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            print("✅ Token invalidated")
+    except:
+        print("⚠️ Token cleanup failed")
+    
+    access_token = None
+
+#==============================================================================
+# PAGINATION HELPER FUNCTION
+#==============================================================================
+
+def get_paginated_results(endpoint, page_size=100, max_pages=50):
+    """
+    Helper function to handle pagination for Jamf Pro API endpoints
+    Demonstrates the complexity of manual pagination handling
+    """
+    
+    print(f"📄 Starting paginated retrieval from {endpoint}")
+    all_results = []
+    current_page = 0
+    total_count = None
+    
+    while current_page < max_pages:  # Safety limit to prevent infinite loops
+        print(f"🔄 Fetching page {current_page + 1}...")
+        
+        # Construct paginated URL
+        url = f"{JAMF_URL}{endpoint}?page={current_page}&page-size={page_size}&sort=name%3Aasc"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Bearer {access_token}"
+            }
+        )
+        
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                response_data = response.read().decode('utf-8')
+                data = json.loads(response_data)
+                
+                # Extract pagination info
+                page_results = data.get("results", [])
+                current_total = data.get("totalCount", 0)
+                
+                if total_count is None:
+                    total_count = current_total
+                    print(f"📊 Total resources available: {total_count}")
+                
+                # Add results to our collection
+                all_results.extend(page_results)
+                
+                print(f"✅ Page {current_page + 1}: Retrieved {len(page_results)} items")
+                print(f"📈 Progress: {len(all_results)}/{total_count} items collected")
+                
+                # Check if we've retrieved all results
+                if len(page_results) < page_size or len(all_results) >= total_count:
+                    print(f"🎉 Pagination complete: {len(all_results)} total items retrieved")
+                    break
+                
+                current_page += 1
+                
+        except urllib.error.HTTPError as e:
+            error_data = e.read().decode('utf-8')
+            print(f"❌ HTTP error on page {current_page + 1}: {e.code}")
+            print(f"📄 Error response: {error_data}")
             break
-except:
-    pass
-" 2>/dev/null)
+        except Exception as e:
+            print(f"❌ Pagination error on page {current_page + 1}: {e}")
+            break
+    
+    if current_page >= max_pages:
+        print(f"⚠️ Hit pagination safety limit ({max_pages} pages)")
+        print(f"📊 Retrieved {len(all_results)} items before stopping")
+    
+    return all_results
 
-if [ ! -z "$EXISTING_SCRIPT_ID" ]; then
-    echo "📋 Found existing script with ID: $EXISTING_SCRIPT_ID"
-    OPERATION="UPDATE"
-else
-    echo "📋 No existing script found - will create new one"
-    OPERATION="CREATE"
-fi
+#==============================================================================
+# GET RESOURCE LIST BLOCK
+#==============================================================================
 
-# Step 3: Prepare script content - shared between create and update
-read -r -d '' SCRIPT_CONTENT << 'EOF' || true
-#!/bin/bash
-# Security Compliance Check Script
+def get_resource_list():
+    """Get list of all scripts from Jamf Pro API with pagination handling"""
+    
+    print("🔍 Getting complete script list with pagination...")
+    
+    try:
+        # Use pagination helper to get all scripts
+        all_scripts = get_paginated_results("/api/v1/scripts")
+        
+        if all_scripts is not None:
+            print(f"📊 Successfully retrieved {len(all_scripts)} total scripts")
+            return all_scripts
+        else:
+            print("❌ Failed to retrieve scripts via pagination")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Failed to get script list: {e}")
+        return None
+
+#==============================================================================
+# GET BY ID BLOCK
+#==============================================================================
+
+def get_by_id(script_id):
+    """Get script details by ID"""
+    
+    print(f"🔍 Getting script details for ID: {script_id}")
+    
+    url = f"{JAMF_URL}/api/v1/scripts/{script_id}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "accept": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            response_data = response.read().decode('utf-8')
+            script_data = json.loads(response_data)
+            
+            script_name = script_data.get("name", "Unknown")
+            print(f"✅ Retrieved script: {script_name}")
+            return script_data
+        
+    except Exception as e:
+        print(f"❌ Failed to get script: {e}")
+        return None
+
+#==============================================================================
+# SCRIPT PAYLOAD BLOCK
+#==============================================================================
+
+def build_script_payload(operation):
+    """Build JSON payload for script operations"""
+    
+    script_content = '''#!/bin/bash
 echo "🔍 Starting security compliance check..."
 
 # FileVault validation
@@ -419,7 +582,7 @@ if [[ "$FIREWALL_STATUS" == "1" ]]; then
     echo "✅ Firewall: Enabled"
     FIREWALL_OK=1
 else
-    echo "❌ Firewall: Disabled"
+    echo "❌ Firewall: Disabled"  
     FIREWALL_OK=0
 fi
 
@@ -427,7 +590,6 @@ fi
 TOTAL_CHECKS=2
 PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK))
 COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-
 echo "📊 Compliance Score: ${COMPLIANCE_PCT}%"
 
 if [[ $COMPLIANCE_PCT -ge 80 ]]; then
@@ -436,200 +598,217 @@ if [[ $COMPLIANCE_PCT -ge 80 ]]; then
 else
     echo "❌ Device requires remediation"
     exit 1
-fi
-EOF
-
-# Enhanced script content for updates
-read -r -d '' ENHANCED_SCRIPT_CONTENT << 'EOF' || true
-#!/bin/bash
-# Security Compliance Check Script - ENHANCED VERSION
-echo "🔍 Starting enhanced security compliance check..."
-
-# Enhanced FileVault check
-FILEVAULT_STATUS=$(fdesetup status | head -1)
-if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
-    echo "✅ FileVault: Enabled"
-    FILEVAULT_OK=1
-else
-    echo "❌ FileVault: Disabled"
-    FILEVAULT_OK=0
-fi
-
-# Enhanced Firewall check with stealth mode
-FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
-STEALTH_MODE=$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
-if [[ "$FIREWALL_STATUS" == "1" && "$STEALTH_MODE" == "1" ]]; then
-    echo "✅ Firewall: Enabled with stealth mode"
-    FIREWALL_OK=1
-else
-    echo "❌ Firewall: Configuration needed"
-    FIREWALL_OK=0
-fi
-
-# NEW: Password policy check
-PWD_LENGTH=$(pwpolicy -n /Local/Default -getglobalpolicy | grep minChars | cut -d'=' -f2 2>/dev/null || echo "0")
-if [[ $PWD_LENGTH -ge 8 ]]; then
-    echo "✅ Password Policy: Compliant"
-    PASSWORD_OK=1
-else
-    echo "❌ Password Policy: Non-compliant"
-    PASSWORD_OK=0
-fi
-
-# Calculate enhanced compliance
-TOTAL_CHECKS=3
-PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK + PASSWORD_OK))
-COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-
-echo "📊 Enhanced Compliance Score: ${COMPLIANCE_PCT}%"
-
-if [[ $COMPLIANCE_PCT -ge 90 ]]; then
-    echo "✅ Device is compliant"
-    exit 0
-else
-    echo "❌ Device requires remediation"
-    exit 1
-fi
-EOF
-
-# Step 4: Execute create or update operation
-if [ "$OPERATION" == "CREATE" ]; then
-    echo "🔄 Creating new script in Jamf Pro..."
+fi'''
     
-    # Construct JSON payload for creation
-    PAYLOAD=$(python3 -c "
-import json
-payload = {
-    'name': '${SCRIPT_NAME}',
-    'info': 'Security compliance validation script',
-    'notes': 'Created via Bash Script - Version 1.0 - $(date)',
-    'priority': 'BEFORE',
-    'categoryId': '-1',
-    'parameter4': 'environment_type',
-    'parameter5': 'compliance_threshold',
-    'osRequirements': '13',
-    'scriptContents': '''${SCRIPT_CONTENT}'''
-}
-print(json.dumps(payload))
-")
+    info_suffix = " - UPDATED" if operation == "UPDATE" else ""
     
-    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-        -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -X POST "${JAMF_URL}/api/v1/scripts" \
-        -d "$PAYLOAD")
+    return {
+        "name": SCRIPT_NAME,
+        "info": f"Security compliance validation script{info_suffix}",
+        "notes": f"{operation} via Python Script - {time.strftime('%Y-%m-%d %H:%M:%S')}",
+        "priority": "BEFORE",
+        "categoryId": "-1",
+        "parameter4": "environment_type",
+        "parameter5": "compliance_threshold",
+        "osRequirements": "13",
+        "scriptContents": script_content
+    }
+
+#==============================================================================
+# CREATE BLOCK
+#==============================================================================
+
+def create_script():
+    """Create new script in Jamf Pro"""
+    
+    print("🔄 Creating new script...")
+    
+    url = f"{JAMF_URL}/api/v1/scripts"
+    payload = build_script_payload("CREATE")
+    data = json.dumps(payload).encode('utf-8')
+    
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status == 201:
+                response_data = response.read().decode('utf-8')
+                script_data = json.loads(response_data)
+                script_id = str(script_data.get("id"))
+                print("✅ Script created successfully")
+                return script_id
+            else:
+                print(f"❌ Create failed: HTTP {response.status}")
+                return None
+                
+    except urllib.error.HTTPError as e:
+        error_data = e.read().decode('utf-8')
+        print(f"❌ Script creation failed with HTTP {e.code}")
+        print(f"📄 Response: {error_data}")
+        return None
+    except Exception as e:
+        print(f"❌ Create request failed: {e}")
+        return None
+
+#==============================================================================
+# UPDATE BLOCK
+#==============================================================================
+
+def update_script(script_id):
+    """Update existing script in Jamf Pro"""
+    
+    print(f"🔄 Updating script ID: {script_id}...")
+    
+    url = f"{JAMF_URL}/api/v1/scripts/{script_id}"
+    payload = build_script_payload("UPDATE")
+    data = json.dumps(payload).encode('utf-8')
+    
+    req = urllib.request.Request(
+        url,
+        data=data,
+        method='PUT',
+        headers={
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status == 200:
+                print("✅ Script updated successfully")
+                return True
+            else:
+                print(f"❌ Update failed: HTTP {response.status}")
+                return False
+                
+    except urllib.error.HTTPError as e:
+        error_data = e.read().decode('utf-8')
+        print(f"❌ Script update failed with HTTP {e.code}")
+        print(f"📄 Response: {error_data}")
+        return False
+    except Exception as e:
+        print(f"❌ Update request failed: {e}")
+        return False
+
+#==============================================================================
+# MAIN WORKFLOW
+#==============================================================================
+
+def find_script_by_name(script_name):
+    """Find script ID by name - Manual state checking"""
+    
+    print(f"🔍 Looking for script: '{script_name}'")
+    
+    scripts = get_resource_list()
+    if not scripts:
+        return None
+    
+    # Manual iteration through all scripts
+    for script in scripts:
+        if script.get("name") == script_name:
+            script_id = str(script.get("id"))
+            print(f"✅ Found existing script with ID: {script_id}")
+            return script_id
+    
+    print("📋 No existing script found")
+    return None
+
+def main():
+    """Main execution function"""
+    
+    print("🚀 Starting Jamf Pro Script Lifecycle Management...")
+    print(f"📋 Script: {SCRIPT_NAME}")
+    print(f"🌐 Instance: {JAMF_URL}")
+    print("🐍 Python Implementation")
+    print("")
+    
+    try:
+        # Step 1: Authentication
+        print("🔐 Authenticating with Jamf Pro API...")
+        if not get_oauth_token():
+            return 1
         
-    HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-    RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-    
-    if [ "$HTTP_STATUS" == "201" ]; then
-        echo "✅ Script created successfully"
-        SCRIPT_ID=$(echo "$RESPONSE_BODY" | python3 -c "import sys, json; print(json.load(sys.stdin)['id'])" 2>/dev/null)
-    else
-        echo "❌ Script creation failed with HTTP $HTTP_STATUS"
-        echo "📄 Response: $RESPONSE_BODY"
-        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-        exit 1
-    fi
-    
-else
-    echo "🔄 Updating existing script in Jamf Pro..."
-    
-    # Construct JSON payload for update
-    PAYLOAD=$(python3 -c "
-import json
-payload = {
-    'name': '${SCRIPT_NAME}',
-    'info': 'Security compliance validation script - ENHANCED',
-    'notes': 'Updated via Bash Script - Version 2.0 - $(date)',
-    'priority': 'BEFORE',
-    'categoryId': '-1',
-    'parameter4': 'environment_type',
-    'parameter5': 'compliance_threshold',
-    'osRequirements': '13',
-    'scriptContents': '''${ENHANCED_SCRIPT_CONTENT}'''
-}
-print(json.dumps(payload))
-")
-    
-    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-        -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -X PUT "${JAMF_URL}/api/v1/scripts/${EXISTING_SCRIPT_ID}" \
-        -d "$PAYLOAD")
+        # Step 2: Manual state checking - determine operation
+        print("🔧 Determining operation type...")
+        existing_script_id = find_script_by_name(SCRIPT_NAME)
         
-    HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-    RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-    
-    if [ "$HTTP_STATUS" == "200" ]; then
-        echo "✅ Script updated successfully"
-        SCRIPT_ID=$EXISTING_SCRIPT_ID
-    else
-        echo "❌ Script update failed with HTTP $HTTP_STATUS"
-        echo "📄 Response: $RESPONSE_BODY"
-        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-        exit 1
-    fi
-fi
+        # Step 3: Execute operation based on manual state check
+        if existing_script_id:
+            print(f"📋 Found existing script, will update ID: {existing_script_id}")
+            success = update_script(existing_script_id)
+            result_script_id = existing_script_id if success else None
+        else:
+            print("📋 No existing script found, will create new one")
+            result_script_id = create_script()
+        
+        if not result_script_id:
+            print("💥 Operation failed")
+            return 1
+        
+        # Step 4: Verify operation
+        print("🔍 Verifying operation...")
+        script_data = get_by_id(result_script_id)
+        if script_data:
+            print("✅ Verification successful")
+        
+        print("")
+        print("🎉 Script lifecycle management complete!")
+        
+    except KeyboardInterrupt:
+        print("\n⚠️ Operation interrupted")
+        return 1
+    except Exception as e:
+        print(f"💥 Unexpected error: {e}")
+        return 1
+    finally:
+        # Cleanup
+        print("")
+        print("🧹 Performing cleanup...")
+        invalidate_token()
+    return 0
 
-# Step 5: Verify the operation
-echo "🔍 Verifying script details..."
-SCRIPT_DETAILS=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/json" \
-    "${JAMF_URL}/api/v1/scripts/${SCRIPT_ID}")
+if __name__ == "__main__":
+    sys.exit(main())
 
-if [ $? -eq 0 ]; then
-    SCRIPT_NAME_VERIFY=$(echo "$SCRIPT_DETAILS" | python3 -c "import sys, json; print(json.load(sys.stdin)['name'])" 2>/dev/null)
-    LAST_MODIFIED=$(echo "$SCRIPT_DETAILS" | python3 -c "import sys, json; print(json.load(sys.stdin)['lastModified'])" 2>/dev/null)
-    
-    echo "✅ Verification successful:"
-    echo "   Operation: $OPERATION"
-    echo "   Script ID: $SCRIPT_ID"
-    echo "   Script Name: $SCRIPT_NAME_VERIFY"
-    echo "   Last Modified: $LAST_MODIFIED"
-else
-    echo "⚠️ Verification failed but operation may have succeeded"
-fi
-
-# Step 6: Manual cleanup - invalidate token
-echo "🧹 Cleaning up authentication token..."
-curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-
-echo "🎉 Script lifecycle management complete!"
-
-# PROBLEMS WITH THIS BASH APPROACH:
-# 1. ❌ Manual State Checking: Must query existing scripts and parse responses
-# 2. ❌ Complex JSON Construction: Python required for reliable JSON creation
-# 3. ❌ Fragile Response Parsing: JSON parsing prone to errors
-# 4. ❌ No Automatic Rollback: Failed operations leave inconsistent state
-# 5. ❌ Token Management Overhead: Authentication/cleanup in every script
-# 6. ❌ No Type Validation: Invalid JSON structure errors at runtime
-# 7. ❌ Verbose Logic: Complex if/else branching for create vs update
-# 8. ❌ No Drift Detection: Cannot detect manual GUI changes between runs
-# 9. ❌ Error Handling Complexity: Must handle each HTTP status manually
-# 10. ❌ No Resource Dependencies: Cannot manage relationships with other resources
 ```
 
-This single bash script demonstrates the same complexity issues as the Ansible approach, but with additional challenges:
+**🚨 Challenges of the Imperative Scripting Approach:**
 
-- **🐍 Python Dependencies**: Requires Python for reliable JSON parsing and construction
-- **🔧 Complex Shell Logic**: Intricate if/else branching for different operations
-- **📝 Heredoc Management**: Complex multi-line string handling for script content
-- **🔍 Manual Parsing**: Fragile response parsing that breaks on API changes
-- **⚙️ Environment Variables**: Manual credential and configuration management
+# PROBLEMS WITH THIS PYTHON APPROACH:
 
-**⚖️ The Evolution: Bash Scripts vs. Manual GUI**
+- 1. ❌ Repeated Error Handling: Each script needs to handle HTTP errors, JSON errors, network timeouts. duplicating logic.
+- 2. ❌ Token Management Overhead: Each script Must handle OAuth lifecycle manually. duplicating logic
+- 3. ❌ Custom Retry Logic: Each script Must implement exponential backoff for failed API calls. duplicating logic 
+- 4. ❌ Pagination Complexity: Each script needs to implement it's own pagiantion logic. 
+- 5. ❌ No Automatic Rollback: Failed operations leave inconsistent resource state behind.
+- 6. ❌ Race Conditions: Multiple runs can conflict with each other
+- 7. ❌ No Drift Detection: Cannot detect manual GUI changes between runs
+- 8. ❌ No Type Safety: Runtime errors for API schema changes
+- 9. ❌ No Resource Dependencies: Cannot manage relationships dynamically or easily.
+- 10. ❌ No Idempotency Guarantees: Same script can produce different results
+- 11. ❌ API Version Management: Must handle API changes and deprecation manually for each script.
+- 12. ❌ No Concurrent Access Control: No locking for shared resources
+- 13. ❌ Testing Complexity: Each endpoint needs individual mocking and testing
 
-To be fair, this bash script approach **is a significant improvement** over manual GUI administration. It provides **automation**, **repeatability**, and **version control** that eliminates the human errors and time consumption of clicking through web interfaces. Organizations can deploy consistent configurations, track changes through Git, and integrate with CI/CD pipelines.
+**⚖️ The Evolution: Python Scripts vs. Manual GUI**
 
-However, the **fundamental challenges remain substantial**. You've eliminated manual GUI problems but **traded them for complex development and maintenance burdens**: building robust error handling, managing authentication tokens, parsing API responses, and handling edge cases. The result is often **hundreds of lines of shell script code** that must be developed, tested, debugged, and maintained by your team - essentially **building your own API management framework** from scratch.
+To be fair, this Python script approach **is a significant improvement** over manual GUI administration. It provides **automation**, **repeatability**, **version control**, and **better error handling** that eliminates the human errors and time consumption of clicking through web interfaces. Organizations can deploy consistent configurations, track changes through Git, integrate with CI/CD pipelines, and benefit from Python's strong JSON handling and exception management.
+
+However, the **fundamental challenges remain substantial**. You've eliminated manual GUI problems but **traded them for complex development and maintenance burdens**: building robust HTTP request handling, managing authentication tokens, implementing manual state checking through API iteration, and handling edge cases. The result is often **hundreds of lines of Python code** with extensive try/catch blocks that must be developed, tested, debugged, and maintained by your team - essentially **building your own API management framework** from scratch.
 
 **🤖 The Next Evolution: Configuration Management Tools**
 
-Recognizing these limitations, many organizations turn to **configuration management tools** like Ansible, which provide more structured approaches to API automation. Let's examine how Ansible addresses some of the bash script challenges while introducing its own complexities:
+Recognizing these limitations, many organizations turn to **configuration management tools** like Ansible, which provide more structured approaches to API automation. Let's examine how Ansible addresses some of the Python script challenges while introducing its own complexities:
 
 **Ansible Implementation for Jamf Pro Scripts Management**
 
@@ -869,7 +1048,7 @@ However, the **fundamental limitations remain substantial**. While you've elimin
 We've now seen the **evolution of SaaS configuration management approaches**:
 
 1. **Manual GUI Administration** → Time-consuming, error-prone, not scalable
-2. **Bash Scripts** → Automated but requires extensive custom development  
+2. **Python Scripts** → Better error handling but still requires extensive custom development  
 3. **Ansible Playbooks** → More structured but still complex custom automation
 
 Each approach **improves upon the previous** by adding automation, structure, and repeatability. However, **all three share fundamental limitations**:
