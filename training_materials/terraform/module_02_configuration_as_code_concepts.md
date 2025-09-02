@@ -168,6 +168,34 @@ Some organizations attempt to use traditional **configuration management tools**
 
 ---
 
+#### 🔄 The Universal SaaS Resource Lifecycle
+
+Regardless of the approach used (manual GUI, scripts, or automation tools), every SaaS resource follows the same fundamental lifecycle:
+
+```mermaid
+flowchart LR
+    CREATE[🔨 Create a Resource] 
+    TEST[🧪 Test the Resource]
+    DEPLOY[🚀 Deploy to Production]
+    UPDATE[📝 Update the Resource]
+    DELETE[🗑️ Delete the Resource]
+    
+    CREATE --> TEST
+    TEST --> DEPLOY
+    DEPLOY --> UPDATE
+    UPDATE --> TEST
+    TEST --> DEPLOY
+    DEPLOY --> DELETE
+    
+    style CREATE fill:#e8f5e8
+    style TEST fill:#fff3e0
+    style DEPLOY fill:#e3f2fd
+    style UPDATE fill:#f3e5f5
+    style DELETE fill:#ffebee
+```
+
+The challenge is **how** each approach handles this lifecycle - with varying degrees of complexity, reliability, maintainability, ease of repeatability and the ability to scale to large numbers of resources.
+
 **📊 Comparison: SaaS Configuration Management Approaches**
 
 | **Aspect** | **🖱️ Manual GUI** | **🔧 Custom Scripts/Pipelines** | **🤖 Ansible/Chef/Puppet** | **🎯 Terraform (CaC)** |
@@ -202,33 +230,7 @@ Scaling presents another significant barrier, as these approaches simply don't s
 Knowledge silos compound these challenges, as implementation details and tribal knowledge often remain concentrated with single individuals, creating organizational risk and limiting collaboration effectiveness. Finally, the constant evolution of SaaS platform APIs requires manual updates across all custom implementations, creating an ongoing maintenance burden that diverts resources from strategic initiatives to keeping basic automation functional.
 
 
-#### 🔄 The Universal SaaS Resource Lifecycle
 
-Following on from the challenges of managing resources within a saas tool, regardless of the approach used (manual GUI, scripts, or automation tools), every SaaS resource follows the same fundamental lifecycle:
-
-```mermaid
-flowchart LR
-    CREATE[🔨 Create a Resource] 
-    TEST[🧪 Test the Resource]
-    DEPLOY[🚀 Deploy to Production]
-    UPDATE[📝 Update the Resource]
-    DELETE[🗑️ Delete the Resource]
-    
-    CREATE --> TEST
-    TEST --> DEPLOY
-    DEPLOY --> UPDATE
-    UPDATE --> TEST
-    TEST --> DEPLOY
-    DEPLOY --> DELETE
-    
-    style CREATE fill:#e8f5e8
-    style TEST fill:#fff3e0
-    style DEPLOY fill:#e3f2fd
-    style UPDATE fill:#f3e5f5
-    style DELETE fill:#ffebee
-```
-
-The challenge is **how** each approach handles this lifecycle - with varying degrees of complexity, reliability, and maintainability.
 
 **🔄 The Manual GUI Administration Lifecycle:**
 
