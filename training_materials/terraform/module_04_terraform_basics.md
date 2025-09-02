@@ -546,11 +546,14 @@ terraform plan
 # Plan graph (default) - shows what will be created/modified
 terraform graph
 
-# Apply graph - shows execution during apply
+# Destroy planning graph - shows destruction order
 terraform graph -type=plan-destroy
 
-# Refresh graph - shows data source dependencies  
-terraform graph -type=refresh
+# Plan-refresh graph - shows refresh operations
+terraform graph -type=plan-refresh-only
+
+# Apply graph - shows execution during apply
+terraform graph -type=apply
 ```
 
 **🔍 What You Should Observe:**
@@ -680,22 +683,22 @@ terraform {
 }
 
 provider "jamfpro" {
-  jamfpro_instance_fqdn                = "https://lbgsandbox.jamfcloud.com"
+  jamfpro_instance_fqdn                = "https://your-instance.jamfcloud.com"
   auth_method                          = "oauth2"
-  client_id                            = "f17936ee-c517-468c-8359-05498fc49b28"
-  client_secret                        = "bwSxPO6byQYq2M5cJDPralSwM962wn_NdCKZOa9QUkPtrgK4YuSNeG2AYmeK2xu8"
+  client_id                            = "your-client-id"
+  client_secret                        = "your-client-secret"
   jamfpro_load_balancer_lock           = true
 }
 
 # Create a Category for organization
 resource "jamfpro_category" "infrastructure" {
-  name     = "${var.environment} Infrastructure - ${var.version}"
+  name     = "${var.environment} Infrastructure - ${var.version_number}"
   priority = 10
 }
 
 # Create a Smart Computer Group for targeting
 resource "jamfpro_smart_computer_group" "test_machines" {
-  name = "${var.environment} Test Machines - ${var.version}"
+  name = "${var.environment} Test Machines - ${var.version_number}"
   
   criteria {
     name          = "Computer Name"
@@ -710,11 +713,11 @@ resource "jamfpro_smart_computer_group" "test_machines" {
 
 # Create a Basic Policy
 resource "jamfpro_policy" "inventory_update" {
-  name                        = "${var.environment} Inventory Update - ${var.version}"
+  name                        = "${var.environment} Inventory Update - ${var.version_number}"
   enabled                     = true
   trigger_checkin            = true
   trigger_enrollment_complete = false
-  frequency                  = "Once per day"
+  frequency                  = "Once every day"
   target_drive               = "/"
   category_id                = jamfpro_category.infrastructure.id
   
@@ -739,8 +742,6 @@ resource "jamfpro_policy" "inventory_update" {
   }
 }
 
-# Data source to get existing packages (demonstrates external data)
-data "jamfpro_packages" "available" {}
 ```
 
 **Step 3: Create Variables File**
@@ -758,13 +759,13 @@ variable "environment" {
   }
 }
 
-variable "version" {
+variable "version_number" {
   description = "Version number for resource naming"
   type        = string
   default     = "v1.0"
   
   validation {
-    condition     = can(regex("^v\\d+\\.\\d+$", var.version))
+    condition     = can(regex("^v\\d+\\.\\d+$", var.version_number))
     error_message = "Version must be in format 'vX.Y' (e.g., 'v1.0')."
   }
 }
@@ -804,9 +805,13 @@ output "policy_name" {
   value       = jamfpro_policy.inventory_update.name
 }
 
-output "available_packages_count" {
-  description = "Number of available packages in Jamf Pro"
-  value       = length(data.jamfpro_packages.available.packages)
+output "resource_summary" {
+  description = "Summary of created resources"
+  value = {
+    category_created       = jamfpro_category.infrastructure.name
+    computer_group_created = jamfpro_smart_computer_group.test_machines.name
+    policy_created         = jamfpro_policy.inventory_update.name
+  }
 }
 ```
 
@@ -862,13 +867,17 @@ terraform show tfplan
 Plan: 3 to add, 0 to change, 0 to destroy.
 
 Changes to Outputs:
-  + available_packages_count = (known after apply)
-  + category_id             = (known after apply)
-  + category_name           = "Learning Infrastructure - v1.0"
-  + computer_group_id       = (known after apply)
-  + computer_group_name     = "Learning Test Machines - v1.0"
-  + policy_id               = (known after apply)
-  + policy_name             = "Learning Inventory Update - v1.0"
+  + category_id         = (known after apply)
+  + category_name       = "Learning Infrastructure - v1.0"
+  + computer_group_id   = (known after apply)
+  + computer_group_name = "Learning Test Machines - v1.0"
+  + policy_id           = (known after apply)
+  + policy_name         = "Learning Inventory Update - v1.0"
+  + resource_summary    = {
+      + category_created       = "Learning Infrastructure - v1.0"
+      + computer_group_created = "Learning Test Machines - v1.0"
+      + policy_created         = "Learning Inventory Update - v1.0"
+    }
 ```
 
 **Step 8: Apply the Configuration**
@@ -892,13 +901,17 @@ jamfpro_policy.inventory_update: Creation complete after 4s [id=789]
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 
 Outputs:
-available_packages_count = 42
 category_id = "123"
 category_name = "Learning Infrastructure - v1.0"
 computer_group_id = "456"
 computer_group_name = "Learning Test Machines - v1.0"
 policy_id = "789"
 policy_name = "Learning Inventory Update - v1.0"
+resource_summary = {
+  "category_created" = "Learning Infrastructure - v1.0"
+  "computer_group_created" = "Learning Test Machines - v1.0"
+  "policy_created" = "Learning Inventory Update - v1.0"
+}
 ```
 
 **Step 9: Explore the State**
@@ -915,7 +928,6 @@ terraform state show jamfpro_policy.inventory_update
 
 **Expected `terraform state list` Output:**
 ```
-data.jamfpro_packages.available
 jamfpro_category.infrastructure
 jamfpro_policy.inventory_update
 jamfpro_smart_computer_group.test_machines
@@ -924,10 +936,10 @@ jamfpro_smart_computer_group.test_machines
 **Step 10: Test Variable Changes**
 ```bash
 # Test with different variables
-terraform plan -var="version=v2.0" -var="environment=Production"
+terraform plan -var="version_number=v2.0" -var="environment=Production"
 
 # Apply the changes to see resource updates
-terraform apply -var="version=v2.0" -var="environment=Production"
+terraform apply -var="version_number=v2.0" -var="environment=Production"
 ```
 
 **Expected Output:**
