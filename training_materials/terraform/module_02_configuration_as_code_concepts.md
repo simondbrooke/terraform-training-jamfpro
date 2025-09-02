@@ -1234,6 +1234,19 @@ graph LR
     style TERRAFORM fill:#e3f2fd
 ```
 
+**🚧 The Persistent Challenge:**
+
+However, **stages 1-3 all share fundamental architectural limitations** when applied to SaaS API management:
+
+| **Core Limitation** | **GUI Impact** | **Scripts Impact** | **Ansible Impact** |
+|---------------------|----------------|-------------------|-------------------|
+| **Imperative Approach** | Manual steps | Custom CRUD logic | Task-based operations |
+| **State Management** | None | Custom tracking | Manual implementation |
+| **Drift Detection** | Manual checking | Custom monitoring | Custom validation |
+| **Resource Dependencies** | Manual coordination | Custom orchestration | Manual task ordering |
+| **API Evolution** | GUI updates | Script maintenance | Playbook updates |
+| **Idempotency** | None | Custom logic | Framework-assisted |
+
 **📈 The Improvement Pattern:**
 
 Each evolution **genuinely improves** upon the previous approach:
@@ -1241,19 +1254,6 @@ Each evolution **genuinely improves** upon the previous approach:
 1. **GUI → Scripts**: Adds automation, repeatability, version control
 2. **Scripts → Ansible**: Adds structure, error handling, task orchestration  
 3. **Ansible → Terraform**: Adds declarative syntax, native state management, idempotency
-
-**🚧 The Persistent Challenge:**
-
-However, **stages 1-3 all share fundamental architectural limitations** when applied to SaaS API management:
-
-| **Core Limitation** | **Stage 1: Manual GUI** | **Stage 2: Custom Scripts** | **Stage 3: Config Management** |
-|---------------------|--------------------------|------------------------------|--------------------------------|
-| **Imperative Approach** | Point & click through screens in sequence | Write explicit CREATE/READ/UPDATE/DELETE logic for each resource type | Define task sequences with conditional logic (YAML/DSL syntax) |
-| **State Management** | Screenshots and email approvals for tracking | Custom databases/files to track resource IDs and attributes | Manual state logic using facts, registers, and when conditions |
-| **Drift Detection** | Manual verification by comparing GUI settings | Custom monitoring scripts to compare desired vs actual state | Custom validation tasks that must query and compare all resources |
-| **Resource Dependencies** | Manual coordination and email approvals for change order | Custom orchestration logic to handle creation/deletion sequences | Manual task ordering with complex dependency chains using handlers |
-| **API Evolution** | Learn new GUI layouts when platforms update interfaces | Update all scripts when APIs change endpoints or authentication | Update all playbooks when API schemas or response formats change |
-| **Idempotency** | Every GUI action is a manual operation with potential for change | Custom logic to check "does this exist?" before every operation | Generic HTTP modules require manual implementation of idempotent checks |
 
 **🎯 The Paradigm Shift: Declarative Configuration as Code**
 
