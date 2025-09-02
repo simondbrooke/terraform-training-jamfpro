@@ -1504,33 +1504,17 @@ resource "jamfpro_script" "security_compliance_check" {
   EOF
 }
 
-# BENEFITS OF THIS DECLARATIVE TERRAFORM APPROACH:
-
-# 🎯 SINGLE SOURCE OF TRUTH:
-# - One configuration file manages entire script lifecycle
-# - All CRUD operations handled automatically by Terraform
-# - Configuration and deployment logic combined
-
-# 🔄 IDEMPOTENCY BUILT-IN:
-# - Running 'terraform apply' multiple times = same result
-# - No duplicate creation, no failed updates
-# - Automatic state reconciliation
-
-# 📊 COMPREHENSIVE STATE MANAGEMENT:
-# - Terraform tracks all resource attributes
-# - Automatic drift detection with 'terraform plan'
-# - No manual state files or ID tracking
-
-# 🛠️ API ABSTRACTION:
-# - No manual HTTP calls or JSON parsing
-# - Provider handles authentication, retries, errors
-# - Consistent interface across all resources
-
-# 📋 DECLARATIVE SYNTAX:
-# - Describe WHAT you want, not HOW to get it
-# - Self-documenting configuration
-# - Version control friendly
 ```
+
+**🎯 The Transformative Benefits of Declarative Configuration as Code:**
+
+The contrast between the imperative Python script approach and this declarative Terraform configuration is striking. Where the Python implementation required over 400 lines of code handling authentication, pagination, error recovery, and manual state checking, the Terraform approach accomplishes the exact same goal with fewer than 50 lines of simple, readable configuration. This isn't just a matter of brevity - it represents a fundamental shift in how we think about and manage saas resources.
+
+Terraform's single source of truth principle means that this one configuration file becomes the authoritative definition of how the example's security script should exist in your Jamf Pro environment. Unlike the imperative approach where logic is scattered across multiple files and you must mentally reconstruct the intended state, everything about this resource is visible and declarative in one place. The provider handles all the complex API orchestration automatically, including authentication token management, HTTP retry logic, JSON parsing, and response validation that consumed hundreds of lines in the Python implementation.
+
+The built-in idempotency guarantee eliminates the entire class of problems that plague imperative scripting. Running `terraform apply` ten times produces identical results, with no risk of duplicate resources, failed updates, or inconsistent state. Terraform automatically determines whether to create, update, or leave unchanged each resource based on comparing the desired state in your configuration with the actual state in Jamf Pro. This eliminates the complex conditional logic and manual state checking that made the Python approach so fragile and error-prone.
+
+Perhaps most powerfully, Terraform's sophisticated state management provides automatic drift detection that would be nearly impossible to implement reliably with custom scripts. Running `terraform plan` instantly shows you exactly what has changed in your Jamf Pro environment since your last deployment, whether those changes were made through Terraform or manually through the GUI. This visibility into configuration drift, combined with the ability to remediate it simply by running `terraform apply`, transforms how organizations maintain consistency across their SaaS platforms and provides the foundation for truly reliable configuration management at scale.
 
 
 #### 🎯 Configuration as Code: Use Cases and Benefits
