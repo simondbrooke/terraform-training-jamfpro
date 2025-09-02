@@ -493,7 +493,7 @@ resource "jamfpro_script" "security_check" {
   script_contents = file("security_check.sh")
   category_id     = -1
 }
-# Terraform handles all imperative steps automatically!
+# Terraform handles all imperative steps automatically by abstracting the API complexity into the terraform provider!
 ```
 
 ---
@@ -528,7 +528,8 @@ Organizations using traditional approaches typically end up with:
 
 Here's how organizations might implement a solution to this challenge with Python scripts that seek to implement atomic operations using the Jamf Pro API:
 
-**Python Script Example: Jamf Pro Script Lifecycle Management**
+<details>
+<summary>🔍 Python Script Example: Jamf Pro Script Lifecycle Management</summary>
 
 ```python
 #!/usr/bin/env python3
@@ -970,6 +971,8 @@ if __name__ == "__main__":
 
 ```
 
+</details>
+
 **🚨 Challenges with this Imperative Scripting Approach:**
 
 - Repeated Error Handling: Each script needs to handle HTTP errors, JSON errors, network timeouts. duplicating logic.
@@ -1022,6 +1025,9 @@ The result is **more organized complexity**, but still **hundreds of lines of YA
 **Ansible Implementation for Jamf Pro Scripts Management**
 
 To illustrate these limitations, here's how organizations typically implement SaaS API management with Ansible using the [official URI module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html). This example demonstrates the complexity required for even basic script management:
+
+<details>
+<summary>🔍 Ansible Implementation for Jamf Pro Scripts Management</summary>
 
 ```yaml
 # Complete Ansible playbook for Jamf Pro Scripts CRUD operations
@@ -1243,6 +1249,8 @@ To illustrate these limitations, here's how organizations typically implement Sa
 # 9. ❌ Verbose Configuration: ~150 lines for single script management
 # 10. ❌ No Resource Relationships: Cannot reference other Jamf resources easily
 ```
+
+</details>
 
 **⚖️ The Trade-off: Better than Manual, But Still Problematic**
 
