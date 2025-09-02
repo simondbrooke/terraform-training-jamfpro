@@ -88,7 +88,7 @@ Terraform will perform the following actions:
 Plan: 1 to add, 1 to change, 0 to destroy.
 ```
 
-💡 **Pro Tip**: Always run `terraform plan` before `terraform apply` to avoid surprises!
+💡 **Pro Tip**: `terraform plan` is sometimes referred to as a speculative plan. It is used to preview the changes that will be applied to the infrastructure. You can use the optional `-out=FILE` option to save the generated plan to a file on disk, which you can later execute by passing the file to terraform apply as an extra argument. This two-step workflow is primarily intended for when running Terraform in automation.
 
 [hashi docs: terraform plan command](https://developer.hashicorp.com/terraform/cli/commands/plan)
 
@@ -205,6 +205,7 @@ terraform apply -replace="aws_instance.web" -var="instance_type=t3.micro"
 ```
 
 **🚨 Important Limitations:**
+
 - **One resource at a time**: Can only replace single resources, not multiple in one flag
 - **Destructive operation**: Resource will be destroyed and recreated
 - **Dependency aware**: Terraform will handle dependent resource updates automatically
