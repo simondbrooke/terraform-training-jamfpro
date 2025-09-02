@@ -18,7 +18,9 @@ By the end of this module, you will be able to:
 
 #### 🔍 What is Configuration as Code?
 
-**Configuration as Code (CaC)** is the practice of managing **SaaS service configurations, policies, and resources** through machine-readable definition files and APIs, rather than manual GUI administration or imperative scripts.
+**Configuration as Code (CaC)** is the practice of managing **SaaS service configurations, policies, and resources** through machine-readable definition files and API interactions, rather than manual GUI administration or imperative scripts.
+
+💡 **Key Term**: Throughout this module, "imperative" means giving explicit step-by-step instructions (like a recipe: "first do this, then do that, then check if..."), while "declarative" means describing the desired end result (like ordering from a menu: "I want this dish" - the chef handles all the steps).
 
 **🔑 The Fundamental Distinction:**
 
