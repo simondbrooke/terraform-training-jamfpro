@@ -202,17 +202,20 @@ flowchart TB
     CHANGETYPE --> SCOPED
     GLOBAL --> DEV1
     SCOPED --> DEV1
-    DEV6 --> STAGE1
-    STAGE6 --> PROD1
-    PROD5 --> DRIFT1
+    DEV7 --> STAGE1
+    STAGE7 --> PROD1
+    PROD6 --> DRIFT1
     
     DEV3 -.->|Human Error| FAIL1
     DEV4 -.->|Human Error| FAIL2
+    DEV7 -.->|Review Failure| FAIL6
     STAGE4 -.->|Human Error| FAIL3
     STAGE5 -.->|Human Error| FAIL4
-    PROD2 -.->|Process Failure| FAIL5
-    PROD4G -.->|Global Failure| FAIL7G
-    PROD4S -.->|Scoped Failure| FAIL7S
+    STAGE7 -.->|Review Failure| FAIL6
+    PROD1 -.->|Process Failure| FAIL5
+    PROD3 -.->|Knowledge Gap| FAIL6
+    PROD5G -.->|Global Failure| FAIL7G
+    PROD5S -.->|Scoped Failure| FAIL7S
     
     FAIL1 -.->|Recovery| START
     FAIL2 -.->|Recovery| START
