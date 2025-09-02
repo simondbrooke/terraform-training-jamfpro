@@ -124,61 +124,65 @@ timeline
 **🔄 The Manual GUI Administration Lifecycle:**
 
 ```mermaid
-flowchart TD
-    subgraph "🖱️ Manual GUI Configuration Lifecycle"
-        START([Configuration Change Request]) 
+flowchart TB
+    START([Configuration Change Request])
+    
+    subgraph DEV ["🔓 Development Environment"]
+        DEV1[Admin logs into Dev GUI]
+        DEV2[Navigate through multiple screens]
+        DEV3[Click, type, select options]
+        DEV4[Save configuration]
+        DEV5[Test manually]
+        DEV6[Document changes in wiki/email]
         
-        subgraph "🔓 Development Environment"
-            DEV1[Admin logs into Dev GUI]
-            DEV2[Navigate through multiple screens]
-            DEV3[Click, type, select options]
-            DEV4[Save configuration]
-            DEV5[Test manually]
-            DEV6[Document changes in wiki/email]
-        end
+        DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6
+    end
+    
+    subgraph STAGE ["🔒 Staging Environment"]
+        STAGE1[Admin logs into Staging GUI]
+        STAGE2[Try to remember dev changes]
+        STAGE3[Navigate same screens again]
+        STAGE4[Recreate configuration manually]
+        STAGE5[Hope settings match dev]
+        STAGE6[Manual testing again]
         
-        subgraph "🔒 Staging Environment" 
-            STAGE1[Admin logs into Staging GUI]
-            STAGE2[Try to remember dev changes]
-            STAGE3[Navigate same screens again]
-            STAGE4[Recreate configuration manually]
-            STAGE5[Hope settings match dev]
-            STAGE6[Manual testing again]
-        end
+        STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6
+    end
+    
+    subgraph PROD ["🚨 Production Environment"]
+        PROD1[Admin logs into Prod GUI]
+        PROD2[Reference documentation/notes]
+        PROD3[Navigate screens third time]
+        PROD4[Apply changes during maintenance window]
+        PROD5[Cross fingers - no rollback plan]
+        PROD6[Monitor for issues]
         
-        subgraph "🚨 Production Environment"
-            PROD1[Admin logs into Prod GUI]
-            PROD2[Reference documentation/notes]
-            PROD3[Navigate screens third time]
-            PROD4[Apply changes during maintenance window]
-            PROD5[Cross fingers - no rollback plan]
-            PROD6[Monitor for issues]
-        end
+        PROD1 --> PROD2 --> PROD3 --> PROD4 --> PROD5 --> PROD6
+    end
+    
+    subgraph FAIL ["💥 Common Failure Points"]
+        FAIL1[Wrong setting clicked]
+        FAIL2[Typo in configuration]
+        FAIL3[Missed a screen/option]
+        FAIL4[Environment differences]
+        FAIL5[Documentation out of date]
+        FAIL6[Admin unavailable/leaves company]
+    end
+    
+    subgraph DRIFT ["🔍 Post-Change Reality"]
+        DRIFT1[Environments now different]
+        DRIFT2[No change audit trail]
+        DRIFT3[Manual verification required]
+        DRIFT4[Issues discovered weeks later]
+        DRIFT5[Blame game begins]
         
-        subgraph "💥 Common Failure Points"
-            FAIL1[Wrong setting clicked]
-            FAIL2[Typo in configuration]
-            FAIL3[Missed a screen/option]
-            FAIL4[Environment differences]
-            FAIL5[Documentation out of date]
-            FAIL6[Admin unavailable/leaves company]
-        end
-        
-        subgraph "🔍 Post-Change Reality"
-            DRIFT1[Environments now different]
-            DRIFT2[No change audit trail]
-            DRIFT3[Manual verification required]
-            DRIFT4[Issues discovered weeks later]
-            DRIFT5[Blame game begins]
-        end
+        DRIFT1 --> DRIFT2 --> DRIFT3 --> DRIFT4 --> DRIFT5
     end
     
     START --> DEV1
-    DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6
     DEV6 --> STAGE1
-    STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6
     STAGE6 --> PROD1
-    PROD1 --> PROD2 --> PROD3 --> PROD4 --> PROD5 --> PROD6
+    PROD6 --> DRIFT1
     
     DEV3 -.->|Human Error| FAIL1
     DEV4 -.->|Human Error| FAIL2
@@ -187,15 +191,12 @@ flowchart TD
     PROD2 -.->|Process Failure| FAIL5
     PROD4 -.->|Knowledge Gap| FAIL6
     
-    PROD6 --> DRIFT1
-    DRIFT1 --> DRIFT2 --> DRIFT3 --> DRIFT4 --> DRIFT5
-    
-    FAIL1 --> |Recovery| START
-    FAIL2 --> |Recovery| START
-    FAIL3 --> |Recovery| START
-    FAIL4 --> |Recovery| START
-    FAIL5 --> |Recovery| START
-    FAIL6 --> |Recovery| START
+    FAIL1 -.->|Recovery| START
+    FAIL2 -.->|Recovery| START
+    FAIL3 -.->|Recovery| START
+    FAIL4 -.->|Recovery| START
+    FAIL5 -.->|Recovery| START
+    FAIL6 -.->|Recovery| START
     
     style START fill:#e3f2fd
     style FAIL1 fill:#ffebee
