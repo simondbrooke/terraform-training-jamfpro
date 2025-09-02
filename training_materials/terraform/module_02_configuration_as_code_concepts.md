@@ -23,11 +23,11 @@ By the end of this module, you will be able to:
 | Aspect | Infrastructure as Code | Configuration as Code |
 |--------|----------------------|----------------------|
 | **Scope** | Physical/Virtual Infrastructure | SaaS Service Settings & Resources |
-| **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Device configurations |
+| **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Device configurations, Certificates |
 | **APIs** | Cloud Provider APIs (AWS, Azure, GCP) | SaaS Platform APIs (Microsoft 365, Jamf Pro, Okta) |
 | **Resources** | Compute, Network, Storage | Users, Groups, Policies, Applications |
-| **Lifecycle** | Provision → Configure → Terminate | Create → Configure → Update → Archive |
-| **Drift** | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions) |
+| **Lifecycle** | Provision → Configure → Terminate | Configure → Deploy → Update → Delete |
+| **Drift** | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions, integrations) |
 
 #### ⏰ Historical Timeline: How SaaS APIs Evolved
 
@@ -40,30 +40,50 @@ timeline
     section Early SaaS Era (2000-2005)
         First Web APIs : Salesforce.com first web API (Feb 7, 2000)
                        : eBay API launch (Nov 20, 2000)
-                       : Amazon Web Services (July 16, 2002)
-                       : XML-based integration
-                       : SOAP protocol dominance
+                       : Amazon Web Services launch (July 16, 2002)
+                       : PayPal API (2002)
+                       : XML-based integration dominant
+                       : SOAP protocol standard
+                       : Manual GUI administration primary
         
     section REST Adoption (2005-2010)
-        REST Standardization : Roy Fielding's REST principles adopted
-                             : Transition from SOAP to REST
-                             : JSON becomes popular
-                             : Early manual scripting solutions
-                             : PowerShell/Bash API automation
+        REST Standardization : Roy Fielding's REST dissertation (2000) gains adoption
+                             : Twitter API launch (2006)
+                             : Facebook API launch (2007)
+                             : Transition from SOAP to REST begins
+                             : JSON emerges as preferred format
+                             : Early PowerShell/Bash API automation
+                             : Custom scripting solutions proliferate
         
-    section Modern APIs (2010-2020)
-        API Maturity : REST becomes dominant
-                     : OAuth authentication
-                     : Rate limiting and pagination
-                     : Comprehensive API documentation
-                     : Infrastructure as Code tools emerge
+    section API Maturation (2010-2015)
+        Modern API Patterns : REST becomes industry standard
+                            : OAuth 2.0 authentication (2012)
+                            : Rate limiting and pagination standardized
+                            : Comprehensive API documentation emerges
+                            : Postman founded (2012) - API testing
+                            : Swagger/OpenAPI specification (2011)
+                            : Mobile-first API design principles
         
-    section Declarative Era (2020+)
-        Configuration as Code : Terraform providers for SaaS platforms
-                             : Idempotent API management
-                             : State management for API resources
-                             : GitOps workflows
-                             : Policy as Code integration
+    section Infrastructure as Code Era (2015-2020)
+        IaC Tool Emergence : Terraform open-sourced (2014)
+                           : AWS CloudFormation maturation
+                           : Ansible, Chef, Puppet for infrastructure
+                           : Docker containerization (2013)
+                           : Kubernetes orchestration (2014)
+                           : CI/CD pipeline automation
+                           : Infrastructure drift detection concepts
+                           : Script-based API management via pipelines
+        
+    section Configuration as Code Era (2020+)
+        Declarative SaaS Management : Terraform providers for major SaaS platforms
+                                    : Microsoft Graph Terraform provider
+                                    : Jamf Pro Terraform provider (2023)
+                                    : Okta, Auth0, DataDog providers
+                                    : Idempotent API resource management
+                                    : State management for SaaS resources
+                                    : GitOps workflows for configuration
+                                    : Policy as Code integration (OPA/Conftest)
+                                    : Drift detection for SaaS configurations
 ```
 
 **📚 Research References:**
