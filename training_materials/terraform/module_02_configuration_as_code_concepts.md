@@ -140,8 +140,9 @@ flowchart TB
         DEV4[Save configuration]
         DEV5[Test manually]
         DEV6[Document changes in wiki/personal notes/email]
+        DEV7[👥 Request peer review<br/>Email/Slack screenshots<br/>Schedule review meeting]
         
-        DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6
+        DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6 --> DEV7
     end
     
     subgraph STAGE ["🔒 Staging Environment"]
@@ -151,23 +152,25 @@ flowchart TB
         STAGE4[Recreate configuration manually]
         STAGE5[Hope settings match dev]
         STAGE6[Manual testing again]
+        STAGE7[👥 Second peer review<br/>Compare with dev screenshots<br/>Manual verification]
         
-        STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6
+        STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6 --> STAGE7
     end
     
     subgraph PROD ["🚨 Production Environment"]
-        PROD1[Admin logs into Prod GUI]
-        PROD2[Reference documentation/notes]
-        PROD3[Navigate screens third time]
-        PROD4G[🌐 Apply GLOBAL changes<br/>⚠️ IMMEDIATE effect on ALL users<br/>❌ NO ROLLBACK possible]
-        PROD4S[🎯 Apply SCOPED changes<br/>✅ Limited blast radius<br/>🔄 Usually reversible]
-        PROD5[Monitor for issues]
+        PROD1[👥 Final approval meeting<br/>Review change documentation<br/>Sign-off from stakeholders]
+        PROD2[Admin logs into Prod GUI]
+        PROD3[Reference documentation/notes]
+        PROD4[Navigate screens third time]
+        PROD5G[🌐 Apply GLOBAL changes<br/>⚠️ IMMEDIATE effect on ALL users<br/>❌ NO ROLLBACK possible]
+        PROD5S[🎯 Apply SCOPED changes<br/>✅ Limited blast radius<br/>🔄 Usually reversible]
+        PROD6[Monitor for issues]
         
-        PROD1 --> PROD2 --> PROD3
-        PROD3 --> PROD4G
-        PROD3 --> PROD4S
-        PROD4G --> PROD5
-        PROD4S --> PROD5
+        PROD1 --> PROD2 --> PROD3 --> PROD4
+        PROD4 --> PROD5G
+        PROD4 --> PROD5S
+        PROD5G --> PROD6
+        PROD5S --> PROD6
     end
     
     subgraph FAIL ["💥 Common Failure Points"]
