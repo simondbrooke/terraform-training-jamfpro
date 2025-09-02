@@ -6,13 +6,13 @@
 By the end of this module, you will be able to:
 
 - ✅ Define Configuration as Code and distinguish it from Infrastructure as Code
-- ✅ Understand why traditional configuration management tools fail with modern SaaS APIs
-- ✅ Explain the evolution from imperative scripting to declarative configuration management
-- ✅ Demonstrate the benefits of Terraform's idempotent approach for SaaS configuration
-- ✅ Implement Jamf Pro configuration management using both imperative and declarative approaches
-- ✅ Apply Configuration as Code principles to Microsoft 365 and other SaaS platforms
-- ✅ Understand configuration drift detection and remediation for cloud services
-- ✅ Implement GitOps workflows for collaborative SaaS configuration management
+- ✅ Explain why manual GUI administration fails at scale and creates operational bottlenecks
+- ✅ Understand the architectural limitations of traditional tools like Ansible for SaaS API management
+- ✅ Compare imperative scripting approaches with declarative configuration management
+- ✅ Analyze the complexity differences between Python/Ansible API scripts and Terraform resources
+- ✅ Explain how Terraform's state management enables idempotency and drift detection
+- ✅ Identify scenarios where Configuration as Code provides the greatest organizational benefits
+- ✅ Understand the paradigm shift from custom API automation to declarative resource management
 
 ### 📚 Topics Covered
 
@@ -168,38 +168,6 @@ flowchart LR
 ```
 
 The challenge is **how** each approach handles this lifecycle - with varying degrees of complexity, reliability, maintainability, ease of repeatability and the ability to scale to large numbers of resources.
-
-**📊 Comparison: SaaS Configuration Management Approaches**
-
-| **Aspect** | **🖱️ Manual GUI** | **🔧 Custom Scripts/Pipelines** | **🤖 Ansible/Chef/Puppet** | **🎯 Terraform (CaC)** |
-|------------|-------------------|--------------------------------|----------------------------|------------------------|
-| **Learning Curve** | Low - point & click | Medium - scripting knowledge | Medium - tool-specific DSL | Medium - HCL syntax |
-| **Initial Setup Time** | Minutes | Hours/Days | Hours/Days | Hours |
-| **Scalability** | Poor - manual effort | Good - automated execution | Good - orchestrated tasks | Excellent - declarative |
-| **Idempotency** | None - always manual | Manual implementation | Manual implementation | Built-in |
-| **State Management** | None | Custom file/database | Custom implementation | Native state tracking |
-| **Drift Detection** | Manual verification | Custom monitoring | Custom monitoring | Built-in (`terraform plan`) |
-| **Error Recovery** | Manual rollback | Custom rollback logic | Custom rollback logic | State-aware recovery* |
-| **Multi-Environment** | Manual replication | Script parameterization | Playbook variables | Workspace/variables |
-| **Dependency Management** | Manual coordination | Manual orchestration | Manual orchestration | Automatic tf graph resolution |
-| **Version Control** | Screenshots/docs only | Git + script versioning | Git + playbook versioning | Git + module versioning + state versioning |
-| **Collaboration** | Email/meetings | Code reviews | Code reviews | Code reviews + tf plan review |
-| **Audit Trail** | Platform logs only | Custom logging + Git history | Built-in logging + Git history | State versioning + Git history* |
-| **API Changes** | Manual GUI updates | Script maintenance | Playbook maintenance | Provider updates |
-| **Testing** | Manual validation | Custom test scripts | Built-in test modules | Plan validation + testing frameworks |
-| **Resource Relationships** | Manual tracking | Custom logic | Custom logic | Automatic references |
-| **Rollback Capability** | Manual reversal | Custom implementation | Custom implementation | Built-in state management |
-| **Time to Deploy** | Hours/Days | Minutes/Hours | Minutes/Hours | Minutes |
-| **Maintenance Overhead** | High - manual effort | High - custom code | Medium - tool maintenance | Low - provider updates |
-| **Risk of Human Error** | Very High | Medium | Low | Very Low |
-| **Peer Review** | Only if saas tools offers this feature | Code reviews (GitOps) | Code reviews (GitOps) | Code reviews (GitOps)|
-| **Compliance/Governance** | Manual processes | Custom validation | Custom validation | Policy as Code integration |
-| **Documentation** | Screenshots/docs | Script documentation | playbook documentation | hcl is self-documenting |
-
-***Terraform Nuances:** 
-- **Audit Trail**: Complete state history requires specific backend configurations (S3 with versioning, Terraform Cloud/Enterprise) or external tooling. Open-source Terraform with local state provides limited historical tracking without additional setup.
-- **Error Recovery**: Terraform does not automatically rollback on failure. Instead, it maintains state awareness of partially completed operations, allowing for informed manual recovery using `terraform plan` and `terraform apply` to reach desired state.
-- **Version Control**: Terraform provides multiple layers of versioning: Git for configuration files, semantic versioning for modules (e.g., `version = "~> 1.0"`), provider version constraints, and state file versioning with compatible backends. This enables precise dependency management and reproducible deployments across environments.*
 
 **💥 Universal Pain Points (Shared by GUI, Scripts, and Traditional Config Mgmt):**
 
@@ -1311,6 +1279,39 @@ The industry recognized these **persistent patterns** and developed a fundamenta
 - ✅ "`terraform plan` shows any configuration drift"
 
 This is why **Configuration as Code** with tools like Terraform represents such a significant leap forward - it doesn't just improve the existing approach, it **fundamentally changes the approach**.
+
+
+**📊 Comparison: SaaS Configuration Management Approaches**
+
+| **Aspect** | **🖱️ Manual GUI** | **🔧 Custom Scripts/Pipelines** | **🤖 Ansible/Chef/Puppet** | **🎯 Terraform (CaC)** |
+|------------|-------------------|--------------------------------|----------------------------|------------------------|
+| **Learning Curve** | Low - point & click | Medium - scripting knowledge | Medium - tool-specific DSL | Medium - HCL syntax |
+| **Initial Setup Time** | Minutes | Hours/Days | Hours/Days | Hours |
+| **Scalability** | Poor - manual effort | Good - automated execution | Good - orchestrated tasks | Excellent - declarative |
+| **Idempotency** | None - always manual | Manual implementation | Manual implementation | Built-in |
+| **State Management** | None | Custom file/database | Custom implementation | Native state tracking |
+| **Drift Detection** | Manual verification | Custom monitoring | Custom monitoring | Built-in (`terraform plan`) |
+| **Error Recovery** | Manual rollback | Custom rollback logic | Custom rollback logic | State-aware recovery* |
+| **Multi-Environment** | Manual replication | Script parameterization | Playbook variables | Workspace/variables |
+| **Dependency Management** | Manual coordination | Manual orchestration | Manual orchestration | Automatic tf graph resolution |
+| **Version Control** | Screenshots/docs only | Git + script versioning | Git + playbook versioning | Git + module versioning + state versioning |
+| **Collaboration** | Email/meetings | Code reviews | Code reviews | Code reviews + tf plan review |
+| **Audit Trail** | Platform logs only | Custom logging + Git history | Built-in logging + Git history | State versioning + Git history* |
+| **API Changes** | Manual GUI updates | Script maintenance | Playbook maintenance | Provider updates |
+| **Testing** | Manual validation | Custom test scripts | Built-in test modules | Plan validation + testing frameworks |
+| **Resource Relationships** | Manual tracking | Custom logic | Custom logic | Automatic references |
+| **Rollback Capability** | Manual reversal | Custom implementation | Custom implementation | Built-in state management |
+| **Time to Deploy** | Hours/Days | Minutes/Hours | Minutes/Hours | Minutes |
+| **Maintenance Overhead** | High - manual effort | High - custom code | Medium - tool maintenance | Low - provider updates |
+| **Risk of Human Error** | Very High | Medium | Low | Very Low |
+| **Peer Review** | Only if saas tools offers this feature | Code reviews (GitOps) | Code reviews (GitOps) | Code reviews (GitOps)|
+| **Compliance/Governance** | Manual processes | Custom validation | Custom validation | Policy as Code integration |
+| **Documentation** | Screenshots/docs | Script documentation | playbook documentation | hcl is self-documenting |
+
+***Terraform Nuances:** 
+- **Audit Trail**: Complete state history requires specific backend configurations (S3 with versioning, Terraform Cloud/Enterprise) or external tooling. Open-source Terraform with local state provides limited historical tracking without additional setup.
+- **Error Recovery**: Terraform does not automatically rollback on failure. Instead, it maintains state awareness of partially completed operations, allowing for informed manual recovery using `terraform plan` and `terraform apply` to reach desired state.
+- **Version Control**: Terraform provides multiple layers of versioning: Git for configuration files, semantic versioning for modules (e.g., `version = "~> 1.0"`), provider version constraints, and state file versioning with compatible backends. This enables precise dependency management and reproducible deployments across environments.*
 
 #### 🎯 The Terraform Advantage for SaaS Configuration
 
