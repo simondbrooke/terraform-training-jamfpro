@@ -99,9 +99,9 @@ timeline
 - [API Evolution Timeline - Postman](https://blog.postman.com/intro-to-apis-history-of-apis/)
 
 
-#### 😫 Current State Problems: How Organizations Manage SaaS Configuration Today
+#### 😫 Current State: How Organizations Manage SaaS Configuration Today
 
-Understanding the current landscape of SaaS configuration management approaches helps illustrate why Configuration as Code represents such a significant improvement. Most organizations use one of these three approaches, each with distinct characteristics and limitations:
+Understanding the current landscape of SaaS configuration management approaches helps illustrate why Configuration as Code represents such a significant improvement. Most organizations use one of these three approaches, each with distinct characteristics:
 
 **🖱️ Approach 1: Manual GUI Administration**
 
@@ -112,16 +112,7 @@ This is the **most common approach** where IT administrators manage SaaS platfor
 - Manual navigation through multiple screens and settings pages
 - Copy-paste configurations between environments
 - Screenshots and documentation for change tracking
-- Email/Slack communication for approvals
-
-**Specific Pain Points:**
-- **Human Error**: Clicking wrong buttons, typos in configuration fields, missed settings
-- **Time Consumption**: Hours spent clicking through interfaces for simple changes
-- **Inconsistency**: Different administrators configure things differently
-- **No Audit Trail**: Limited visibility into who changed what and when
-- **Environment Drift**: Dev/staging/prod environments become inconsistent over time
-- **Knowledge Silos**: Configuration knowledge trapped in individuals' heads
-- **No Rollback**: Cannot easily undo complex configuration changes
+- Email/Slack/MS Teams communication for approvals
 
 ---
 
@@ -136,15 +127,6 @@ Organizations recognizing GUI limitations often develop **custom automation scri
 - Manual state checking (GET requests to determine if resources exist)
 - Imperative operations (explicit CREATE, UPDATE, DELETE logic)
 
-**Specific Pain Points:**
-- **Development Overhead**: Building custom HTTP clients, JSON parsers, retry logic
-- **Maintenance Burden**: Each script needs individual updates when APIs change
-- **No Idempotency**: Running scripts multiple times can create duplicates or errors
-- **State Management Complexity**: Manually tracking resource IDs and relationships
-- **Fragile Error Handling**: Scripts often fail partway through operations
-- **Authentication Complexity**: Managing OAuth tokens, API keys, rate limiting
-- **Testing Challenges**: Mocking API responses, handling edge cases
-
 ---
 
 **🤖 Approach 3: Configuration Management Tools (Ansible, Chef, Puppet)**
@@ -157,14 +139,6 @@ Some organizations attempt to use traditional **configuration management tools**
 - Puppet manifests with REST API providers
 - YAML/DSL syntax for defining desired configurations
 - Built-in task orchestration and error handling
-
-**Specific Pain Points:**
-- **API Impedance Mismatch**: Tools designed for file/package management, not API resources
-- **Manual State Reconciliation**: Must implement custom logic to check if resources exist
-- **No Native Idempotency**: HTTP modules don't understand SaaS resource semantics
-- **Complex Dependency Management**: Manual orchestration of resource creation order
-- **Limited Type Safety**: Runtime discovery of API schema changes
-- **Verbose Configuration**: Hundreds of lines for simple resource management
 
 ---
 
@@ -234,37 +208,6 @@ All three traditional approaches share fundamental limitations that declarative 
 Scaling presents another significant barrier, as these approaches simply don't scale efficiently when managing hundreds or thousands of resources across multiple environments and platforms. The manual effort required grows exponentially with complexity, creating operational bottlenecks that slow business delivery. When failures occur, there is typically no systematic way to rollback failed changes or recover from partial failures, forcing teams into time-consuming manual remediation processes.
 
 Knowledge silos compound these challenges, as implementation details and tribal knowledge often remain concentrated with single individuals, creating organizational risk and limiting collaboration effectiveness. Finally, the constant evolution of SaaS platform APIs requires manual updates across all custom implementations, creating an ongoing maintenance burden that diverts resources from strategic initiatives to keeping basic automation functional.
-
-**📚 Understanding Version Control Depth Across Approaches:**
-
-The "Version Control" comparison reveals significant differences in versioning sophistication:
-
-**🖱️ Manual GUI Approach:**
-- Limited to screenshots, documentation, and manual change logs
-- No systematic way to track configuration evolution
-- Impossible to rollback to previous configurations reliably
-
-**🔧 Custom Scripts/Pipelines:**
-- Git versioning for script files provides change tracking and rollback
-- Script-level versioning but no dependency management for external APIs
-- Manual coordination required for script interdependencies
-
-**🤖 Ansible/Chef/Puppet:**
-- Git versioning for playbooks/recipes with full change history
-- Some tools offer cookbook/role versioning (Chef Supermarket, Ansible Galaxy)
-- Limited built-in dependency version management
-
-**🎯 Terraform Configuration as Code:**
-- **Multi-layered versioning ecosystem** that provides unprecedented control:
-  - **Configuration Versioning**: Git tracks all `.tf` files with full history
-  - **Module Versioning**: Semantic versioning for reusable modules (`version = "~> 1.2.0"`)
-  - **Provider Versioning**: Lock specific provider versions (`version = "~> 0.0.49"`)
-  - **State Versioning**: Backend-dependent state file versioning
-  - **Dependency Locking**: `.terraform.lock.hcl` ensures reproducible provider versions
-
-This multi-layered approach enables **reproducible infrastructure** where the exact same configuration can be deployed months later with identical results, something impossible with other approaches.
-
-
 
 
 **🔄 The Manual GUI Administration Lifecycle:**
@@ -1357,7 +1300,7 @@ The industry recognized these **persistent patterns** and developed a fundamenta
 
 **From Custom Development** → **To Provider Abstraction**  
 - ❌ "Build HTTP client, handle auth, parse JSON"
-- ✅ "Use provider that handles all API complexity"
+- ✅ "Use provider that handles all API interactions"
 
 **From Manual State** → **To Automatic State Management**
 - ❌ "Track resource IDs in files/databases"  
@@ -1399,8 +1342,8 @@ graph TB
     end
     
     subgraph "🌐 SaaS Platform"
-        API["Jamf Pro REST API<br/>• /api/oauth/token<br/>• /api/v1/scripts<br/>• Authentication & endpoints"]
-        PLATFORM["Jamf Pro Platform<br/>• Actual scripts<br/>• Policies & groups<br/>• Configuration profiles"]
+        API["Jamf Pro REST API<br/>• /api/oauth/token<br/>• /api/v1/resource_type<br/>• Authentication & endpoints"]
+        PLATFORM["Jamf Pro Platform<br/>• Actual resources<br/>• Policies & groups<br/>• Configuration profiles"]
     end
     
     subgraph "📊 State Management"
