@@ -127,13 +127,19 @@ timeline
 flowchart TB
     START([Configuration Change Request])
     
+    subgraph DECISION ["🤔 Change Type Decision"]
+        CHANGETYPE{Change Type?}
+        GLOBAL[🌐 Global Settings<br/>Affects ALL users/devices<br/>Examples: Password policy,<br/>Security baselines, API settings]
+        SCOPED[🎯 Scoped Changes<br/>Targets specific groups<br/>Examples: App deployments,<br/>Device policies, User groups]
+    end
+    
     subgraph DEV ["🔓 Development Environment"]
         DEV1[Admin logs into Dev GUI]
         DEV2[Navigate through multiple screens]
         DEV3[Click, type, select options]
         DEV4[Save configuration]
         DEV5[Test manually]
-        DEV6[Document changes in wiki/email]
+        DEV6[Document changes in wiki/personal notes/email]
         
         DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6
     end
@@ -153,11 +159,15 @@ flowchart TB
         PROD1[Admin logs into Prod GUI]
         PROD2[Reference documentation/notes]
         PROD3[Navigate screens third time]
-        PROD4[Apply changes during maintenance window]
-        PROD5[Cross fingers - no rollback plan]
-        PROD6[Monitor for issues]
+        PROD4G[🌐 Apply GLOBAL changes<br/>⚠️ IMMEDIATE effect on ALL users<br/>❌ NO ROLLBACK possible]
+        PROD4S[🎯 Apply SCOPED changes<br/>✅ Limited blast radius<br/>🔄 Usually reversible]
+        PROD5[Monitor for issues]
         
-        PROD1 --> PROD2 --> PROD3 --> PROD4 --> PROD5 --> PROD6
+        PROD1 --> PROD2 --> PROD3
+        PROD3 --> PROD4G
+        PROD3 --> PROD4S
+        PROD4G --> PROD5
+        PROD4S --> PROD5
     end
     
     subgraph FAIL ["💥 Common Failure Points"]
@@ -167,6 +177,8 @@ flowchart TB
         FAIL4[Environment differences]
         FAIL5[Documentation out of date]
         FAIL6[Admin unavailable/leaves company]
+        FAIL7G[🌐 Global setting breaks<br/>ALL users affected<br/>❌ Cannot undo]
+        FAIL7S[🎯 Scoped setting breaks<br/>Limited user impact<br/>🔄 Can target different group]
     end
     
     subgraph DRIFT ["🔍 Post-Change Reality"]
@@ -174,22 +186,30 @@ flowchart TB
         DRIFT2[No change audit trail]
         DRIFT3[Manual verification required]
         DRIFT4[Issues discovered weeks later]
-        DRIFT5[Blame game begins]
+        DRIFT5G[🌐 Global issues = Major incident<br/>All hands on deck]
+        DRIFT5S[🎯 Scoped issues = Targeted fix<br/>Manageable scope]
         
-        DRIFT1 --> DRIFT2 --> DRIFT3 --> DRIFT4 --> DRIFT5
+        DRIFT1 --> DRIFT2 --> DRIFT3 --> DRIFT4
+        DRIFT4 --> DRIFT5G
+        DRIFT4 --> DRIFT5S
     end
     
-    START --> DEV1
+    START --> CHANGETYPE
+    CHANGETYPE --> GLOBAL
+    CHANGETYPE --> SCOPED
+    GLOBAL --> DEV1
+    SCOPED --> DEV1
     DEV6 --> STAGE1
     STAGE6 --> PROD1
-    PROD6 --> DRIFT1
+    PROD5 --> DRIFT1
     
     DEV3 -.->|Human Error| FAIL1
     DEV4 -.->|Human Error| FAIL2
     STAGE4 -.->|Human Error| FAIL3
     STAGE5 -.->|Human Error| FAIL4
     PROD2 -.->|Process Failure| FAIL5
-    PROD4 -.->|Knowledge Gap| FAIL6
+    PROD4G -.->|Global Failure| FAIL7G
+    PROD4S -.->|Scoped Failure| FAIL7S
     
     FAIL1 -.->|Recovery| START
     FAIL2 -.->|Recovery| START
@@ -197,16 +217,24 @@ flowchart TB
     FAIL4 -.->|Recovery| START
     FAIL5 -.->|Recovery| START
     FAIL6 -.->|Recovery| START
+    FAIL7G -.->|⚠️ Difficult Recovery| START
+    FAIL7S -.->|🔄 Easier Recovery| START
     
     style START fill:#e3f2fd
+    style GLOBAL fill:#ffcdd2
+    style SCOPED fill:#c8e6c9
+    style PROD4G fill:#ffcdd2
+    style PROD4S fill:#c8e6c9
     style FAIL1 fill:#ffebee
     style FAIL2 fill:#ffebee
     style FAIL3 fill:#ffebee
     style FAIL4 fill:#ffebee
     style FAIL5 fill:#ffebee
     style FAIL6 fill:#ffebee
-    style DRIFT4 fill:#fff3e0
-    style DRIFT5 fill:#ffebee
+    style FAIL7G fill:#d32f2f
+    style FAIL7S fill:#ff9800
+    style DRIFT5G fill:#d32f2f
+    style DRIFT5S fill:#ff9800
 ```
 
 **⚠️ The Reality of Manual GUI Administration:**
