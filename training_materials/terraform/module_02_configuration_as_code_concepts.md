@@ -297,6 +297,304 @@ Traditional configuration management tools were designed for **infrastructure co
 - **Resource lifecycle management** - Create, Read, Update, Delete operations must be coordinated
 - **State reconciliation** - Desired state vs. actual state comparison is complex
 
+#### 🔧 The Imperative Approach: Manual CRUD Operations
+
+**⚠️ The Pain Points We'll Observe:**
+- **Complex lifecycle management** requiring multiple coordinated operations
+- **Manual state checking** to determine create vs. update operations
+- **Fragile JSON/response parsing** that breaks on API changes
+- **No automatic rollback** when operations fail partway
+- **Authentication token management** in every script operation
+- **Error handling** that must be implemented from scratch
+- **No idempotency guarantees** without extensive custom logic
+
+Here's how organizations typically implement this with bash scripts that mirror the same lifecycle as the Ansible approach:
+
+**Bash Script: Complete Jamf Pro Script Lifecycle Management**
+
+```bash
+#!/bin/bash
+# manage_jamf_script.sh - Complete Script Lifecycle Management
+# Demonstrates the complexity of imperative API management matching Ansible approach
+
+set -e  # Exit on any error
+
+# Configuration variables
+JAMF_URL="${JAMF_PRO_URL:-https://your-jamf-instance.jamfcloud.com}"
+USERNAME="${JAMF_PRO_USERNAME:-api_user}"
+PASSWORD="${JAMF_PRO_PASSWORD:-api_password}"
+SCRIPT_NAME="Security Compliance Check"
+
+echo "🚀 Starting Jamf Pro Script Lifecycle Management..."
+echo "📋 Script: $SCRIPT_NAME"
+echo "🌐 Instance: $JAMF_URL"
+
+# Step 1: Authentication - required for every operation
+echo "🔐 Authenticating with Jamf Pro API..."
+AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
+    "${JAMF_URL}/api/v1/auth/token" -X POST | \
+    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
+
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "❌ Authentication failed - check credentials"
+    exit 1
+fi
+echo "✅ Authentication successful"
+
+# Step 2: Manual state checking - check if script already exists
+echo "🔍 Checking for existing script..."
+EXISTING_SCRIPTS=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/json" \
+    "${JAMF_URL}/api/v1/scripts")
+
+# Extract existing script ID if found - fragile JSON parsing
+EXISTING_SCRIPT_ID=$(echo "$EXISTING_SCRIPTS" | \
+    python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    for script in data.get('results', []):
+        if script.get('name') == '${SCRIPT_NAME}':
+            print(script.get('id', ''))
+            break
+except:
+    pass
+" 2>/dev/null)
+
+if [ ! -z "$EXISTING_SCRIPT_ID" ]; then
+    echo "📋 Found existing script with ID: $EXISTING_SCRIPT_ID"
+    OPERATION="UPDATE"
+else
+    echo "📋 No existing script found - will create new one"
+    OPERATION="CREATE"
+fi
+
+# Step 3: Prepare script content - shared between create and update
+read -r -d '' SCRIPT_CONTENT << 'EOF' || true
+#!/bin/bash
+# Security Compliance Check Script
+echo "🔍 Starting security compliance check..."
+
+# FileVault validation
+FILEVAULT_STATUS=$(fdesetup status | head -1)
+if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+    echo "✅ FileVault: Enabled"
+    FILEVAULT_OK=1
+else
+    echo "❌ FileVault: Disabled"
+    FILEVAULT_OK=0
+fi
+
+# Firewall validation
+FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+if [[ "$FIREWALL_STATUS" == "1" ]]; then
+    echo "✅ Firewall: Enabled"
+    FIREWALL_OK=1
+else
+    echo "❌ Firewall: Disabled"
+    FIREWALL_OK=0
+fi
+
+# Calculate compliance
+TOTAL_CHECKS=2
+PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK))
+COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+
+echo "📊 Compliance Score: ${COMPLIANCE_PCT}%"
+
+if [[ $COMPLIANCE_PCT -ge 80 ]]; then
+    echo "✅ Device is compliant"
+    exit 0
+else
+    echo "❌ Device requires remediation"
+    exit 1
+fi
+EOF
+
+# Enhanced script content for updates
+read -r -d '' ENHANCED_SCRIPT_CONTENT << 'EOF' || true
+#!/bin/bash
+# Security Compliance Check Script - ENHANCED VERSION
+echo "🔍 Starting enhanced security compliance check..."
+
+# Enhanced FileVault check
+FILEVAULT_STATUS=$(fdesetup status | head -1)
+if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
+    echo "✅ FileVault: Enabled"
+    FILEVAULT_OK=1
+else
+    echo "❌ FileVault: Disabled"
+    FILEVAULT_OK=0
+fi
+
+# Enhanced Firewall check with stealth mode
+FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
+STEALTH_MODE=$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
+if [[ "$FIREWALL_STATUS" == "1" && "$STEALTH_MODE" == "1" ]]; then
+    echo "✅ Firewall: Enabled with stealth mode"
+    FIREWALL_OK=1
+else
+    echo "❌ Firewall: Configuration needed"
+    FIREWALL_OK=0
+fi
+
+# NEW: Password policy check
+PWD_LENGTH=$(pwpolicy -n /Local/Default -getglobalpolicy | grep minChars | cut -d'=' -f2 2>/dev/null || echo "0")
+if [[ $PWD_LENGTH -ge 8 ]]; then
+    echo "✅ Password Policy: Compliant"
+    PASSWORD_OK=1
+else
+    echo "❌ Password Policy: Non-compliant"
+    PASSWORD_OK=0
+fi
+
+# Calculate enhanced compliance
+TOTAL_CHECKS=3
+PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK + PASSWORD_OK))
+COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
+
+echo "📊 Enhanced Compliance Score: ${COMPLIANCE_PCT}%"
+
+if [[ $COMPLIANCE_PCT -ge 90 ]]; then
+    echo "✅ Device is compliant"
+    exit 0
+else
+    echo "❌ Device requires remediation"
+    exit 1
+fi
+EOF
+
+# Step 4: Execute create or update operation
+if [ "$OPERATION" == "CREATE" ]; then
+    echo "🔄 Creating new script in Jamf Pro..."
+    
+    # Construct JSON payload for creation
+    PAYLOAD=$(python3 -c "
+import json
+payload = {
+    'name': '${SCRIPT_NAME}',
+    'info': 'Security compliance validation script',
+    'notes': 'Created via Bash Script - Version 1.0 - $(date)',
+    'priority': 'BEFORE',
+    'categoryId': '-1',
+    'parameter4': 'environment_type',
+    'parameter5': 'compliance_threshold',
+    'osRequirements': '13',
+    'scriptContents': '''${SCRIPT_CONTENT}'''
+}
+print(json.dumps(payload))
+")
+    
+    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+        -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -X POST "${JAMF_URL}/api/v1/scripts" \
+        -d "$PAYLOAD")
+        
+    HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+    
+    if [ "$HTTP_STATUS" == "201" ]; then
+        echo "✅ Script created successfully"
+        SCRIPT_ID=$(echo "$RESPONSE_BODY" | python3 -c "import sys, json; print(json.load(sys.stdin)['id'])" 2>/dev/null)
+    else
+        echo "❌ Script creation failed with HTTP $HTTP_STATUS"
+        echo "📄 Response: $RESPONSE_BODY"
+        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+        exit 1
+    fi
+    
+else
+    echo "🔄 Updating existing script in Jamf Pro..."
+    
+    # Construct JSON payload for update
+    PAYLOAD=$(python3 -c "
+import json
+payload = {
+    'name': '${SCRIPT_NAME}',
+    'info': 'Security compliance validation script - ENHANCED',
+    'notes': 'Updated via Bash Script - Version 2.0 - $(date)',
+    'priority': 'BEFORE',
+    'categoryId': '-1',
+    'parameter4': 'environment_type',
+    'parameter5': 'compliance_threshold',
+    'osRequirements': '13',
+    'scriptContents': '''${ENHANCED_SCRIPT_CONTENT}'''
+}
+print(json.dumps(payload))
+")
+    
+    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+        -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -X PUT "${JAMF_URL}/api/v1/scripts/${EXISTING_SCRIPT_ID}" \
+        -d "$PAYLOAD")
+        
+    HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+    
+    if [ "$HTTP_STATUS" == "200" ]; then
+        echo "✅ Script updated successfully"
+        SCRIPT_ID=$EXISTING_SCRIPT_ID
+    else
+        echo "❌ Script update failed with HTTP $HTTP_STATUS"
+        echo "📄 Response: $RESPONSE_BODY"
+        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+        exit 1
+    fi
+fi
+
+# Step 5: Verify the operation
+echo "🔍 Verifying script details..."
+SCRIPT_DETAILS=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Accept: application/json" \
+    "${JAMF_URL}/api/v1/scripts/${SCRIPT_ID}")
+
+if [ $? -eq 0 ]; then
+    SCRIPT_NAME_VERIFY=$(echo "$SCRIPT_DETAILS" | python3 -c "import sys, json; print(json.load(sys.stdin)['name'])" 2>/dev/null)
+    LAST_MODIFIED=$(echo "$SCRIPT_DETAILS" | python3 -c "import sys, json; print(json.load(sys.stdin)['lastModified'])" 2>/dev/null)
+    
+    echo "✅ Verification successful:"
+    echo "   Operation: $OPERATION"
+    echo "   Script ID: $SCRIPT_ID"
+    echo "   Script Name: $SCRIPT_NAME_VERIFY"
+    echo "   Last Modified: $LAST_MODIFIED"
+else
+    echo "⚠️ Verification failed but operation may have succeeded"
+fi
+
+# Step 6: Manual cleanup - invalidate token
+echo "🧹 Cleaning up authentication token..."
+curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
+
+echo "🎉 Script lifecycle management complete!"
+
+# PROBLEMS WITH THIS BASH APPROACH:
+# 1. ❌ Manual State Checking: Must query existing scripts and parse responses
+# 2. ❌ Complex JSON Construction: Python required for reliable JSON creation
+# 3. ❌ Fragile Response Parsing: JSON parsing prone to errors
+# 4. ❌ No Automatic Rollback: Failed operations leave inconsistent state
+# 5. ❌ Token Management Overhead: Authentication/cleanup in every script
+# 6. ❌ No Type Validation: Invalid JSON structure errors at runtime
+# 7. ❌ Verbose Logic: Complex if/else branching for create vs update
+# 8. ❌ No Drift Detection: Cannot detect manual GUI changes between runs
+# 9. ❌ Error Handling Complexity: Must handle each HTTP status manually
+# 10. ❌ No Resource Dependencies: Cannot manage relationships with other resources
+```
+
+This single bash script demonstrates the same complexity issues as the Ansible approach, but with additional challenges:
+
+- **🐍 Python Dependencies**: Requires Python for reliable JSON parsing and construction
+- **🔧 Complex Shell Logic**: Intricate if/else branching for different operations
+- **📝 Heredoc Management**: Complex multi-line string handling for script content
+- **🔍 Manual Parsing**: Fragile response parsing that breaks on API changes
+- **⚙️ Environment Variables**: Manual credential and configuration management
+
+**The Fundamental Problem**: Whether using Ansible or bash scripts, you're still building **custom automation on top of generic HTTP tools**. Every organization ends up creating their own **configuration management framework** with hundreds of lines of code to handle what should be basic operations. The complexity grows exponentially when you need to manage relationships between scripts, policies, groups, and other Jamf Pro resources.
+
 **Demonstration: Ansible Implementation for Jamf Pro Scripts Management**
 
 To illustrate these limitations, here's how organizations typically implement SaaS API management with Ansible using the [official URI module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html). This example demonstrates the complexity required for even basic script management:
@@ -694,823 +992,6 @@ flowchart TD
     style F6 fill:#ffebee
 ```
 
-**⚠️ The Pain Points We'll Observe:**
-- **~2,930 lines of code** across 4 scripts for managing a single resource type
-- **Fragile XML parsing** with sed/grep that breaks on API changes
-- **Manual state management** using files and variables
-- **No automatic rollback** when operations fail partway
-- **Complex dependency tracking** requiring multiple API calls
-- **Authentication token management** in every script
-- **Error handling** that must be implemented from scratch
-
-Now let's examine each script to see these problems in detail:
-
-#### 🔧 The Imperative Approach: Manual CRUD Operations
-
-**Script 1: CREATE - Jamf Pro Script via API**
-
-```bash
-#!/bin/bash
-# create_jamf_script.sh - IMPERATIVE CREATE OPERATION
-# Demonstrates the complexity of manual API management
-
-set -e  # Exit on any error
-
-# Configuration variables
-JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
-USERNAME="${2:-api_user}"
-PASSWORD="${3:-api_password}"
-SCRIPT_NAME="${4:-Security Compliance Check}"
-
-echo "🔐 Authenticating with Jamf Pro API..."
-
-# Step 1: Manual authentication - credential exposure risk
-AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
-    "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
-
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "❌ Authentication failed - check credentials"
-    exit 1
-fi
-
-echo "✅ Authentication successful"
-
-# Step 2: Manual XML payload construction - error-prone
-SCRIPT_PAYLOAD=$(cat << 'EOF'
-<script>
-    <name>Security Compliance Check</name>
-    <category>Security</category>
-    <filename>security_compliance.sh</filename>
-    <info>Checks system compliance against corporate security standards</info>
-    <notes>Deployed via API - Version 1.0</notes>
-    <priority>Before</priority>
-    <parameters/>
-    <os_requirements>macOS 12.0</os_requirements>
-    <script_contents><![CDATA[#!/bin/bash
-
-# Security Compliance Check Script
-# Version: 1.0
-# Purpose: Validate corporate security settings
-
-echo "🔍 Starting security compliance check..."
-
-# Check FileVault status
-FILEVAULT_STATUS=$(fdesetup status | head -1)
-if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
-    echo "✅ FileVault: Enabled"
-    FILEVAULT_COMPLIANT=1
-else
-    echo "❌ FileVault: Disabled"
-    FILEVAULT_COMPLIANT=0
-fi
-
-# Check firewall status  
-FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
-if [[ "$FIREWALL_STATUS" == "1" ]]; then
-    echo "✅ Firewall: Enabled"
-    FIREWALL_COMPLIANT=1
-else
-    echo "❌ Firewall: Disabled" 
-    FIREWALL_COMPLIANT=0
-fi
-
-# Check for required software
-REQUIRED_APPS=("Google Chrome" "Microsoft Office" "CrowdStrike Falcon")
-APPS_COMPLIANT=1
-
-for app in "${REQUIRED_APPS[@]}"; do
-    if [[ -d "/Applications/${app}.app" ]]; then
-        echo "✅ Required App: $app installed"
-    else
-        echo "❌ Required App: $app missing"
-        APPS_COMPLIANT=0
-    fi
-done
-
-# Calculate overall compliance score
-TOTAL_CHECKS=3
-PASSED_CHECKS=$((FILEVAULT_COMPLIANT + FIREWALL_COMPLIANT + APPS_COMPLIANT))
-COMPLIANCE_PERCENTAGE=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-
-echo "📊 Compliance Score: ${COMPLIANCE_PERCENTAGE}%"
-
-# Report to Jamf Pro
-/usr/local/jamf/bin/jamf recon -endUsername "system"
-
-if [[ $COMPLIANCE_PERCENTAGE -ge 80 ]]; then
-    echo "✅ Device is compliant"
-    exit 0
-else
-    echo "❌ Device requires remediation"  
-    exit 1
-fi
-]]></script_contents>
-</script>
-EOF
-)
-
-echo "🔄 Creating script in Jamf Pro..."
-
-# Step 3: Manual API call with complex error handling
-RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Content-Type: application/xml" \
-    -X POST "${JAMF_URL}/JSSResource/scripts/id/0" \
-    -d "${SCRIPT_PAYLOAD}")
-
-# Extract HTTP status code
-HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-# Step 4: Manual response parsing and error handling
-case $HTTP_STATUS in
-    201)
-        echo "✅ Script created successfully"
-        
-        # Extract script ID - fragile XML parsing
-        SCRIPT_ID=$(echo "$RESPONSE_BODY" | grep -o '<id>[0-9]*</id>' | head -1 | grep -o '[0-9]*')
-        
-        if [ ! -z "$SCRIPT_ID" ]; then
-            echo "📋 Script ID: $SCRIPT_ID"
-            echo "🔗 Script URL: ${JAMF_URL}/policies.html?id=${SCRIPT_ID}"
-            
-            # Save script ID for future operations - manual state management
-            echo "$SCRIPT_ID" > ".jamf_script_id"
-            echo "💾 Script ID saved to .jamf_script_id"
-        else
-            echo "⚠️  Script created but couldn't extract ID"
-        fi
-        ;;
-    409)
-        echo "❌ Script with name '$SCRIPT_NAME' already exists"
-        echo "💡 Use update_jamf_script.sh to modify existing script"
-        exit 1
-        ;;
-    401)
-        echo "❌ Authentication failed - token may have expired"
-        exit 1
-        ;;
-    403)
-        echo "❌ Insufficient permissions to create scripts"
-        exit 1
-        ;;
-    *)
-        echo "❌ Script creation failed with HTTP $HTTP_STATUS"
-        echo "📄 Response: $RESPONSE_BODY"
-        exit 1
-        ;;
-esac
-
-# Step 5: Manual cleanup - token invalidation
-echo "🧹 Cleaning up authentication token..."
-curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-
-echo "🎉 Script creation process complete!"
-
-# PROBLEMS WITH THIS IMPERATIVE APPROACH:
-# 1. Manual authentication and token management
-# 2. Complex XML payload construction
-# 3. Fragile response parsing and error handling  
-# 4. No idempotency - running twice fails with 409 conflict
-# 5. Manual state management (saving script ID to file)
-# 6. No dependency management or validation
-# 7. No drift detection capabilities
-# 8. Different scripts needed for different operations (CRUD)
-# 9. Credential exposure in command line arguments
-# 10. No rollback mechanism if creation partially succeeds
-```
-
-**Script 2: READ - Jamf Pro Script via API**
-
-```bash
-#!/bin/bash
-# read_jamf_script.sh - IMPERATIVE READ OPERATION
-# Demonstrates the complexity of manual API querying
-
-set -e
-
-# Configuration variables
-JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
-USERNAME="${2:-api_user}" 
-PASSWORD="${3:-api_password}"
-SCRIPT_IDENTIFIER="${4}"  # Can be ID or name
-
-if [ -z "$SCRIPT_IDENTIFIER" ]; then
-    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id_or_name>"
-    exit 1
-fi
-
-echo "🔐 Authenticating with Jamf Pro API..."
-
-# Manual authentication
-AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
-    "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
-
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "❌ Authentication failed"
-    exit 1
-fi
-
-# Determine if identifier is numeric (ID) or string (name)
-if [[ "$SCRIPT_IDENTIFIER" =~ ^[0-9]+$ ]]; then
-    ENDPOINT="${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_IDENTIFIER}"
-    IDENTIFIER_TYPE="ID"
-else
-    # URL encode the name for API call
-    ENCODED_NAME=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SCRIPT_IDENTIFIER'))")
-    ENDPOINT="${JAMF_URL}/JSSResource/scripts/name/${ENCODED_NAME}"
-    IDENTIFIER_TYPE="Name"
-fi
-
-echo "🔍 Retrieving script by $IDENTIFIER_TYPE: $SCRIPT_IDENTIFIER"
-
-# Manual API call with error handling
-RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/xml" \
-    -X GET "$ENDPOINT")
-
-HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-RESPONSE_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-# Handle different response scenarios
-case $HTTP_STATUS in
-    200)
-        echo "✅ Script retrieved successfully"
-        echo ""
-        
-        # Manual XML parsing - fragile and complex
-        echo "📋 Script Details:"
-        echo "=================="
-        
-        # Extract basic information
-        SCRIPT_ID=$(echo "$RESPONSE_BODY" | grep -o '<id>[0-9]*</id>' | head -1 | sed 's/<[^>]*>//g')
-        SCRIPT_NAME=$(echo "$RESPONSE_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
-        CATEGORY=$(echo "$RESPONSE_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
-        FILENAME=$(echo "$RESPONSE_BODY" | grep -o '<filename>.*</filename>' | head -1 | sed 's/<[^>]*>//g')
-        PRIORITY=$(echo "$RESPONSE_BODY" | grep -o '<priority>.*</priority>' | head -1 | sed 's/<[^>]*>//g')
-        
-        echo "ID: ${SCRIPT_ID:-N/A}"
-        echo "Name: ${SCRIPT_NAME:-N/A}"  
-        echo "Category: ${CATEGORY:-N/A}"
-        echo "Filename: ${FILENAME:-N/A}"
-        echo "Priority: ${PRIORITY:-N/A}"
-        
-        # Extract info and notes - handling potential missing elements
-        INFO=$(echo "$RESPONSE_BODY" | grep -o '<info>.*</info>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
-        NOTES=$(echo "$RESPONSE_BODY" | grep -o '<notes>.*</notes>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
-        OS_REQUIREMENTS=$(echo "$RESPONSE_BODY" | grep -o '<os_requirements>.*</os_requirements>' | head -1 | sed 's/<[^>]*>//g' || echo "N/A")
-        
-        echo "Info: $INFO"
-        echo "Notes: $NOTES"
-        echo "OS Requirements: $OS_REQUIREMENTS"
-        echo ""
-        
-        # Extract script contents - complex CDATA handling
-        echo "📜 Script Contents:"
-        echo "==================="
-        
-        # This is fragile - CDATA parsing in bash is problematic
-        SCRIPT_CONTENTS=$(echo "$RESPONSE_BODY" | sed -n '/<script_contents>/,/<\/script_contents>/p' | \
-            sed 's/<script_contents><!\[CDATA\[//' | sed 's/\]\]><\/script_contents>//' | \
-            sed '1d;$d' 2>/dev/null || echo "Could not extract script contents")
-        
-        if [ "$SCRIPT_CONTENTS" != "Could not extract script contents" ]; then
-            echo "$SCRIPT_CONTENTS"
-        else
-            echo "⚠️  Script contents could not be parsed from XML response"
-        fi
-        
-        # Save to file for potential future use
-        echo "$RESPONSE_BODY" > "script_${SCRIPT_ID}.xml"
-        echo ""
-        echo "💾 Full XML response saved to script_${SCRIPT_ID}.xml"
-        
-        ;;
-    404)
-        echo "❌ Script not found: $SCRIPT_IDENTIFIER"
-        echo "💡 Check the script ID/name and try again"
-        exit 1
-        ;;
-    401)
-        echo "❌ Authentication failed - check credentials"
-        exit 1
-        ;;
-    403)
-        echo "❌ Insufficient permissions to read scripts"
-        exit 1
-        ;;
-    *)
-        echo "❌ Failed to retrieve script with HTTP $HTTP_STATUS"
-        echo "📄 Response: $RESPONSE_BODY"
-        exit 1
-        ;;
-esac
-
-# Manual token cleanup
-curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-
-echo "✅ Script retrieval complete"
-
-# PROBLEMS WITH THIS IMPERATIVE READ APPROACH:
-# 1. Manual XML parsing with sed/grep - extremely fragile
-# 2. Complex handling of different identifier types (ID vs name)
-# 3. No validation of retrieved data structure
-# 4. CDATA parsing is problematic and error-prone
-# 5. Manual error handling for each possible HTTP response
-# 6. No caching or performance optimization
-# 7. Output format is inconsistent and hard to parse programmatically
-# 8. No filtering or query capabilities
-# 9. Manual token management for each operation
-# 10. Different scripts needed for different data formats (JSON vs XML)
-```
-
-**Script 3: UPDATE - Jamf Pro Script via API**
-
-```bash
-#!/bin/bash
-# update_jamf_script.sh - IMPERATIVE UPDATE OPERATION  
-# Demonstrates the complexity of manual API updates
-
-set -e
-
-# Configuration variables
-JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
-USERNAME="${2:-api_user}"
-PASSWORD="${3:-api_password}"
-SCRIPT_ID="${4}"
-UPDATE_VERSION="${5:-2.0}"
-
-if [ -z "$SCRIPT_ID" ]; then
-    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id> [version]"
-    echo "💡 Get script ID using read_jamf_script.sh first"
-    exit 1
-fi
-
-echo "🔐 Authenticating with Jamf Pro API..."
-
-AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
-    "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
-
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "❌ Authentication failed"
-    exit 1
-fi
-
-# Step 1: Read current script to get existing data - required for update
-echo "🔍 Reading current script configuration..."
-
-CURRENT_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/xml" \
-    -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
-
-CURRENT_HTTP_STATUS=$(echo "$CURRENT_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-CURRENT_BODY=$(echo "$CURRENT_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-if [ "$CURRENT_HTTP_STATUS" != "200" ]; then
-    echo "❌ Failed to read current script (HTTP $CURRENT_HTTP_STATUS)"
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-    exit 1
-fi
-
-# Step 2: Extract current values - fragile XML parsing
-CURRENT_NAME=$(echo "$CURRENT_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
-CURRENT_CATEGORY=$(echo "$CURRENT_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
-CURRENT_FILENAME=$(echo "$CURRENT_BODY" | grep -o '<filename>.*</filename>' | head -1 | sed 's/<[^>]*>//g')
-
-echo "📋 Current script: $CURRENT_NAME"
-
-# Step 3: Create updated script payload - manual XML construction
-UPDATED_PAYLOAD=$(cat << EOF
-<script>
-    <name>${CURRENT_NAME} - Updated</name>
-    <category>${CURRENT_CATEGORY}</category>
-    <filename>${CURRENT_FILENAME}</filename>
-    <info>Enhanced security compliance check with additional validations</info>
-    <notes>Updated via API - Version ${UPDATE_VERSION} - $(date)</notes>
-    <priority>Before</priority>
-    <parameters/>
-    <os_requirements>macOS 12.0</os_requirements>
-    <script_contents><![CDATA[#!/bin/bash
-
-# Security Compliance Check Script - UPDATED VERSION
-# Version: ${UPDATE_VERSION}
-# Purpose: Enhanced corporate security validation
-
-echo "🔍 Starting enhanced security compliance check..."
-echo "📅 Script version: ${UPDATE_VERSION}"
-echo "🕒 Execution time: \$(date)"
-
-# Enhanced FileVault check with recovery key validation
-echo "🔐 Checking FileVault status..."
-FILEVAULT_STATUS=\$(fdesetup status | head -1)
-if [[ "\$FILEVAULT_STATUS" == "FileVault is On." ]]; then
-    echo "✅ FileVault: Enabled"
-    
-    # NEW: Check for institutional recovery key
-    RECOVERY_KEY_CHECK=\$(fdesetup list -extended | grep -c "Recovery Key")
-    if [[ \$RECOVERY_KEY_CHECK -gt 0 ]]; then
-        echo "✅ Institutional recovery key: Present"
-        FILEVAULT_COMPLIANT=1
-    else
-        echo "⚠️  Institutional recovery key: Missing"
-        FILEVAULT_COMPLIANT=0
-    fi
-else
-    echo "❌ FileVault: Disabled"
-    FILEVAULT_COMPLIANT=0
-fi
-
-# Enhanced firewall check with stealth mode validation
-echo "🔥 Checking firewall configuration..."
-FIREWALL_STATUS=\$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
-STEALTH_MODE=\$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
-
-if [[ "\$FIREWALL_STATUS" == "1" ]]; then
-    echo "✅ Firewall: Enabled"
-    if [[ "\$STEALTH_MODE" == "1" ]]; then
-        echo "✅ Stealth mode: Enabled"
-        FIREWALL_COMPLIANT=1
-    else
-        echo "⚠️  Stealth mode: Disabled"
-        FIREWALL_COMPLIANT=0
-    fi
-else
-    echo "❌ Firewall: Disabled"
-    FIREWALL_COMPLIANT=0
-fi
-
-# Enhanced application check with version validation
-echo "📱 Checking required applications..."
-REQUIRED_APPS_DATA='
-Google Chrome|/Applications/Google Chrome.app|100.0
-Microsoft Office|/Applications/Microsoft Excel.app|16.0  
-CrowdStrike Falcon|/Applications/Falcon.app|6.0
-'
-
-APPS_COMPLIANT=1
-while IFS='|' read -r app_name app_path min_version; do
-    if [[ -z "\$app_name" ]]; then continue; fi
-    
-    if [[ -d "\$app_path" ]]; then
-        echo "✅ Required App: \$app_name installed"
-        
-        # NEW: Version checking (simplified)
-        APP_VERSION=\$(defaults read "\$app_path/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unknown")
-        echo "   Version: \$APP_VERSION"
-    else
-        echo "❌ Required App: \$app_name missing"
-        APPS_COMPLIANT=0
-    fi
-done <<< "\$REQUIRED_APPS_DATA"
-
-# NEW: Password policy check
-echo "🔑 Checking password policy compliance..."
-PWD_MIN_LENGTH=\$(pwpolicy -n /Local/Default -getglobalpolicy | grep -o 'minChars=[0-9]*' | cut -d'=' -f2)
-if [[ \$PWD_MIN_LENGTH -ge 8 ]]; then
-    echo "✅ Password policy: Compliant (min \$PWD_MIN_LENGTH chars)"
-    PASSWORD_COMPLIANT=1
-else
-    echo "❌ Password policy: Non-compliant (min \$PWD_MIN_LENGTH chars)"
-    PASSWORD_COMPLIANT=0
-fi
-
-# NEW: Screen saver lock check
-echo "🔒 Checking screen saver security..."
-SCREENSAVER_DELAY=\$(defaults read /Library/Preferences/com.apple.screensaver idleTime 2>/dev/null || echo "0")
-ASK_FOR_PASSWORD=\$(defaults read /Library/Preferences/com.apple.screensaver askForPassword 2>/dev/null || echo "0")
-
-if [[ \$SCREENSAVER_DELAY -le 600 && \$ASK_FOR_PASSWORD == "1" ]]; then
-    echo "✅ Screen saver: Secure (locks in \$SCREENSAVER_DELAY seconds)"
-    SCREENSAVER_COMPLIANT=1
-else
-    echo "❌ Screen saver: Insecure"
-    SCREENSAVER_COMPLIANT=0
-fi
-
-# Calculate enhanced compliance score
-TOTAL_CHECKS=5
-PASSED_CHECKS=\$((FILEVAULT_COMPLIANT + FIREWALL_COMPLIANT + APPS_COMPLIANT + PASSWORD_COMPLIANT + SCREENSAVER_COMPLIANT))
-COMPLIANCE_PERCENTAGE=\$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-
-echo "📊 Enhanced Compliance Score: \${COMPLIANCE_PERCENTAGE}% (\$PASSED_CHECKS/\$TOTAL_CHECKS checks passed)"
-
-# NEW: Detailed reporting to Jamf Pro with extension attributes
-echo "📡 Updating Jamf Pro inventory..."
-/usr/local/jamf/bin/jamf recon \
-    -endUsername "system" \
-    -verbose
-
-# NEW: Create compliance report
-REPORT_FILE="/tmp/compliance_report_\$(date +%Y%m%d_%H%M%S).log"
-cat > "\$REPORT_FILE" << REPORT
-Security Compliance Report - Version ${UPDATE_VERSION}
-Generated: \$(date)
-Device: \$(hostname)
-
-FileVault Status: \$([ \$FILEVAULT_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
-Firewall Status: \$([ \$FIREWALL_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")  
-Applications Status: \$([ \$APPS_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
-Password Policy: \$([ \$PASSWORD_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
-Screen Saver Security: \$([ \$SCREENSAVER_COMPLIANT -eq 1 ] && echo "PASS" || echo "FAIL")
-
-Overall Compliance: \${COMPLIANCE_PERCENTAGE}%
-REPORT
-
-echo "📄 Report saved to: \$REPORT_FILE"
-
-if [[ \$COMPLIANCE_PERCENTAGE -ge 90 ]]; then
-    echo "✅ Device is highly compliant"
-    exit 0
-elif [[ \$COMPLIANCE_PERCENTAGE -ge 70 ]]; then
-    echo "⚠️  Device is minimally compliant - improvements recommended"
-    exit 0  
-else
-    echo "❌ Device requires immediate remediation"
-    exit 1
-fi
-]]></script_contents>
-</script>
-EOF
-)
-
-# Step 4: Execute update API call
-echo "🔄 Updating script in Jamf Pro..."
-
-UPDATE_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Content-Type: application/xml" \
-    -X PUT "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}" \
-    -d "${UPDATED_PAYLOAD}")
-
-UPDATE_HTTP_STATUS=$(echo "$UPDATE_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-UPDATE_BODY=$(echo "$UPDATE_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-# Step 5: Handle update response
-case $UPDATE_HTTP_STATUS in
-    201)
-        echo "✅ Script updated successfully"
-        echo "📋 Script ID: $SCRIPT_ID"
-        echo "🔗 View in Jamf Pro: ${JAMF_URL}/computerManagement.html?id=${SCRIPT_ID}&o=r&v=scripts"
-        
-        # Verify update by reading back the script
-        echo "🔍 Verifying update..."
-        VERIFY_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-            -H "Accept: application/xml" \
-            -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
-        
-        UPDATED_NAME=$(echo "$VERIFY_RESPONSE" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
-        echo "✅ Updated script name: $UPDATED_NAME"
-        ;;
-    404)
-        echo "❌ Script with ID $SCRIPT_ID not found"
-        exit 1
-        ;;
-    401)
-        echo "❌ Authentication failed"
-        exit 1
-        ;;
-    403)
-        echo "❌ Insufficient permissions to update script"
-        exit 1
-        ;;
-    *)
-        echo "❌ Script update failed with HTTP $UPDATE_HTTP_STATUS"
-        echo "📄 Response: $UPDATE_BODY"
-        exit 1
-        ;;
-esac
-
-# Token cleanup
-curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-
-echo "🎉 Script update process complete!"
-
-# PROBLEMS WITH THIS IMPERATIVE UPDATE APPROACH:
-# 1. Must read current state before updating - multiple API calls
-# 2. Complex XML manipulation and template construction
-# 3. Manual state comparison and merge logic
-# 4. No rollback if update fails partway through
-# 5. Fragile XML parsing of current state
-# 6. No validation of updated data before sending
-# 7. Manual verification step needed after update
-# 8. Different update strategy needed for partial vs full updates
-# 9. No dependency checking if script is used by policies
-# 10. No conflict resolution if script was modified by another admin
-```
-
-**Script 4: DELETE - Jamf Pro Script via API**
-
-```bash
-#!/bin/bash
-# delete_jamf_script.sh - IMPERATIVE DELETE OPERATION
-# Demonstrates the complexity and risks of manual API deletion
-
-set -e
-
-# Configuration variables
-JAMF_URL="${1:-https://your-jamf-instance.jamfcloud.com}"
-USERNAME="${2:-api_user}"
-PASSWORD="${3:-api_password}" 
-SCRIPT_ID="${4}"
-FORCE_DELETE="${5:-false}"
-
-if [ -z "$SCRIPT_ID" ]; then
-    echo "❌ Usage: $0 <jamf_url> <username> <password> <script_id> [force_delete]"
-    echo "💡 Get script ID using read_jamf_script.sh first"
-    exit 1
-fi
-
-echo "🔐 Authenticating with Jamf Pro API..."
-
-AUTH_TOKEN=$(curl -s -u "${USERNAME}:${PASSWORD}" \
-    "${JAMF_URL}/api/v1/auth/token" -X POST | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
-
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "❌ Authentication failed"
-    exit 1
-fi
-
-# Step 1: Pre-deletion validation - check if script exists and get details
-echo "🔍 Validating script before deletion..."
-
-SCRIPT_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/xml" \
-    -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
-
-SCRIPT_HTTP_STATUS=$(echo "$SCRIPT_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-SCRIPT_BODY=$(echo "$SCRIPT_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-if [ "$SCRIPT_HTTP_STATUS" != "200" ]; then
-    echo "❌ Script with ID $SCRIPT_ID not found or inaccessible"
-    curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-        -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-    exit 1
-fi
-
-# Extract script details for confirmation
-SCRIPT_NAME=$(echo "$SCRIPT_BODY" | grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g')
-SCRIPT_CATEGORY=$(echo "$SCRIPT_BODY" | grep -o '<category>.*</category>' | head -1 | sed 's/<[^>]*>//g')
-
-echo "📋 Script to delete:"
-echo "   ID: $SCRIPT_ID"
-echo "   Name: $SCRIPT_NAME"
-echo "   Category: $SCRIPT_CATEGORY"
-
-# Step 2: Check for dependencies - scripts used by policies
-# This is complex because we need to check all policies for script references
-echo "🔍 Checking for policy dependencies..."
-
-POLICIES_RESPONSE=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Accept: application/xml" \
-    -X GET "${JAMF_URL}/JSSResource/policies")
-
-if [ $? -eq 0 ]; then
-    # Extract policy IDs that might use this script - very fragile
-    DEPENDENT_POLICIES=$(echo "$POLICIES_RESPONSE" | grep -B5 -A5 "<script_id>${SCRIPT_ID}</script_id>" | grep -o '<id>[0-9]*</id>' | head -10 | sed 's/<[^>]*>//g' || echo "")
-    
-    if [ ! -z "$DEPENDENT_POLICIES" ]; then
-        echo "⚠️  WARNING: Script is referenced by policies:"
-        echo "$DEPENDENT_POLICIES" | while read policy_id; do
-            if [ ! -z "$policy_id" ]; then
-                # Get policy name - another API call for each dependency
-                POLICY_INFO=$(curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-                    -X GET "${JAMF_URL}/JSSResource/policies/id/${policy_id}" | \
-                    grep -o '<name>.*</name>' | head -1 | sed 's/<[^>]*>//g' 2>/dev/null || echo "Policy ID: $policy_id")
-                echo "   - $POLICY_INFO"
-            fi
-        done
-        
-        if [ "$FORCE_DELETE" != "true" ]; then
-            echo "❌ Cannot delete script with policy dependencies"
-            echo "💡 Options:"
-            echo "   1. Remove script from dependent policies first"
-            echo "   2. Use 'force_delete=true' parameter to ignore dependencies"
-            curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-                -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-            exit 1
-        else
-            echo "⚠️  Proceeding with forced deletion despite dependencies!"
-        fi
-    else
-        echo "✅ No policy dependencies found"
-    fi
-else
-    echo "⚠️  Could not check policy dependencies - proceeding with caution"
-fi
-
-# Step 3: Create backup before deletion
-echo "💾 Creating backup of script before deletion..."
-
-BACKUP_DIR="./jamf_script_backups"
-mkdir -p "$BACKUP_DIR"
-
-BACKUP_FILE="${BACKUP_DIR}/script_${SCRIPT_ID}_$(date +%Y%m%d_%H%M%S).xml"
-echo "$SCRIPT_BODY" > "$BACKUP_FILE"
-echo "✅ Backup saved to: $BACKUP_FILE"
-
-# Step 4: Final confirmation (if not forced)
-if [ "$FORCE_DELETE" != "true" ]; then
-    echo ""
-    echo "⚠️  FINAL WARNING: You are about to permanently delete this script!"
-    echo "📋 Script: $SCRIPT_NAME (ID: $SCRIPT_ID)"
-    echo "💾 Backup: $BACKUP_FILE"
-    echo ""
-    read -p "🤔 Are you absolutely sure? Type 'DELETE' to confirm: " CONFIRMATION
-    
-    if [ "$CONFIRMATION" != "DELETE" ]; then
-        echo "❌ Deletion cancelled by user"
-        curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-            -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-        exit 0
-    fi
-fi
-
-# Step 5: Execute deletion
-echo "🗑️  Deleting script from Jamf Pro..."
-
-DELETE_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X DELETE "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
-
-DELETE_HTTP_STATUS=$(echo "$DELETE_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-DELETE_BODY=$(echo "$DELETE_RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-
-# Step 6: Handle deletion response and cleanup
-case $DELETE_HTTP_STATUS in
-    200)
-        echo "✅ Script deleted successfully"
-        echo "🗑️  Script '$SCRIPT_NAME' (ID: $SCRIPT_ID) has been removed from Jamf Pro"
-        echo "💾 Backup available at: $BACKUP_FILE"
-        
-        # Verify deletion by attempting to read the script
-        echo "🔍 Verifying deletion..."
-        VERIFY_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-            -H "Authorization: Bearer ${AUTH_TOKEN}" \
-            -X GET "${JAMF_URL}/JSSResource/scripts/id/${SCRIPT_ID}")
-        
-        VERIFY_STATUS=$(echo "$VERIFY_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-        
-        if [ "$VERIFY_STATUS" == "404" ]; then
-            echo "✅ Deletion verified - script no longer exists"
-        else
-            echo "⚠️  Deletion may not have completed properly (HTTP $VERIFY_STATUS)"
-        fi
-        
-        # Log deletion event
-        echo "$(date): Deleted script '$SCRIPT_NAME' (ID: $SCRIPT_ID) by $USERNAME" >> "${BACKUP_DIR}/deletion_log.txt"
-        ;;
-    404)
-        echo "❌ Script with ID $SCRIPT_ID not found (may have been already deleted)"
-        ;;
-    401)
-        echo "❌ Authentication failed during deletion"
-        exit 1
-        ;;
-    403)
-        echo "❌ Insufficient permissions to delete script"
-        exit 1
-        ;;
-    409)
-        echo "❌ Cannot delete script - it may be in use by active policies"
-        echo "💡 Remove the script from all policies before deletion"
-        exit 1
-        ;;
-    *)
-        echo "❌ Script deletion failed with HTTP $DELETE_HTTP_STATUS"
-        echo "📄 Response: $DELETE_BODY"
-        exit 1
-        ;;
-esac
-
-# Token cleanup
-curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -X POST "${JAMF_URL}/api/v1/auth/invalidate-token" > /dev/null
-
-echo "🎉 Script deletion process complete!"
-
-# PROBLEMS WITH THIS IMPERATIVE DELETE APPROACH:
-# 1. Complex dependency checking requires multiple API calls
-# 2. Manual backup creation and management
-# 3. No atomic transaction - partial failures leave inconsistent state
-# 4. Fragile dependency parsing from XML responses  
-# 5. Manual confirmation process is not suitable for automation
-# 6. No rollback mechanism if deletion causes issues
-# 7. Risk of cascade failures if dependencies weren't properly identified
-# 8. Manual logging and audit trail creation
-# 9. No integration with change management processes
-# 10. Different deletion strategies needed for different resource types
-```
 
 #### ✅ The Declarative Approach: Terraform Configuration
 
