@@ -209,7 +209,7 @@ The challenge is **how** each approach handles this lifecycle - with varying deg
 | **Multi-Environment** | Manual replication | Script parameterization | Playbook variables | Workspace/variables |
 | **Dependency Management** | Manual coordination | Manual orchestration | Manual orchestration | Automatic tf graph resolution |
 | **Version Control** | Screenshots/docs only | Git + script versioning | Git + playbook versioning | Git + module versioning + state versioning |
-| **Collaboration** | Email/meetings | Code reviews | Code reviews | Code reviews + plan review |
+| **Collaboration** | Email/meetings | Code reviews | Code reviews | Code reviews + tf plan review |
 | **Audit Trail** | Platform logs only | Custom logging + Git history | Built-in logging + Git history | State versioning + Git history* |
 | **API Changes** | Manual GUI updates | Script maintenance | Playbook maintenance | Provider updates |
 | **Testing** | Manual validation | Custom test scripts | Built-in test modules | Plan validation + testing frameworks |
@@ -228,7 +228,7 @@ The challenge is **how** each approach handles this lifecycle - with varying deg
 
 **💥 Universal Pain Points (Shared by GUI, Scripts, and Traditional Config Mgmt):**
 
-All three traditional approaches share fundamental limitations that Configuration as Code addresses comprehensively. Configuration drift represents one of the most persistent challenges, where manual changes inevitably cause environments to diverge from their intended state, creating inconsistencies that compound over time. These approaches also lack built-in drift detection capabilities, making it difficult to track and automatically identify when configurations have changed, often leaving organizations unaware of critical deviations until problems occur.
+All three traditional approaches share fundamental limitations that declarative Configuration as Code addresses comprehensively. Configuration drift represents one of the most persistent challenges, where manual changes inevitably cause environments to diverge from their intended state, creating inconsistencies that compound over time. These approaches also lack built-in drift detection capabilities, making it difficult to track and automatically identify when configurations have changed, often leaving organizations unaware of critical deviations until problems occur.
 
 Scaling presents another significant barrier, as these approaches simply don't scale efficiently when managing hundreds or thousands of resources across multiple environments and platforms. The manual effort required grows exponentially with complexity, creating operational bottlenecks that slow business delivery. When failures occur, there is typically no systematic way to rollback failed changes or recover from partial failures, forcing teams into time-consuming manual remediation processes.
 
