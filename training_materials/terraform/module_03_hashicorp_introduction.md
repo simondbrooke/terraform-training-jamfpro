@@ -243,7 +243,7 @@ selections it made above. Include this file in your version control repository
 so that Terraform can guarantee to make the same selections by default when
 you run "terraform init" in the future.
 
-<span style="color:green">**Terraform has been successfully initialized!**</span>
+Terraform has been successfully initialized!
 
 You may now begin working with Terraform. Try running "terraform plan" to see
 any changes that are required for your infrastructure. All Terraform commands
@@ -254,14 +254,64 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
+Now perform your first terraform plan
+
 ```bash
 # Plan the changes
 terraform plan
+```
 
+**expected output**
+
+```bash
+Terraform used the selected providers to generate the following execution plan. Resource actions are
+indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # local_file.hello will be created
+  + resource "local_file" "hello" {
+      + content              = "Hello from Terraform! 🚀"
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0777"
+      + filename             = "hello.txt"
+      + id                   = (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + file_content = "Hello from Terraform! 🚀"
+```
+
+
+```bash
 # Apply the changes
 terraform apply
 # Type 'yes' when prompted
+```
 
+**expected output**
+
+```bash
+local_file.hello: Creating...
+local_file.hello: Creation complete after 0s [id=3d3a4083913dfdd5890d12ef12a42e55c6e49235]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+file_content = "Hello from Terraform! 🚀"
+```
+
+```bash
 # Verify the file was created
 ls -la
 cat hello.txt
