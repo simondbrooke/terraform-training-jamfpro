@@ -139,7 +139,7 @@ flowchart TB
         DEV3[Click, type, select options]
         DEV4[Save configuration]
         DEV5[🧪 Test manually<br/>Limited dev data/users<br/>May not reveal all issues]
-        DEV6[📝 Document changes<br/>Quality varies by person<br/>May skip if "simple change"]
+        DEV6[📝 Document changes<br/>Quality varies by person<br/>May skip if simple change]
         DEV7[👥 Request peer review<br/>Email/Slack screenshots<br/>Schedule review meeting]
         
         DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6 --> DEV7
