@@ -138,8 +138,8 @@ flowchart TB
         DEV2[Navigate through multiple screens]
         DEV3[Click, type, select options]
         DEV4[Save configuration]
-        DEV5[Test manually]
-        DEV6[Document changes in wiki/personal notes/email]
+        DEV5[🧪 Test manually<br/>Limited dev data/users<br/>May not reveal all issues]
+        DEV6[📝 Document changes<br/>Quality varies by person<br/>May skip if "simple change"]
         DEV7[👥 Request peer review<br/>Email/Slack screenshots<br/>Schedule review meeting]
         
         DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6 --> DEV7
@@ -151,10 +151,15 @@ flowchart TB
         STAGE3[Navigate same screens again]
         STAGE4[Recreate configuration manually]
         STAGE5[Hope settings match dev]
-        STAGE6[Manual testing again]
+        STAGE6[🧪 Test with staging data<br/>Different users/devices<br/>Unintended consequences emerge]
         STAGE7[👥 Second peer review<br/>Compare with dev screenshots<br/>Manual verification]
+        STAGEFAIL{🚨 Testing reveals issues?}
+        STAGEFIX[🔧 Debug and fix issues<br/>Update documentation<br/>Start over in staging]
         
-        STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6 --> STAGE7
+        STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6 --> STAGEFAIL
+        STAGEFAIL -->|Issues Found| STAGEFIX
+        STAGEFAIL -->|Looks Good| STAGE7
+        STAGEFIX --> STAGE2
     end
     
     subgraph PROD ["🚨 Production Environment"]
@@ -164,13 +169,20 @@ flowchart TB
         PROD4[Navigate screens third time]
         PROD5G[🌐 Apply GLOBAL changes<br/>⚠️ IMMEDIATE effect on ALL users<br/>❌ NO ROLLBACK possible]
         PROD5S[🎯 Apply SCOPED changes<br/>✅ Limited blast radius<br/>🔄 Usually reversible]
-        PROD6[Monitor for issues]
+        PROD6[🧪 Monitor production impact<br/>Real users, real data<br/>New issues may emerge]
+        PRODFAIL{🚨 Production issues discovered?}
+        PRODFIX[🔥 Emergency response<br/>Rollback if possible<br/>All hands on deck]
+        PRODDOC[📝 Post-change documentation<br/>Update if remembered<br/>Often skipped under pressure]
         
         PROD1 --> PROD2 --> PROD3 --> PROD4
         PROD4 --> PROD5G
         PROD4 --> PROD5S
         PROD5G --> PROD6
         PROD5S --> PROD6
+        PROD6 --> PRODFAIL
+        PRODFAIL -->|Issues Found| PRODFIX
+        PRODFAIL -->|Success| PRODDOC
+        PRODFIX --> PRODDOC
     end
     
     subgraph FAIL ["💥 Common Failure Points"]
@@ -182,6 +194,8 @@ flowchart TB
         FAIL6[Admin unavailable/leaves company]
         FAIL7G[🌐 Global setting breaks<br/>ALL users affected<br/>❌ Cannot undo]
         FAIL7S[🎯 Scoped setting breaks<br/>Limited user impact<br/>🔄 Can target different group]
+        FAIL8[🧪 Testing inadequacy<br/>Config valid but unintended consequences<br/>Rinse & repeat cycle begins]
+        FAIL9[📝 Documentation inconsistency<br/>Quality varies by person<br/>Skipped under pressure/time constraints]
     end
     
     subgraph DRIFT ["🔍 Post-Change Reality"]
@@ -204,18 +218,24 @@ flowchart TB
     SCOPED --> DEV1
     DEV7 --> STAGE1
     STAGE7 --> PROD1
-    PROD6 --> DRIFT1
+    PRODDOC --> DRIFT1
     
     DEV3 -.->|Human Error| FAIL1
     DEV4 -.->|Human Error| FAIL2
+    DEV5 -.->|Inadequate Testing| FAIL8
+    DEV6 -.->|Documentation Gap| FAIL9
     DEV7 -.->|Review Failure| FAIL6
     STAGE4 -.->|Human Error| FAIL3
     STAGE5 -.->|Human Error| FAIL4
+    STAGE6 -.->|Environment Differences| FAIL8
     STAGE7 -.->|Review Failure| FAIL6
+    STAGEFIX -.->|Rinse & Repeat| FAIL8
     PROD1 -.->|Process Failure| FAIL5
     PROD3 -.->|Knowledge Gap| FAIL6
     PROD5G -.->|Global Failure| FAIL7G
     PROD5S -.->|Scoped Failure| FAIL7S
+    PRODFIX -.->|Emergency Pressure| FAIL9
+    PRODDOC -.->|Documentation Neglect| FAIL9
     
     FAIL1 -.->|Recovery| START
     FAIL2 -.->|Recovery| START
@@ -225,10 +245,17 @@ flowchart TB
     FAIL6 -.->|Recovery| START
     FAIL7G -.->|⚠️ Difficult Recovery| START
     FAIL7S -.->|🔄 Easier Recovery| START
+    FAIL8 -.->|🔄 Back to Development| DEV1
+    FAIL9 -.->|📝 Knowledge Loss| DRIFT1
     
     style START fill:#e3f2fd
     style GLOBAL fill:#ffcdd2
     style SCOPED fill:#c8e6c9
+    style STAGEFAIL fill:#fff3e0
+    style STAGEFIX fill:#ffcc80
+    style PRODFAIL fill:#ffebee
+    style PRODFIX fill:#ffab91
+    style PRODDOC fill:#e1f5fe
     style FAIL1 fill:#ffebee
     style FAIL2 fill:#ffebee
     style FAIL3 fill:#ffebee
@@ -237,6 +264,8 @@ flowchart TB
     style FAIL6 fill:#ffebee
     style FAIL7G fill:#d32f2f
     style FAIL7S fill:#ff9800
+    style FAIL8 fill:#9c27b0
+    style FAIL9 fill:#795548
     style DRIFT5G fill:#d32f2f
     style DRIFT5S fill:#ff9800
 ```
