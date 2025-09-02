@@ -1248,12 +1248,12 @@ However, **stages 1-3 all share fundamental architectural limitations** when app
 
 | **Core Limitation** | **GUI Impact** | **Scripts Impact** | **Ansible Impact** |
 |---------------------|----------------|-------------------|-------------------|
-| **Imperative Approach** | Manual steps | Custom CRUD logic | Task-based operations |
-| **State Management** | None | Custom tracking | Manual implementation |
-| **Drift Detection** | Manual checking | Custom monitoring | Custom validation |
-| **Resource Dependencies** | Manual coordination | Custom orchestration | Manual task ordering |
-| **API Evolution** | GUI updates | Script maintenance | Playbook updates |
-| **Idempotency** | None | Custom logic | Framework-assisted |
+| **Imperative Approach** | Navigate screens, fill forms, click buttons in sequence | Write explicit CREATE/READ/UPDATE/DELETE logic for each resource type | Define task sequences with conditional logic for different scenarios |
+| **State Management** | No tracking of what exists or current configuration | Custom databases/files to track resource IDs and attributes | Manual implementation using facts, registers, and when conditions |
+| **Drift Detection** | Manual verification by comparing screenshots or checking settings | Custom monitoring scripts to compare desired vs actual state | Custom validation tasks that must query and compare all resources |
+| **Resource Dependencies** | Remember and manually coordinate the order of changes | Custom orchestration logic to handle creation/deletion sequences | Manual task ordering with complex dependency chains using handlers |
+| **API Evolution** | Learn new GUI layouts when platforms update interfaces | Update all scripts when APIs change endpoints or authentication | Update all playbooks when API schemas or response formats change |
+| **Idempotency** | Every action is a manual operation with potential for change | Custom logic to check "does this exist?" before every operation | Framework provides structure but requires manual implementation of idempotent checks |
 
 **🎯 The Paradigm Shift: Declarative Configuration as Code**
 
