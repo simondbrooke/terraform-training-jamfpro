@@ -382,30 +382,138 @@ flowchart LR
 
 The challenge is **how** each approach handles this lifecycle - with varying degrees of complexity, reliability, and maintainability.
 
-#### 🚫 Why Other Methods Fall Short for SaaS Configuration Management
+#### 🚫 Why Traditional Approaches Fall Short for SaaS Configuration Management
 
-**The Evolution of API Management Approaches:**
+**The Evolution Challenge:**
 
-As organizations moved from manual GUI administration to programmatic management, various approaches emerged to handle REST API CRUD workflows. These methods evolved from simple scripts to sophisticated automation tools, each attempting to solve the fundamental challenge of managing SaaS configurations at scale.
+As organizations recognized the limitations of manual GUI administration, they naturally turned to existing automation tools. However, **each approach brings its own set of challenges** when applied to modern SaaS API management. Understanding these limitations helps explain why Configuration as Code represents such a significant paradigm shift.
 
-**Common Approaches Organizations Use:**
+**🔧 Why Custom Scripts and Pipelines Fall Short:**
 
-1. **🔧 Custom Scripts**: PowerShell, Bash, Python scripts calling APIs directly
-2. **🤖 Configuration Management Tools**: Ansible, Chef, Puppet using HTTP modules
-3. **🔄 CI/CD Pipeline Scripts**: Jenkins, GitHub Actions, Azure DevOps with API calls
-4. **📦 Custom Applications**: Internal tools built around specific SaaS APIs
-5. **🌐 Infrastructure as Code Tools**: Terraform, Pulumi with SaaS providers
+Custom scripting seems like the obvious first step beyond GUI administration, but organizations quickly discover the complexity:
 
-While these approaches can work, they all share **fundamental limitations** when applied to modern SaaS API management.
+**Core Issues:**
+- **Imperative Complexity**: Must explicitly handle CREATE, READ, UPDATE, DELETE logic for every resource type
+- **State Management Nightmare**: No built-in way to track what resources exist or their current configuration
+- **Authentication Overhead**: Every script must implement OAuth flows, token refresh, rate limiting
+- **Error Handling Burden**: Must build robust retry logic, partial failure recovery, and rollback mechanisms
+- **API Evolution Tax**: Each API change requires updating multiple scripts across the organization
+- **Testing Complexity**: Mocking API responses, handling edge cases, integration testing
 
-**The Core Challenge:**
+**Real-World Example**: A simple Jamf Pro script to manage one security policy requires:
+- ~200 lines of authentication code
+- ~150 lines of error handling and retry logic  
+- ~100 lines of JSON parsing and validation
+- ~50 lines of actual business logic
+- Result: **500 lines of code for what should be a 10-line configuration**
 
-Traditional configuration management tools were designed for **infrastructure configuration** (installing packages, editing files, managing services), but struggle with **API-driven SaaS resource management** because:
+---
 
-- **APIs are stateful** - resources have IDs, relationships, and complex interdependencies
-- **SaaS platforms evolve rapidly** - APIs change frequently, requiring constant maintenance
-- **Resource lifecycle management** - Create, Read, Update, Delete operations must be coordinated
-- **State reconciliation** - Desired state vs. actual state comparison is complex
+**🤖 Why Ansible/Chef/Puppet Fall Short for SaaS APIs:**
+
+Traditional configuration management tools were **architecturally designed** for a different problem space, creating fundamental impedance mismatches when applied to SaaS APIs:
+
+**Architectural Mismatch:**
+- **File-Based Assumptions**: Tools assume managing files, packages, and services on servers
+- **Agent/SSH Model**: Designed for connecting to servers, not making HTTP API calls
+- **Convergence Model**: Built for eventual consistency, not immediate API state synchronization
+- **Resource Abstraction**: HTTP modules are generic and don't understand SaaS resource semantics
+
+**Specific SaaS API Challenges:**
+- **No Native Idempotency**: HTTP modules don't understand when a POST creates vs. updates a resource
+- **Manual State Checking**: Must implement custom logic to determine if resources exist
+- **Resource Relationships**: Cannot automatically handle dependencies between SaaS resources
+- **API Schema Evolution**: No type safety or automatic handling of API changes
+- **Complex Authentication**: Generic HTTP modules don't handle OAuth flows, token refresh, etc.
+
+**The Verbose Reality**: Here's what "simple" looks like in Ansible for Jamf Pro:
+
+```yaml
+# Just to create ONE script in Jamf Pro requires:
+- name: "Check if script exists" (30 lines of YAML)
+- name: "Get authentication token" (15 lines of YAML)  
+- name: "Create script if missing" (25 lines of YAML)
+- name: "Update script if exists" (25 lines of YAML)
+- name: "Verify operation" (15 lines of YAML)
+- name: "Clean up token" (10 lines of YAML)
+# Total: ~120 lines of YAML for one resource!
+```
+
+**Compared to Terraform:**
+```hcl
+resource "jamfpro_script" "security_check" {
+  name            = "Security Compliance Check"
+  script_contents = file("security_check.sh")
+  category_id     = -1
+}
+# Total: 4 lines of HCL for the same resource!
+```
+
+---
+
+**🔄 Why CI/CD Pipeline Orchestration Isn't Enough:**
+
+Many organizations try to solve scripting limitations by adding CI/CD orchestration, but this **compounds rather than solves** the core problems:
+
+**Additional Complexity Layers:**
+- **Pipeline Configuration**: YAML/JSON pipeline definitions that must be maintained
+- **Secret Management**: Storing and rotating API credentials across pipeline systems  
+- **Environment Coordination**: Managing deployment order across dev/staging/prod
+- **Failure Recovery**: Building custom logic to handle partial pipeline failures
+- **State Synchronization**: No built-in way to ensure pipeline state matches actual state
+
+**The Result**: Organizations end up with **thousands of lines** of pipeline configuration, custom scripts, and orchestration logic that must be maintained, tested, and debugged - essentially **building their own configuration management platform**.
+
+---
+
+**🎯 The Fundamental Problem: Imperative vs. Declarative**
+
+All traditional approaches share the same core limitation: they are **imperative** (telling the system *how* to do something) rather than **declarative** (describing *what* you want the end result to be).
+
+**Imperative Approach Problems:**
+```bash
+# Traditional approach - imperative steps
+1. Authenticate to API
+2. Check if resource exists  
+3. If exists, GET current configuration
+4. Compare with desired configuration
+5. If different, PUT updated configuration
+6. If doesn't exist, POST new resource
+7. Handle errors at each step
+8. Clean up authentication
+9. Log results
+10. Update tracking systems
+```
+
+**Declarative Approach Solution:**
+```hcl
+# Terraform approach - declarative desired state
+resource "jamfpro_script" "security_check" {
+  name            = "Security Compliance Check"
+  script_contents = file("security_check.sh")
+  category_id     = -1
+}
+# Terraform handles all imperative steps automatically!
+```
+
+---
+
+**📊 The Maintenance Burden Reality:**
+
+Organizations using traditional approaches typically end up with:
+
+- **10,000+ lines** of custom script code to maintain
+- **50+ API endpoints** to handle individually  
+- **3-5 different authentication methods** across SaaS platforms
+- **Hundreds of hours annually** spent on maintenance and updates
+- **Multiple single points of failure** when key script maintainers leave
+
+**Configuration as Code Approach:**
+- **100 lines** of declarative configuration
+- **Single provider interface** handling all API complexity
+- **Unified authentication** through provider configuration
+- **Minutes annually** spent on provider updates
+- **Self-documenting configuration** that any team member can understand
 
 #### 🔧 The Imperative Approach: Manual CRUD Operations
 
@@ -878,15 +986,38 @@ if __name__ == "__main__":
 - No Concurrent Access Control: No locking for shared resources
 - Testing Complexity: Each endpoint needs individual mocking and testing
 
-**⚖️ The Evolution: Python Scripts vs. Manual GUI**
+**⚖️ The Evolution: Understanding Each Approach's Trade-offs**
 
-To be fair, this Python script approach **is a significant improvement** over manual GUI administration. It provides **automation**, **repeatability**, **version control**, and **better error handling** that eliminates the human errors and time consumption of clicking through web interfaces. Organizations can deploy consistent configurations, track changes through Git, integrate with CI/CD pipelines, and benefit from Python's strong JSON handling and exception management.
+**🐍 Python Scripts vs. Manual GUI:**
+
+This Python script approach **is a significant improvement** over manual GUI administration. It provides **automation**, **repeatability**, **version control**, and **better error handling** that eliminates the human errors and time consumption of clicking through web interfaces. Organizations can deploy consistent configurations, track changes through Git, integrate with CI/CD pipelines, and benefit from Python's strong JSON handling and exception management.
 
 However, the **fundamental challenges remain substantial**. You've eliminated manual GUI problems but **traded them for complex development and maintenance burdens**: building robust HTTP request handling, managing authentication tokens, implementing manual state checking through API iteration, and handling edge cases. The result is often **hundreds of lines of Python code** with extensive try/catch blocks that must be developed, tested, debugged, and maintained by your team - essentially **building your own API management framework** from scratch.
 
-**🤖 The Next Evolution: Configuration Management Tools**
+**🤖 Configuration Management Tools vs. Custom Scripts:**
 
-Recognizing these limitations, many organizations turn to **configuration management tools** like Ansible, which provide more structured approaches to API automation. Let's examine how Ansible addresses some of the Python script challenges while introducing its own complexities:
+Recognizing these limitations, many organizations turn to **configuration management tools** like Ansible, which provide more structured approaches to API automation. Ansible offers several advantages over custom scripts:
+
+**✅ Ansible Advantages over Custom Scripts:**
+- **Structured YAML**: More readable than procedural Python/PowerShell code
+- **Built-in Error Handling**: Automatic retry logic and failure handling
+- **Task Orchestration**: Better organization of complex multi-step operations
+- **Inventory Management**: Built-in support for managing multiple environments
+- **Community Modules**: Reusable components for common operations
+- **Idempotency Framework**: Structure for implementing idempotent operations
+
+**❌ But Ansible Still Falls Short for SaaS APIs:**
+
+However, Ansible still **shares the core limitations** of custom scripting when applied to SaaS API management:
+
+- **Generic HTTP Module**: The `uri` module doesn't understand SaaS resource semantics
+- **Manual State Logic**: Still must implement custom logic to check if resources exist
+- **Verbose Configuration**: Simple operations require extensive YAML definitions
+- **No Native Relationships**: Cannot automatically handle resource dependencies
+- **Custom Authentication**: Must implement OAuth flows and token management manually
+- **API Evolution Burden**: Updates required when SaaS platforms change their APIs
+
+The result is **more organized complexity**, but still **hundreds of lines of YAML** that must be maintained for what should be simple resource definitions.
 
 **Ansible Implementation for Jamf Pro Scripts Management**
 
@@ -1121,23 +1252,80 @@ However, the **fundamental limitations remain substantial**. While you've elimin
 
 **The core issue**: You're still working **imperatively** (telling the system *how* to do things step-by-step) rather than **declaratively** (describing *what* you want the end result to be). This fundamental difference becomes critical as your SaaS configuration complexity grows beyond simple script management to include policies, groups, applications, certificates, and their interdependencies.
 
-**🔄 The Pattern: Incremental Improvements, Persistent Challenges**
+**🔄 The Evolution Pattern: Each Step Forward, Persistent Core Challenges**
 
-We've now seen the **evolution of SaaS configuration management approaches**:
+We've now examined the **natural progression** organizations follow as they mature their SaaS configuration management:
 
-1. **Manual GUI Administration** → Time-consuming, error-prone, not scalable
-2. **Python Scripts** → Better error handling but still requires extensive custom development  
-3. **Ansible Playbooks** → More structured but still complex custom automation
+```mermaid
+graph LR
+    subgraph "🖱️ Stage 1: Manual GUI"
+        GUI[Manual Administration<br/>• Point & click<br/>• Screenshots<br/>• Email approvals<br/>• Manual verification]
+    end
+    
+    subgraph "🔧 Stage 2: Custom Scripts"  
+        SCRIPTS[Custom API Scripts<br/>• Python/PowerShell<br/>• HTTP requests<br/>• Custom error handling<br/>• Manual state checking]
+    end
+    
+    subgraph "🤖 Stage 3: Config Management"
+        ANSIBLE[Ansible/Chef/Puppet<br/>• YAML/DSL syntax<br/>• Task orchestration<br/>• Generic HTTP modules<br/>• Manual state logic]
+    end
+    
+    subgraph "🎯 Stage 4: Configuration as Code"
+        TERRAFORM[Terraform/Pulumi<br/>• Declarative resources<br/>• Native state management<br/>• Automatic dependencies<br/>• Built-in drift detection]
+    end
+    
+    GUI -->|"❌ Too manual<br/>❌ Error-prone<br/>❌ Not scalable"| SCRIPTS
+    SCRIPTS -->|"❌ Complex development<br/>❌ Maintenance burden<br/>❌ No idempotency"| ANSIBLE  
+    ANSIBLE -->|"❌ Verbose config<br/>❌ Manual state mgmt<br/>❌ Generic HTTP only"| TERRAFORM
+    
+    style GUI fill:#ffebee
+    style SCRIPTS fill:#fff3e0
+    style ANSIBLE fill:#e8f5e8
+    style TERRAFORM fill:#e3f2fd
+```
 
-Each approach **improves upon the previous** by adding automation, structure, and repeatability. However, **all three share fundamental limitations**:
+**📈 The Improvement Pattern:**
 
-- **🔧 Custom Development Burden**: Building your own configuration management framework
-- **📊 Manual State Management**: No built-in tracking of resource states and relationships  
-- **🔍 No Native Drift Detection**: Cannot automatically detect manual changes
-- **🛠️ Imperative Complexity**: Must specify *how* to achieve desired state step-by-step
-- **⚙️ Maintenance Overhead**: Hundreds or thousands of lines of code to maintain
+Each evolution **genuinely improves** upon the previous approach:
 
-**The industry recognized these patterns** and developed a new category of tools specifically designed for **declarative infrastructure and configuration management**. These tools shift the paradigm from "how to do it" to "what you want" - this is where **Terraform** and the concept of **Configuration as Code** truly shine.
+1. **GUI → Scripts**: Adds automation, repeatability, version control
+2. **Scripts → Ansible**: Adds structure, error handling, task orchestration  
+3. **Ansible → Terraform**: Adds declarative syntax, native state management, idempotency
+
+**🚧 The Persistent Challenge:**
+
+However, **stages 1-3 all share fundamental architectural limitations** when applied to SaaS API management:
+
+| **Core Limitation** | **GUI Impact** | **Scripts Impact** | **Ansible Impact** |
+|---------------------|----------------|-------------------|-------------------|
+| **Imperative Approach** | Manual steps | Custom CRUD logic | Task-based operations |
+| **State Management** | None | Custom tracking | Manual implementation |
+| **Drift Detection** | Manual checking | Custom monitoring | Custom validation |
+| **Resource Dependencies** | Manual coordination | Custom orchestration | Manual task ordering |
+| **API Evolution** | GUI updates | Script maintenance | Playbook updates |
+| **Idempotency** | None | Custom logic | Framework-assisted |
+
+**🎯 The Paradigm Shift: Declarative Configuration as Code**
+
+The industry recognized these **persistent patterns** and developed a fundamentally different approach. Instead of **incrementally improving imperative methods**, Configuration as Code tools like Terraform represent a **paradigm shift**:
+
+**From Imperative ("How")** → **To Declarative ("What")**
+- ❌ "Execute these 10 API calls in sequence"
+- ✅ "Ensure this resource exists with these properties"
+
+**From Custom Development** → **To Provider Abstraction**  
+- ❌ "Build HTTP client, handle auth, parse JSON"
+- ✅ "Use provider that handles all API complexity"
+
+**From Manual State** → **To Automatic State Management**
+- ❌ "Track resource IDs in files/databases"  
+- ✅ "Terraform automatically tracks all resource state"
+
+**From Custom Drift Detection** → **To Built-in Comparison**
+- ❌ "Build monitoring to detect manual changes"
+- ✅ "`terraform plan` shows any configuration drift"
+
+This is why **Configuration as Code** with tools like Terraform represents such a significant leap forward - it doesn't just improve the existing approach, it **fundamentally changes the approach**.
 
 #### 🎯 The Terraform Advantage for SaaS Configuration
 
@@ -1568,227 +1756,6 @@ resource "jamfpro_policy" "security_compliance_enforcement" {
 # - Easy rollbacks with version control
 # - Integration with CI/CD pipelines
 # - Collaborative change management
-```
-
-#### 🔄 Script Template with Dynamic Configuration
-
-The referenced script template (`scripts/security_compliance.sh`) shows how Terraform enables dynamic, parameterized configuration:
-
-```bash
-#!/bin/bash
-# scripts/security_compliance.sh - TERRAFORM TEMPLATE
-# This script is dynamically generated by Terraform with proper parameterization
-
-# Security Compliance Check Script - Terraform Managed
-# Environment: ${environment_type}
-# Company: ${company_name}
-# Generated: $(date)
-
-echo "🔍 Starting ${company_name} security compliance check..."
-echo "🏷️  Environment: ${environment_type}"
-echo "🎯 Compliance threshold: ${compliance_threshold}%"
-
-# FileVault validation
-check_filevault() {
-    echo "🔐 Checking FileVault encryption..."
-    
-    FILEVAULT_STATUS=$(fdesetup status | head -1)
-    if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
-        echo "✅ FileVault: Enabled"
-        return 0
-    else
-        echo "❌ FileVault: Disabled"
-        return 1
-    fi
-}
-
-# Firewall validation with stealth mode check
-check_firewall() {
-    echo "🔥 Checking firewall configuration..."
-    
-    FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null)
-    %{ if security_settings.require_stealth_mode }
-    STEALTH_MODE=$(defaults read /Library/Preferences/com.apple.alf stealthenabled 2>/dev/null)
-    %{ endif }
-    
-    if [[ "$FIREWALL_STATUS" == "1" ]]; then
-        echo "✅ Firewall: Enabled"
-        %{ if security_settings.require_stealth_mode }
-        if [[ "$STEALTH_MODE" == "1" ]]; then
-            echo "✅ Stealth mode: Enabled"
-            return 0
-        else
-            echo "❌ Stealth mode: Required but disabled"
-            return 1
-        fi
-        %{ else }
-        return 0
-        %{ endif }
-    else
-        echo "❌ Firewall: Disabled"
-        return 1
-    fi
-}
-
-# Application compliance check
-check_applications() {
-    echo "📱 Checking required applications..."
-    
-    local apps_compliant=1
-    
-    %{ for app in required_apps }
-    echo "🔍 Checking: ${app.name}"
-    if [[ -d "${app.path}" ]]; then
-        APP_VERSION=$(defaults read "${app.path}/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unknown")
-        echo "✅ ${app.name}: Installed (v$APP_VERSION)"
-        
-        # Version comparison (simplified)
-        if [[ "$APP_VERSION" != "unknown" ]]; then
-            REQUIRED_VERSION="${app.min_version}"
-            echo "   Required version: $REQUIRED_VERSION"
-        fi
-    else
-        echo "❌ ${app.name}: Missing"
-        %{ if app.critical }
-        echo "   ⚠️  CRITICAL APPLICATION MISSING!"
-        apps_compliant=0
-        %{ endif }
-    fi
-    %{ endfor }
-    
-    return $apps_compliant
-}
-
-# Password policy validation  
-check_password_policy() {
-    echo "🔑 Checking password policy..."
-    
-    PWD_MIN_LENGTH=$(pwpolicy -n /Local/Default -getglobalpolicy | grep -o 'minChars=[0-9]*' | cut -d'=' -f2 2>/dev/null || echo "0")
-    REQUIRED_LENGTH=${min_password_length}
-    
-    if [[ $PWD_MIN_LENGTH -ge $REQUIRED_LENGTH ]]; then
-        echo "✅ Password policy: Compliant (min $PWD_MIN_LENGTH chars, required $REQUIRED_LENGTH)"
-        return 0
-    else
-        echo "❌ Password policy: Non-compliant (min $PWD_MIN_LENGTH chars, required $REQUIRED_LENGTH)"
-        return 1
-    fi
-}
-
-# Screen saver security check
-check_screensaver() {
-    echo "🔒 Checking screen saver security..."
-    
-    SCREENSAVER_DELAY=$(defaults read /Library/Preferences/com.apple.screensaver idleTime 2>/dev/null || echo "0")
-    ASK_FOR_PASSWORD=$(defaults read /Library/Preferences/com.apple.screensaver askForPassword 2>/dev/null || echo "0")
-    REQUIRED_TIMEOUT=${screensaver_timeout}
-    
-    if [[ $SCREENSAVER_DELAY -le $REQUIRED_TIMEOUT && $ASK_FOR_PASSWORD == "1" ]]; then
-        echo "✅ Screen saver: Secure (locks in $SCREENSAVER_DELAY seconds, required ≤$REQUIRED_TIMEOUT)"
-        return 0
-    else
-        echo "❌ Screen saver: Insecure (timeout: $SCREENSAVER_DELAY, password required: $ASK_FOR_PASSWORD)"
-        return 1
-    fi
-}
-
-# Execute compliance checks
-FILEVAULT_OK=0
-FIREWALL_OK=0  
-APPS_OK=0
-PASSWORD_OK=0
-SCREENSAVER_OK=0
-
-%{ if security_settings.require_filevault }
-check_filevault && FILEVAULT_OK=1
-%{ else }
-FILEVAULT_OK=1  # Not required, count as passing
-%{ endif }
-
-%{ if security_settings.require_firewall }
-check_firewall && FIREWALL_OK=1
-%{ else }
-FIREWALL_OK=1   # Not required, count as passing
-%{ endif }
-
-check_applications && APPS_OK=1
-check_password_policy && PASSWORD_OK=1
-
-%{ if security_settings.auto_lock_enabled }
-check_screensaver && SCREENSAVER_OK=1
-%{ else }
-SCREENSAVER_OK=1  # Not required, count as passing
-%{ endif }
-
-# Calculate compliance score
-TOTAL_CHECKS=5
-PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK + APPS_OK + PASSWORD_OK + SCREENSAVER_OK))
-COMPLIANCE_PERCENTAGE=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-
-echo ""
-echo "📊 ${company_name} Compliance Report"
-echo "===================================="
-echo "Environment: ${environment_type}"
-echo "Device: $(hostname)"
-echo "Timestamp: $(date)"
-echo ""
-echo "FileVault Encryption: $([ $FILEVAULT_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
-echo "Firewall Protection: $([ $FIREWALL_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
-echo "Required Applications: $([ $APPS_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
-echo "Password Policy: $([ $PASSWORD_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
-echo "Screen Lock Security: $([ $SCREENSAVER_OK -eq 1 ] && echo "✅ PASS" || echo "❌ FAIL")"
-echo ""
-echo "Overall Compliance: $COMPLIANCE_PERCENTAGE% ($PASSED_CHECKS/$TOTAL_CHECKS checks passed)"
-echo "Required Threshold: ${compliance_threshold}%"
-
-# Webhook notification (if configured)
-%{ if webhook_url != "" }
-if command -v curl >/dev/null 2>&1; then
-    WEBHOOK_PAYLOAD=$(cat << EOF
-{
-    "text": "${company_name} Security Compliance Report",
-    "attachments": [{
-        "color": "$([ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ] && echo "good" || echo "danger")",
-        "fields": [
-            {"title": "Device", "value": "$(hostname)", "short": true},
-            {"title": "Environment", "value": "${environment_type}", "short": true},
-            {"title": "Compliance Score", "value": "$COMPLIANCE_PERCENTAGE%", "short": true},
-            {"title": "Status", "value": "$([ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ] && echo "COMPLIANT" || echo "NON-COMPLIANT")", "short": true}
-        ],
-        "timestamp": $(date +%s)
-    }]
-}
-EOF
-    )
-    
-    curl -X POST -H 'Content-type: application/json' \
-        --data "$WEBHOOK_PAYLOAD" \
-        "${webhook_url}" >/dev/null 2>&1 || echo "⚠️  Failed to send webhook notification"
-fi
-%{ endif }
-
-# Update Jamf Pro inventory
-echo "📡 Updating inventory..."
-/usr/local/jamf/bin/jamf recon
-
-# Exit with appropriate code
-if [[ $COMPLIANCE_PERCENTAGE -ge ${compliance_threshold} ]]; then
-    echo "✅ Device meets compliance requirements"
-    exit 0
-else
-    echo "❌ Device requires remediation"
-    exit 1
-fi
-
-# BENEFITS OF TERRAFORM TEMPLATE APPROACH:
-# 1. Dynamic configuration based on environment
-# 2. Type-safe variable interpolation  
-# 3. Conditional logic based on Terraform variables
-# 4. Consistent parameterization across environments
-# 5. Version controlled alongside infrastructure configuration
-# 6. Easy testing with different variable values
-# 7. Integration with Terraform's validation system
-# 8. Self-documenting through variable definitions
 ```
 
 
