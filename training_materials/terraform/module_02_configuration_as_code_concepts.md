@@ -1758,236 +1758,77 @@ resource "jamfpro_policy" "critical_security" {
 
 Test your understanding of Configuration as Code concepts covered in this module:
 
-**Question 1: Why do traditional configuration management tools like Ansible struggle with SaaS API management?**
+**Question 1: What is the fundamental difference between Configuration as Code and Infrastructure as Code?**
 
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-Traditional tools like Ansible struggle with SaaS APIs because they were architecturally designed for a different problem space. They were built with file-based assumptions (managing files, packages, and services on servers) rather than API-driven resource management. Key issues include:
-
-- **No Native Idempotency**: Generic HTTP modules don't understand when a POST creates vs. updates a resource
-- **Manual State Checking**: Must implement custom logic to determine if resources exist before operations
-- **Resource Relationship Complexity**: Cannot automatically handle dependencies between SaaS resources
-- **API Schema Evolution**: No type safety or automatic handling when APIs change
-- **Verbose Configuration**: Simple operations require extensive YAML definitions (often 100+ lines for what should be simple resources)
-
-The fundamental mismatch is that these tools use imperative approaches (telling the system *how* to do something step-by-step) rather than declarative approaches (describing *what* the desired end state should be).
+**Infrastructure as Code** manages physical/virtual infrastructure (EC2 instances, VPCs, load balancers) through cloud provider APIs, while **Configuration as Code** manages SaaS service settings and resources (user accounts, security policies, device configurations) through SaaS platform APIs. IaC provisions compute/network/storage resources, while CaC configures applications and services running on that infrastructure.
 
 </details>
 
-**Question 2: What is the key difference between imperative and declarative configuration management approaches?**
+**Question 2: Why can't traditional tools like Ansible handle SaaS APIs effectively?**
 
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-The fundamental difference lies in *how* vs *what*:
-
-**Imperative Approach** (How):
-- Explicit step-by-step instructions: "First authenticate, then check if resource exists, then create or update accordingly"
-- Must handle all CRUD operations manually with custom logic
-- Requires complex conditional logic for different scenarios
-- Example: The 400+ line Python script that manually handles authentication, state checking, error recovery, and API calls
-
-**Declarative Approach** (What):  
-- Describes the desired end state: "Ensure this script resource exists with these properties"
-- Provider handles all implementation details automatically
-- Same configuration works regardless of current state
-- Example: The 20-line Terraform configuration that achieves the same result
-
-This difference becomes critical at scale - imperative approaches require exponentially more code and maintenance as complexity grows, while declarative approaches maintain consistent simplicity.
+Ansible was designed for file-based server management, not API-driven resources. Its generic HTTP modules don't understand SaaS resource semantics, requiring extensive custom YAML (often 100+ lines) for simple operations. It lacks native idempotency for API resources and requires manual state checking to determine if resources exist before operations.
 
 </details>
 
-**Question 3: How does Terraform's state management provide advantages over custom script approaches?**
+**Question 3: What does "imperative vs declarative" mean in configuration management?**
 
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-Terraform's state management provides several critical advantages:
-
-**Automatic Resource Tracking**: Terraform automatically tracks all resource attributes, relationships, and metadata in its state file, eliminating the need for custom databases or file-based tracking systems that imperative scripts require.
-
-**Built-in Drift Detection**: Running `terraform plan` instantly compares the desired state (configuration) with actual state (current resources), showing exactly what has changed. Custom scripts would need hundreds of lines of code to implement similar functionality.
-
-**Dependency Resolution**: Terraform automatically calculates resource dependencies and handles creation/deletion order, while imperative scripts require manual orchestration of resource relationships.
-
-**Idempotency Guarantee**: The state allows Terraform to determine the precise operations needed (create/update/delete/no-op) for each resource, ensuring the same configuration always produces the same result regardless of how many times it's applied.
-
-**Recovery and Rollback**: State enables Terraform to understand partial failures and provide clear remediation paths, while imperative scripts often leave systems in inconsistent states when failures occur partway through operations.
+**Imperative** tells the system *how* to do something step-by-step: "First authenticate, check if resource exists, then create or update." **Declarative** describes *what* you want the end result to be: "Ensure this script exists with these properties." Terraform handles all the "how" automatically through its providers.
 
 </details>
 
-**Question 4: What are the main problems with manual GUI administration that Configuration as Code solves?**
+**Question 4: How does Terraform's state management solve problems that custom scripts create?**
 
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-Manual GUI administration suffers from several fundamental limitations:
-
-**Time-consuming and Error-prone**: Requires navigating multiple web interface screens and manually entering values, leading to inevitable human errors through typos, missed checkboxes, or wrong selections that often aren't discovered until production issues occur.
-
-**Scalability Failure**: Every configuration change requires linear human effort that cannot be parallelized. Adding 100 users means 100 individual manual processes, creating overwhelming administrative overhead as organizations grow.
-
-**Impossible Repeatability**: Humans cannot perfectly replicate the same sequence of actions across environments or time periods, leading to configuration drift where supposedly identical environments slowly diverge.
-
-**Poor Auditability**: Limited logging of who changed what and when, with little context about why changes were made, making compliance difficult and troubleshooting time-consuming.
-
-**No Testing Capability**: No systematic way to validate changes before production, relying on manual spot-checking that cannot comprehensively test complex configuration interactions.
-
-Configuration as Code solves these by providing automation, repeatability, version control, comprehensive audit trails, and the ability to test configurations systematically before deployment.
+Terraform automatically tracks all resource attributes and relationships in its state file, eliminating custom tracking systems. `terraform plan` instantly detects drift by comparing desired vs actual state. State enables automatic dependency resolution and provides idempotency guarantees that custom scripts must implement manually with hundreds of lines of code.
 
 </details>
 
-**Question 5: Why is the evolution from custom scripts to Configuration as Code considered a paradigm shift rather than just an improvement?**
+**Question 5: What specific problems does manual GUI administration create at scale?**
 
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-The shift represents a fundamental change in approach rather than incremental improvement:
-
-**Architectural Philosophy Change**: 
-- Custom scripts: Build your own configuration management system from HTTP requests up
-- Configuration as Code: Use purpose-built tools designed specifically for declarative resource management
-
-**Problem-solving Approach Change**:
-- Custom scripts: Solve the "how to make API calls" problem with imperative logic
-- Configuration as Code: Solve the "what should my infrastructure look like" problem with declarative definitions
-
-**Operational Model Change**:
-- Custom scripts: Developers write, test, and maintain complex automation code
-- Configuration as Code: Teams define desired state, providers handle all implementation complexity
-
-**State Management Philosophy Change**:
-- Custom scripts: Manual tracking of resources and relationships using custom logic
-- Configuration as Code: Automatic state management as a core platform capability
-
-**Error Handling Philosophy Change**:
-- Custom scripts: Build custom error handling, retry logic, and recovery mechanisms
-- Configuration as Code: Provider handles all error scenarios with built-in resilience
-
-This isn't just "better scripting" - it's a complete reconceptualization of how configuration management should work, similar to how containerization wasn't just "better VMs" but a fundamental change in how we think about application deployment.
+GUI administration creates inevitable human errors (typos, missed checkboxes), cannot scale beyond small numbers of resources, creates configuration drift between environments, provides poor audit trails, and makes systematic testing impossible. These problems compound exponentially as organizations grow.
 
 </details>
 
-### 💻 **Exercise 2.2**: Configuration Drift Simulation
-**Duration**: 45 minutes
+**Question 6: Why is Configuration as Code called a "paradigm shift" rather than just better automation?**
 
-**Scenario**: Simulate configuration drift in a Jamf Pro environment and demonstrate detection and remediation.
+<details>
+<summary>🔍 Click to reveal answer</summary>
 
-**Setup Steps:**
+It's a fundamental change in thinking: from building custom API automation systems to defining desired state in purpose-built tools. Instead of solving "how to make API calls," you solve "what should my configuration look like." The provider handles all implementation complexity, representing a complete reconceptualization of configuration management.
 
-1. **Deploy Initial Configuration**
-```bash
-# Deploy the Terraform-managed script
-terraform init
-terraform plan -out=initial.tfplan
-terraform apply initial.tfplan
-```
+</details>
 
-2. **Simulate Manual Changes**
-   - Use Jamf Pro GUI to modify the script (change name, notes, or content)
-   - This simulates the "manual drift" that occurs in real environments
+**Question 7: When should you choose Configuration as Code over traditional IT approaches?**
 
-3. **Detect Drift**
-```bash
-# Run terraform plan to detect drift
-terraform plan -detailed-exitcode
+<details>
+<summary>🔍 Click to reveal answer</summary>
 
-# Analyze the output - what changes does Terraform detect?
-```
+Choose CaC for API-driven SaaS platforms, multi-environment consistency needs, compliance requirements, large-scale resource management (hundreds/thousands of resources), collaborative change management, drift detection requirements, and disaster recovery scenarios where quick recreation of complex configurations is critical.
 
-4. **Remediate Drift**
-```bash
-# Option 1: Revert manual changes
-terraform apply
+</details>
 
-# Option 2: Accept manual changes (import them)
-terraform import jamfpro_script.security_compliance_check <script_id>
-terraform plan  # Should show no changes after import
-```
+**Question 8: What are the most important organizational considerations when adopting Configuration as Code?**
 
-**Analysis Questions:**
-- How quickly did Terraform detect the manual changes?
-- What specific attributes did Terraform identify as changed?
-- How would you handle this drift in a production environment?
-- What policies would you implement to prevent unauthorized manual changes?
+<details>
+<summary>🔍 Click to reveal answer</summary>
 
-### 💻 **Exercise 2.3**: Multi-Environment Configuration Management
-**Duration**: 60 minutes
+Focus on cultural change management (shifting from GUI to code workflows), skill development for teams, gradual adoption starting with non-critical resources, proper security/access controls for configuration repositories, and integration with existing change management processes rather than replacing them entirely.
 
-**Scenario**: Design a Configuration as Code setup that manages the same security script across development, staging, and production environments with different parameters.
-
-**Task**: Create environment-specific configurations that demonstrate:
-
-1. **Environment-Specific Variables**
-```hcl
-# environments/development.tfvars
-environment_type = "development"
-compliance_threshold = 60
-required_applications = [
-  {
-    name = "Google Chrome"
-    path = "/Applications/Google Chrome.app"
-    min_version = "90.0"
-    critical = false
-  }
-]
-
-security_settings = {
-  screensaver_timeout = 600  # 10 minutes for development
-  require_filevault = false  # Not required in dev
-  require_firewall = true
-  require_stealth_mode = false
-  auto_lock_enabled = false
-}
-```
-
-```hcl
-# environments/production.tfvars  
-environment_type = "production"
-compliance_threshold = 95
-required_applications = [
-  {
-    name = "Google Chrome"
-    path = "/Applications/Google Chrome.app"
-    min_version = "100.0"
-    critical = true
-  },
-  {
-    name = "CrowdStrike Falcon"
-    path = "/Applications/Falcon.app"
-    min_version = "6.0"
-    critical = true
-  }
-]
-
-security_settings = {
-  screensaver_timeout = 300  # 5 minutes for production
-  require_filevault = true   # Required in production
-  require_firewall = true
-  require_stealth_mode = true
-  auto_lock_enabled = true
-}
-```
-
-2. **Deployment Workflow**
-```bash
-# Development deployment
-terraform workspace select development
-terraform plan -var-file="environments/development.tfvars"
-terraform apply -var-file="environments/development.tfvars"
-
-# Production deployment (with approval process)
-terraform workspace select production  
-terraform plan -var-file="environments/production.tfvars" -out=prod.tfplan
-# Review plan, get approval, then apply
-terraform apply prod.tfplan
-```
-
-3. **Configuration Validation**
-   - Ensure production has stricter requirements than development
-   - Validate that critical applications are enforced in production
-   - Confirm that security settings escalate appropriately across environments
+</details>
 
 ---
 
