@@ -590,404 +590,276 @@ print("Generated main.tf.json successfully!")
 }
 ```
 
-### 💻 **Exercise 6.1**: HCL Syntax and Structure
-**Duration**: 20 minutes
+### 💻 **Unit Exercises**: HCL Language Practice
 
-Let's practice HCL syntax by creating a well-structured Terraform configuration.
+**🎯 Goal**: Master HCL syntax through focused, bite-sized exercises
 
-**Step 1: Setup Project Structure**
-```bash
-# Create new project directory
-mkdir ~/terraform-language-demo
-cd ~/terraform-language-demo
+#### **Exercise 1: Terraform Settings Block**
+**Duration**: 3 minutes
 
-# Open in VS Code
-code .
-```
+**Task**: Create a `terraform.tf` file with proper version constraints
 
-**Step 2: Create a Comprehensive Configuration**
-
-Create `main.tf` with proper HCL syntax:
 ```hcl
-/*
-  Terraform Language Demo
-  
-  This configuration demonstrates proper HCL syntax,
-  formatting, and structure best practices.
-*/
-
+# Create terraform.tf
 terraform {
-  required_version = ">= 1.0"
+  required_version = "~> 1.5"
   
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
   }
 }
+```
 
-# Provider configuration with proper formatting
-provider "aws" {
-  region = var.aws_region
+**Practice**: Try different version constraints (`>=`, `<`, `~>`, exact versions)
+
+---
+
+#### **Exercise 2: Provider Configuration**
+**Duration**: 3 minutes
+
+**Task**: Create a `providers.tf` file with JamfPro provider setup
+
+```hcl
+# Create providers.tf
+provider "jamfpro" {
+  jamfpro_instance_fqdn = "https://company.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = "your-client-id"
+  client_secret         = "your-client-secret"
+}
+```
+
+**Practice**: Add comments explaining each parameter
+
+---
+
+#### **Exercise 3: Simple Resource Block**
+**Duration**: 5 minutes
+
+**Task**: Create a `category.tf` file with a JamfPro category
+
+```hcl
+# Create category.tf
+resource "jamfpro_category" "security" {
+  name     = "Security Tools"
+  priority = 10
+}
+```
+
+**Practice**: 
+- Add inline comments
+- Try different category names
+- Experiment with priority values
+
+---
+
+#### **Exercise 4: Data Source Practice**
+**Duration**: 5 minutes
+
+**Task**: Create a `data.tf` file to read existing JamfPro data
+
+```hcl
+# Create data.tf
+data "jamfpro_category" "existing" {
+  name = "Production"
+}
+```
+
+**Practice**: Use the data source in a resource reference
+
+---
+
+#### **Exercise 5: Variables and Outputs**
+**Duration**: 7 minutes
+
+**Task**: Create `variables.tf` and `outputs.tf`
+
+**variables.tf:**
+```hcl
+variable "category_name" {
+  description = "Name of the JamfPro category"
+  type        = string
+  default     = "Demo Category"
+}
+
+variable "category_priority" {
+  description = "Priority level (1-20)"
+  type        = number
+  default     = 10
   
-  # Default tags applied to all resources
-  default_tags {
-    tags = local.common_tags
+  validation {
+    condition     = var.category_priority >= 1 && var.category_priority <= 20
+    error_message = "Priority must be between 1 and 20."
   }
 }
+```
 
-# Local values for computed and reusable values
+**outputs.tf:**
+```hcl
+output "category_id" {
+  description = "The ID of the created category"
+  value       = jamfpro_category.security.id
+}
+```
+
+**Practice**: Reference variables in your resource blocks
+
+---
+
+#### **Exercise 6: Local Values**
+**Duration**: 4 minutes
+
+**Task**: Create `locals.tf` for computed values
+
+```hcl
+# Create locals.tf
 locals {
-  # Environment-specific settings
-  environment = var.environment
+  environment = "production"
   
-  # Common tags applied to all resources
   common_tags = {
     Environment = local.environment
-    Project     = "terraform-language-demo"
     ManagedBy   = "terraform"
-    Owner       = "platform-team"
+    Team        = "platform"
   }
   
-  # Computed naming convention
-  name_prefix = "${local.environment}-demo"
-  
-  # Configuration map
-  instance_config = {
-    dev = {
-      instance_type = "t2.micro"
-      volume_size   = 20
-    }
-    staging = {
-      instance_type = "t2.small"
-      volume_size   = 30
-    }
-    prod = {
-      instance_type = "t2.medium"
-      volume_size   = 50
-    }
-  }
-}
-
-# Random ID for unique resource naming
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-
-# Data source to get latest AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-  
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-# VPC for our resources
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-vpc"
-  })
-}
-
-# Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-  
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-igw"
-  })
-}
-
-# Public subnet
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
-  
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-public-subnet"
-    Type = "public"
-  })
-}
-
-# Data source for availability zones
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Security group with proper formatting
-resource "aws_security_group" "web" {
-  name_prefix = "${local.name_prefix}-web-"
-  vpc_id      = aws_vpc.main.id
-  description = "Security group for web servers"
-  
-  # HTTP access
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  # HTTPS access
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  # SSH access (conditional based on environment)
-  dynamic "ingress" {
-    for_each = local.environment != "prod" ? [1] : []
-    
-    content {
-      description = "SSH"
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = [aws_vpc.main.cidr_block]
-    }
-  }
-  
-  # All outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-web-sg"
-  })
-}
-
-# EC2 instance with environment-specific configuration
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = local.instance_config[local.environment].instance_type
-  subnet_id     = aws_subnet.public.id
-  
-  vpc_security_group_ids = [aws_security_group.web.id]
-  
-  root_block_device {
-    volume_type = "gp3"
-    volume_size = local.instance_config[local.environment].volume_size
-    encrypted   = true
-    
-    tags = merge(local.common_tags, {
-      Name = "${local.name_prefix}-web-root-volume"
-    })
-  }
-  
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    environment = local.environment
-    project     = "terraform-language-demo"
-  }))
-  
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-web-${random_id.suffix.hex}"
-    Type = "web-server"
-  })
-}
-
-# Local file to demonstrate local provider
-resource "local_file" "deployment_info" {
-  filename = "${path.module}/deployment-info.json"
-  
-  content = jsonencode({
-    deployment_id = random_id.suffix.hex
-    environment   = local.environment
-    timestamp     = timestamp()
-    resources = {
-      vpc_id      = aws_vpc.main.id
-      subnet_id   = aws_subnet.public.id
-      instance_id = aws_instance.web.id
-    }
-  })
+  category_name = "${local.environment}-${var.category_name}"
 }
 ```
 
-**Step 3: Create Supporting Files**
+**Practice**: Use locals in your resources
 
-Create `variables.tf`:
+---
+
+#### **Exercise 7: Comments Practice**
+**Duration**: 3 minutes
+
+**Task**: Add all three comment styles to your existing files
+
 ```hcl
-# Input variables with proper documentation and validation
-
-variable "aws_region" {
-  description = "AWS region for resource deployment"
-  type        = string
-  default     = "us-west-2"
+# Single line comment explaining the resource
+resource "jamfpro_building" "hq" {
+  name = "Headquarters"  // Inline comment
+  city = "San Francisco"
   
-  validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.aws_region))
-    error_message = "AWS region must be a valid region identifier."
-  }
+  /*
+    Multi-line comment explaining
+    why we need this building resource
+    for organizational structure
+  */
+  country = "United States"
 }
+```
 
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-  
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be one of: dev, staging, prod."
-  }
-}
+**Practice**: Document your configuration thoroughly
 
-variable "allowed_cidr_blocks" {
-  description = "List of CIDR blocks allowed to access resources"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-  
-  validation {
-    condition = alltrue([
-      for cidr in var.allowed_cidr_blocks :
-      can(cidrhost(cidr, 0))
-    ])
-    error_message = "All values must be valid CIDR blocks."
+---
+
+#### **Exercise 8: JSON Syntax Conversion**
+**Duration**: 8 minutes
+
+**Task**: Convert your category resource to JSON syntax
+
+**Step 1**: Create `category.tf.json`
+```json
+{
+  "resource": {
+    "jamfpro_category": {
+      "security": {
+        "name": "Security Tools",
+        "priority": 10
+      }
+    }
   }
 }
 ```
 
-Create `outputs.tf`:
-```hcl
-# Output values with proper descriptions
-
-output "vpc_info" {
-  description = "VPC information"
-  value = {
-    id         = aws_vpc.main.id
-    cidr_block = aws_vpc.main.cidr_block
-    arn        = aws_vpc.main.arn
-  }
-}
-
-output "instance_info" {
-  description = "EC2 instance information"
-  value = {
-    id          = aws_instance.web.id
-    public_ip   = aws_instance.web.public_ip
-    private_ip  = aws_instance.web.private_ip
-    ami_id      = aws_instance.web.ami
-    type        = aws_instance.web.instance_type
-  }
-}
-
-output "deployment_metadata" {
-  description = "Deployment metadata"
-  value = {
-    environment     = local.environment
-    deployment_id   = random_id.suffix.hex
-    name_prefix     = local.name_prefix
-    availability_zone = aws_subnet.public.availability_zone
-  }
-}
-
-# Sensitive output example
-output "internal_endpoints" {
-  description = "Internal service endpoints"
-  sensitive   = true
-  value = {
-    private_ip = aws_instance.web.private_ip
-    subnet_id  = aws_subnet.public.id
-  }
-}
-```
-
-Create `user_data.sh`:
+**Step 2**: Test both HCL and JSON versions
 ```bash
-#!/bin/bash
-# User data script with template variables
-
-# Update system
-apt-get update
-apt-get upgrade -y
-
-# Install basic packages
-apt-get install -y nginx htop curl wget
-
-# Create index page
-cat > /var/www/html/index.html << EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Terraform Language Demo</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .info { background: #f0f8ff; padding: 20px; border-radius: 5px; }
-        .highlight { color: #7B42BC; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h1>📝 Terraform Language Demo</h1>
-    <div class="info">
-        <h2>Configuration Details</h2>
-        <p><strong>Environment:</strong> <span class="highlight">${environment}</span></p>
-        <p><strong>Project:</strong> <span class="highlight">${project}</span></p>
-        <p><strong>Deployed:</strong> $(date)</p>
-        <p><strong>Server:</strong> $(hostname)</p>
-    </div>
-    <p>This server was provisioned using proper HCL syntax and formatting!</p>
-</body>
-</html>
-EOF
-
-# Start nginx
-systemctl start nginx
-systemctl enable nginx
-
-# Log deployment
-echo "$(date): Server provisioned for environment: ${environment}" >> /var/log/terraform-deployment.log
-```
-
-**Step 4: Test and Validate**
-```bash
-# Initialize Terraform
-terraform init
-
-# Validate syntax and configuration
 terraform validate
-
-# Format code (notice the improvements)
-terraform fmt
-
-# Plan with different environments
-terraform plan -var="environment=dev"
-terraform plan -var="environment=staging"
-terraform plan -var="environment=prod"
-
-# Check for syntax issues
-terraform plan -detailed-exitcode
+terraform plan
 ```
 
-💡 **Pro Tip**: Notice how proper formatting and comments make the configuration much more readable and maintainable!
+**Practice**: Compare readability between HCL and JSON
+
+---
+
+#### **Exercise 9: Version Constraints Testing**
+**Duration**: 5 minutes
+
+**Task**: Experiment with different version constraints
+
+**Test these in your `terraform.tf`:**
+```hcl
+# Test 1: Exact version
+version = "= 0.24.0"
+
+# Test 2: Pessimistic constraint  
+version = "~> 0.24"
+
+# Test 3: Range constraint
+version = ">= 0.20.0, < 0.30.0"
+```
+
+**Practice**: Run `terraform init` with each constraint
+
+---
+
+#### **Exercise 10: Error Debugging**
+**Duration**: 5 minutes
+
+**Task**: Fix these intentional syntax errors
+
+```hcl
+# Error 1: Missing quotes
+resource jamfpro_category demo {
+  name = Security Tools
+}
+
+# Error 2: Wrong block structure  
+resource "jamfpro_building" "office" 
+  name = "Branch Office"
+  city = "New York"
+
+# Error 3: Invalid identifier
+resource "jamfpro_category" "my-category" {
+  name = "Test Category"
+}
+```
+
+**Practice**: Use `terraform validate` to identify and fix errors
+
+---
+
+#### **🎯 Quick Setup Guide**
+
+**Create Project Structure:**
+```bash
+mkdir ~/jamfpro-hcl-practice
+cd ~/jamfpro-hcl-practice
+
+# Create separate files for each exercise
+touch terraform.tf providers.tf category.tf data.tf
+touch variables.tf outputs.tf locals.tf
+```
+
+**Validation Commands:**
+```bash
+# Initialize and validate after each exercise
+terraform init
+terraform validate
+terraform fmt
+terraform plan -var="category_name=Test"
+```
+
+**💡 Pro Tips:**
+- Complete exercises in order (1-10)
+- Validate syntax after each exercise
+- Experiment with different values
+- Use `terraform fmt` to auto-format your code
+- Each exercise builds on previous concepts
 
 #### 🐛 Debugging Language Issues
 
@@ -996,39 +868,39 @@ terraform plan -detailed-exitcode
 1. **Missing Quotes:**
 ```hcl
 # ❌ Incorrect
-resource aws_instance web {
-  ami = ami-12345
+resource jamfpro_category security {
+  name = Security Tools
 }
 
 # ✅ Correct  
-resource "aws_instance" "web" {
-  ami = "ami-12345"
+resource "jamfpro_category" "security" {
+  name = "Security Tools"
 }
 ```
 
 2. **Incorrect Block Structure:**
 ```hcl
 # ❌ Incorrect
-resource "aws_instance" "web" 
-  ami = "ami-12345"
-  instance_type = "t2.micro"
+resource "jamfpro_building" "hq" 
+  name = "Headquarters"
+  city = "San Francisco"
 
 # ✅ Correct
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
+resource "jamfpro_building" "hq" {
+  name = "Headquarters"
+  city = "San Francisco"
 }
 ```
 
 3. **Invalid Characters in Identifiers:**
 ```hcl
 # ❌ Incorrect
-resource "aws_instance" "web-server-1" {
+resource "jamfpro_category" "security-tools" {
   # Hyphens not allowed in resource names
 }
 
 # ✅ Correct
-resource "aws_instance" "web_server_1" {
+resource "jamfpro_category" "security_tools" {
   # Underscores are allowed
 }
 ```
@@ -1066,7 +938,7 @@ terraform {
 }
 
 # 2. Provider configurations
-provider "aws" {
+provider "jamfpro" {
   # ... configuration
 }
 
@@ -1076,26 +948,26 @@ locals {
 }
 
 # 4. Data sources
-data "aws_ami" "ubuntu" {
+data "jamfpro_category" "existing" {
   # ... data source configuration
 }
 
 # 5. Resources (grouped logically)
-resource "aws_vpc" "main" {
+resource "jamfpro_building" "main" {
   # ... resource configuration
 }
 
 # 6. Outputs at the end
-output "vpc_id" {
+output "building_id" {
   # ... output configuration
 }
 ```
 
 **📝 Naming Conventions:**
-- **Resources**: Use descriptive names (`web_server`, not `instance1`)
-- **Variables**: Use snake_case (`instance_type`, not `instanceType`)
-- **Outputs**: Be descriptive (`vpc_info`, not `vpc`)
-- **Tags**: Use consistent naming (`Environment`, `Project`, `ManagedBy`)
+- **Resources**: Use descriptive names (`security_category`, not `category1`)
+- **Variables**: Use snake_case (`jamfpro_url`, not `jamfproUrl`)
+- **Outputs**: Be descriptive (`category_info`, not `category`)
+- **Locals**: Use consistent naming (`Environment`, `Project`, `ManagedBy`)
 
 ---
 
@@ -1191,23 +1063,23 @@ Terraform expects JSON syntax files to be named with the `.tf.json` extension, n
 
 **4. In this code block, identify the block type and block labels:**
 ```hcl
-resource "aws_instance" "web_server" {
-  ami = "ami-12345"
+resource "jamfpro_category" "security_tools" {
+  name = "Security Tools"
 }
 ```
-- a) Block type: `aws_instance`, Block labels: `web_server`
-- b) Block type: `resource`, Block labels: `aws_instance`, `web_server`
-- c) Block type: `resource`, Block labels: `aws_instance`
-- d) Block type: `web_server`, Block labels: `aws_instance`
+- a) Block type: `jamfpro_category`, Block labels: `security_tools`
+- b) Block type: `resource`, Block labels: `jamfpro_category`, `security_tools`
+- c) Block type: `resource`, Block labels: `jamfpro_category`
+- d) Block type: `security_tools`, Block labels: `jamfpro_category`
 
 <details>
 <summary>📖 <strong>Answer</strong></summary>
 
-**✅ Correct Answer: b) Block type: `resource`, Block labels: `aws_instance`, `web_server`**
+**✅ Correct Answer: b) Block type: `resource`, Block labels: `jamfpro_category`, `security_tools`**
 
 **📝 Explanation**: 
 - **Block type**: `resource` (the first identifier)
-- **Block labels**: `"aws_instance"` and `"web_server"` (the quoted strings that follow)
+- **Block labels**: `"jamfpro_category"` and `"security_tools"` (the quoted strings that follow)
 - The block type defines what kind of object this represents, while the labels identify the specific resource type and instance name.
 </details>
 
@@ -1279,9 +1151,9 @@ You would not choose JSON for manual writing (HCL is more readable) or when you 
 terraform {
   required_version = ">= 1.0"
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"
     }
   }
 }
@@ -1299,7 +1171,7 @@ terraform {
 **📝 Explanation**: 
 This Terraform settings block configures:
 - **Required version**: Specifies minimum Terraform version (1.0 or higher)
-- **Required providers**: Specifies the AWS provider with source and version constraints
+- **Required providers**: Specifies the JamfPro provider with source and version constraints
 - It does not configure backend settings (that would require a `backend` block)
 </details>
 
