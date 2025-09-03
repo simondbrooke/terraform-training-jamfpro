@@ -797,7 +797,35 @@ Initializing provider plugins...
 Terraform has been successfully initialized!
 ```
 
-**4. Invalid Version (`= 0.99.0`) - Shows Error:**
+**4. Less Than Constraint (`< 0.25.0`):**
+```bash
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "< 0.25.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**5. Restrictive Less Than (`< 0.20.0`) - Uses Older Version:**
+```bash
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "< 0.20.0"...
+- Installing deploymenttheory/jamfpro v0.19.1...
+- Installed deploymenttheory/jamfpro v0.19.1 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**6. Invalid Version (`= 0.99.0`) - Shows Error:**
 ```bash
 $ terraform init
 ```
@@ -818,9 +846,11 @@ Initializing provider plugins...
 ```
 
 **Key Observations:**
-- All valid constraints install the same version (v0.24.0) as it's the latest matching version
+- Exact, pessimistic, and greater-than constraints that include v0.24.0 all install the latest matching version (v0.24.0)
+- Less than constraints work as expected - `< 0.25.0` installs v0.24.0, while `< 0.20.0` installs an older version (v0.19.1)
 - Invalid version constraints result in clear error messages
 - Terraform provides helpful suggestions when constraints fail
+- The less than operator (`<`) effectively prevents upgrading beyond a certain version
 
 ---
 
