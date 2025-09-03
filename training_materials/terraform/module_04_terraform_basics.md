@@ -1025,12 +1025,26 @@ Test your understanding of Terraform Basics with these questions:
 - C) Init → Write → Plan → Apply
 - D) Apply → Plan → Write → Validate
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - The core Terraform workflow follows Write → Plan → Apply → Manage cycle
+
+</details>
+
 **2. Which symbol in a Terraform plan output indicates a resource will be replaced?**
 
 - A) `+`
 - B) `~`
 - C) `-/+`
 - D) `-`
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - The `-/+` symbol indicates a resource will be replaced (destroyed then created)
+
+</details>
 
 **3. What command would you use to visualize Terraform's dependency graph?**
 
@@ -1039,12 +1053,26 @@ Test your understanding of Terraform Basics with these questions:
 - C) `terraform state list`
 - D) `terraform validate`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - `terraform graph` generates a visual representation of resource dependencies
+
+</details>
+
 **4. Which type of Terraform value is computed at apply time and cannot be used in resource count?**
 
 - A) Input variables
 - B) Local values
 - C) Output values
 - D) Data source attributes
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**D** - Data source attributes are computed at apply time and cannot be used in resource count
+
+</details>
 
 **5. What is the modern replacement for the deprecated `terraform taint` command?**
 
@@ -1053,6 +1081,13 @@ Test your understanding of Terraform Basics with these questions:
 - C) `terraform refresh --replace`
 - D) `terraform state rm`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - `terraform apply --replace` is the modern replacement for deprecated `terraform taint`
+
+</details>
+
 **6. Which block type is used to query existing infrastructure?**
 
 - A) `resource`
@@ -1060,12 +1095,26 @@ Test your understanding of Terraform Basics with these questions:
 - C) `data`
 - D) `output`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - `data` blocks are used to query existing infrastructure and cloud provider APIs
+
+</details>
+
 **7. What makes Terraform operations idempotent?**
 
 - A) HCL syntax validation
 - B) Provider version constraints
 - C) State file tracking of current infrastructure
 - D) Execution plan generation
+
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - State file tracking makes Terraform idempotent by knowing current infrastructure state
+
+</details>
 
 **8. Which validation constraint ensures a variable contains a valid semantic version format (e.g., "v1.0")?**
 
@@ -1075,16 +1124,9 @@ Test your understanding of Terraform Basics with these questions:
 - D) `validation { condition = contains(var.version_number, "v") }`
 
 <details>
-<summary>🔍 Click for Answers</summary>
+<summary>🔍 Click for Answer</summary>
 
-1. **B** - The core Terraform workflow follows Write → Plan → Apply → Manage cycle
-2. **C** - The `-/+` symbol indicates a resource will be replaced (destroyed then created)
-3. **B** - `terraform graph` generates a visual representation of resource dependencies
-4. **D** - Data source attributes are computed at apply time and cannot be used in resource count
-5. **B** - `terraform apply --replace` is the modern replacement for deprecated `terraform taint`
-6. **C** - `data` blocks are used to query existing infrastructure and cloud provider APIs
-7. **C** - State file tracking makes Terraform idempotent by knowing current infrastructure state
-8. **B** - Using `can(regex(".*@.*", var.email))` provides basic email format validation
+**B** - Using `can(regex("^v\\d+\\.\\d+$", var.version_number))` validates semantic version format like "v1.0"
 
 </details>
 
