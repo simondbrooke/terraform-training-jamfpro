@@ -304,6 +304,7 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 - [HashiCorp Learn](https://learn.hashicorp.com/terraform)
 - [HashiCorp Terraform Associate Questions](https://developer.hashicorp.com/terraform/tutorials/certification-003/associate-questions)
 - [Terraform Registry](https://registry.terraform.io/)
+- [Terraform Associate (003) Tutorials](https://developer.hashicorp.com/terraform/tutorials/certification-associate-tutorials-003)
 
 #### Community Resources
 - [Terraform Best Practices](https://www.terraform-best-practices.com/)

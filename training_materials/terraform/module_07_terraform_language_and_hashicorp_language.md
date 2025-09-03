@@ -91,16 +91,26 @@ According to the official documentation, the Terraform language consists of only
 **📊 Practical Example of Language Elements:**
 ```hcl
 # BLOCK TYPE: "resource"
-# BLOCK LABELS: "aws_instance" and "web"  
-resource "aws_instance" "web" {
+# BLOCK LABELS: "jamfpro_policy" and "demo_policy"  
+resource "jamfpro_policy" "demo_policy" {
   # ARGUMENTS (identifier = expression)
-  ami           = "ami-12345"           # Literal string expression
-  instance_type = var.instance_type     # Reference expression
-  count         = length(var.subnets)   # Function expression
+  name                        = "tf-demo-policy"           # Literal string expression
+  enabled                     = var.policy_enabled         # Reference expression
+  frequency                   = "Once per computer"        # Literal string expression
+  trigger_checkin             = true                       # Boolean expression
+  category_id                 = jamfpro_category.demo.id   # Reference expression
   
   # NESTED BLOCK
-  tags = {
-    Name = "${var.project}-${count.index}"  # String template expression
+  scope {
+    all_computers = false
+    computer_ids  = var.target_computer_ids  # Reference to list variable
+  }
+  
+  # NESTED BLOCK
+  payloads {
+    maintenance {
+      recon = true  # Boolean expression
+    }
   }
 }
 ```
@@ -126,60 +136,80 @@ block_type "label" {
 }
 ```
 
-**🔧 Complete Example:**
+**🔧 HCL Block Examples:**
+
+**1. Terraform Settings Block**
 ```hcl
-# Terraform settings block
 terraform {
   required_version = ">= 1.0"
-  
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"
     }
   }
-}
-
-# Provider block
-provider "aws" {
-  region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Environment = "production"
-      ManagedBy   = "terraform"
-    }
-  }
-}
-
-# Resource block
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
-  
-  tags = {
-    Name = "web-server"
-  }
-}
-
-# Data source block
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Variable block
-variable "aws_region" {
-  description = "AWS region for resources"
-  type        = string
-  default     = "us-west-2"
-}
-
-# Output block
-output "instance_id" {
-  description = "ID of the EC2 instance"
-  value       = aws_instance.web.id
 }
 ```
+The `terraform` block configures Terraform's behavior and requirements. It specifies the minimum Terraform version needed and declares which providers the configuration uses. This block must be present in every Terraform configuration to ensure compatibility and proper provider installation.
+
+**2. Provider Block**
+```hcl
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_url
+  auth_method           = "oauth2"
+  client_id             = var.jamfpro_client_id
+  client_secret         = var.jamfpro_client_secret
+}
+```
+The `provider` block configures connection details for external APIs or services. Here it establishes authentication with a JamfPro server using OAuth2 credentials. Provider blocks tell Terraform how to communicate with the target infrastructure platform.
+
+**3. Resource Block**
+```hcl
+resource "jamfpro_category" "demo" {
+  name     = "Terraform Demo"
+  priority = 10
+}
+```
+Resource blocks define infrastructure objects that Terraform should create, update, or delete. This example creates a new category in JamfPro with specific properties. Resources are the core building blocks of Terraform configurations.
+
+**4. Data Source Block**
+```hcl
+data "jamfpro_category" "existing" {
+  name = "Production"
+}
+```
+Data sources allow Terraform to read information from external systems without managing those resources. This block retrieves details about an existing JamfPro category named "Production". Data sources provide read-only access to infrastructure information for use in other resources.
+
+**5. Variable Block**
+```hcl
+variable "jamfpro_url" {
+  description = "Jamf Pro server URL"
+  type        = string
+  default     = "https://company.jamfcloud.com"
+}
+```
+Variable blocks define input parameters that make configurations flexible and reusable. This variable allows users to specify different JamfPro server URLs without modifying the main configuration. Variables enable parameterization of Terraform configurations.
+
+**6. Local Values Block**
+```hcl
+locals {
+  common_tags = {
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Project     = "jamfpro-demo"
+  }
+}
+```
+Local values compute and store expressions for reuse throughout the configuration. This example defines common tags that can be applied to multiple resources. Locals help reduce duplication and improve maintainability by centralizing computed values.
+
+**7. Output Block**
+```hcl
+output "category_id" {
+  description = "ID of the created demo category"
+  value       = jamfpro_category.demo.id
+}
+```
+Output blocks expose values from your configuration for use by other Terraform configurations or external systems. This output provides the ID of a created category for reference elsewhere. Outputs are essential for sharing data between Terraform modules and configurations.
 
 #### ⚙️ Terraform Settings Block
 
@@ -193,9 +223,9 @@ terraform {
   
   # Required providers
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"
     }
     random = {
       source  = "hashicorp/random"
@@ -205,8 +235,8 @@ terraform {
   
   # Backend configuration
   backend "s3" {
-    bucket = "my-terraform-state"
-    key    = "infrastructure/terraform.tfstate"
+    bucket = "jamfpro-terraform-state"
+    key    = "jamfpro-infrastructure/terraform.tfstate"
     region = "us-west-2"
   }
   
@@ -223,28 +253,145 @@ terraform {
   required_version = ">= 1.0, < 2.0"
   
   required_providers {
-    aws = {
-      source                = "hashicorp/aws"
-      version               = "~> 5.0"
-      configuration_aliases = [aws.east, aws.west]
+    jamfpro = {
+      source                = "deploymenttheory/jamfpro"
+      version               = "~> 0.24"
+      configuration_aliases = [jamfpro.prod, jamfpro.staging]
     }
   }
   
   # Cloud backend (Terraform Cloud)
   cloud {
-    organization = "my-org"
+    organization = "jamfpro-org"
     
     workspaces {
-      name = "my-workspace"
+      name = "jamfpro-infrastructure"
     }
   }
   
   # Provider metadata
-  provider_meta "aws" {
-    module_name = "my-module"
+  provider_meta "jamfpro" {
+    module_name = "jamfpro-baseline"
   }
 }
 ```
+
+#### 📊 Version Constraint Operators
+
+Understanding version constraints is crucial for managing provider and Terraform versions effectively. These operators control which versions are acceptable.
+
+**🔧 Version Constraint Operators:**
+
+**1. Exact Version (`=`)**
+```hcl
+terraform {
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "= 0.24.0"  # Exactly version 0.24.0
+    }
+  }
+}
+```
+Use when you need a specific version for stability or compatibility. Most restrictive option.
+
+**2. Greater Than or Equal (`>=`)**
+```hcl
+terraform {
+  required_version = ">= 1.0"  # Terraform 1.0 or higher
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0"  # Version 0.20.0 or higher
+    }
+  }
+}
+```
+Ensures minimum version requirements while allowing newer versions. Good for minimum compatibility.
+
+**3. Less Than (`<`)**
+```hcl
+terraform {
+  required_version = "< 2.0"  # Below version 2.0
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "< 1.0.0"  # Below version 1.0.0
+    }
+  }
+}
+```
+Prevents using versions above a certain threshold. Useful to avoid breaking changes.
+
+**4. Pessimistic Constraint (`~>`)**
+```hcl
+terraform {
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"  # 0.24.x (allows 0.24.0, 0.24.1, etc.)
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1.0"  # 3.1.x (allows 3.1.0, 3.1.1, etc.)
+    }
+  }
+}
+```
+The "pessimistic" operator allows patch-level changes but prevents minor version updates. Most commonly used for stability.
+
+**5. Range Constraints**
+```hcl
+terraform {
+  required_version = ">= 1.0, < 2.0"  # Between 1.0 and 2.0
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0, < 0.30.0"  # Between 0.20.0 and 0.30.0
+    }
+  }
+}
+```
+Combines multiple constraints for precise version control. Provides flexibility within defined bounds.
+
+**📋 Practical Examples:**
+
+**Conservative Approach (Recommended for Production):**
+```hcl
+terraform {
+  required_version = "~> 1.5"  # 1.5.x series
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"  # 0.24.x series
+    }
+  }
+}
+```
+
+**Flexible Development Approach:**
+```hcl
+terraform {
+  required_version = ">= 1.0"  # Any version 1.0+
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0"  # Any version 0.20.0+
+    }
+  }
+}
+```
+
+**🎯 Best Practices:**
+- **Production**: Use `~>` for predictable updates (`~> 0.24.0`)
+- **Development**: Use `>=` for flexibility (`>= 0.20.0`)
+- **Testing**: Use exact versions for reproducibility (`= 0.24.0`)
+- **Always specify upper bounds** to avoid unexpected breaking changes
 
 #### 💬 Comments and Formatting
 
@@ -260,50 +407,59 @@ terraform {
   Useful for documentation blocks
 */
 
-resource "aws_instance" "web" {
-  ami           = "ami-12345"  # Inline comment
-  instance_type = "t2.micro"  // Alternative inline comment
+resource "jamfpro_policy" "demo_policy" {
+  name                        = "Demo Policy"  # Inline comment
+  enabled                     = true           // Alternative inline comment
+  frequency                   = "Once per computer"
+  trigger_checkin             = true
   
   /*
-    This is a complex configuration
-    that requires detailed explanation
+    Use this for multi line comments
   */
-  user_data = base64encode(templatefile("user_data.sh", {
-    environment = var.environment
-  }))
+  payloads {
+    maintenance {
+      recon                       = true
+      install_all_cached_packages = var.install_packages
+    }
+  }
+  
+  scope {
+    all_computers = false
+    computer_ids  = var.target_computers
+  }
 }
 ```
 
 **🎨 Formatting Best Practices:**
 ```hcl
 # Use consistent indentation (2 spaces recommended)
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
+resource "jamfpro_building" "headquarters" {
+  name            = "Corporate HQ"
+  street_address1 = "123 Tech Street"
   
   # Align equals signs for readability
-  vpc_security_group_ids = [aws_security_group.web.id]
-  subnet_id              = aws_subnet.public.id
-  
-  # Group related arguments
-  tags = {
-    Name        = "web-server"
-    Environment = var.environment
-    Project     = "terraform-demo"
-  }
+  city            = "San Francisco"
+  state_province  = "California"
+  zip_postal_code = "94105"
+  country         = "United States"
+}
+
+resource "jamfpro_category" "demo" {
+  name     = "Terraform Demo"
+  priority = var.category_priority
 }
 
 # Use blank lines to separate logical sections
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "dev"
+variable "category_priority" {
+  description = "Priority level for the category"
+  type        = number
+  default     = 10
 }
 
-variable "instance_type" {
-  description = "EC2 instance type"
+variable "jamfpro_environment" {
+  description = "JamfPro environment identifier"
   type        = string
-  default     = "t2.micro"
+  default     = "production"
 }
 ```
 
@@ -321,13 +477,9 @@ Terraform supports **JSON syntax** as an alternative to HCL for programmatic gen
 
 **HCL Syntax:**
 ```hcl
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
-  
-  tags = {
-    Name = "web-server"
-  }
+resource "jamfpro_category" "demo" {
+  name     = "Terraform Demo"
+  priority = 10
 }
 ```
 
@@ -335,13 +487,10 @@ resource "aws_instance" "web" {
 ```json
 {
   "resource": {
-    "aws_instance": {
-      "web": {
-        "ami": "ami-12345",
-        "instance_type": "t2.micro",
-        "tags": {
-          "Name": "web-server"
-        }
+    "jamfpro_category": {
+      "demo": {
+        "name": "Terraform Demo",
+        "priority": 10
       }
     }
   }
@@ -367,51 +516,48 @@ Here's how you might programmatically generate Terraform JSON configurations:
 #!/usr/bin/env python3
 import json
 
-def generate_terraform_json(instances):
-    """Generate Terraform JSON configuration for multiple instances"""
+def generate_terraform_json(categories):
+    """Generate Terraform JSON configuration for multiple JamfPro categories"""
     
     terraform_config = {
         "terraform": {
             "required_providers": {
-                "aws": {
-                    "source": "hashicorp/aws",
-                    "version": "~> 5.0"
+                "jamfpro": {
+                    "source": "deploymenttheory/jamfpro",
+                    "version": "~> 0.24"
                 }
             }
         },
         "resource": {
-            "aws_instance": {}
+            "jamfpro_category": {}
         }
     }
     
-    # Dynamically add instances
-    for instance in instances:
-        terraform_config["resource"]["aws_instance"][instance["name"]] = {
-            "ami": instance["ami"],
-            "instance_type": instance["type"],
-            "tags": instance["tags"]
+    # Dynamically add categories
+    for category in categories:
+        terraform_config["resource"]["jamfpro_category"][category["name"]] = {
+            "name": category["display_name"],
+            "priority": category["priority"]
         }
     
     return terraform_config
 
 # Example usage
-instances_data = [
+categories_data = [
     {
-        "name": "web1", 
-        "ami": "ami-12345", 
-        "type": "t2.micro",
-        "tags": {"Name": "web-server-1", "Environment": "prod"}
+        "name": "security_tools", 
+        "display_name": "Security Tools", 
+        "priority": 5
     },
     {
-        "name": "web2", 
-        "ami": "ami-12345", 
-        "type": "t2.micro",
-        "tags": {"Name": "web-server-2", "Environment": "prod"}
+        "name": "productivity_apps", 
+        "display_name": "Productivity Applications", 
+        "priority": 10
     }
 ]
 
 # Generate and save configuration
-config = generate_terraform_json(instances_data)
+config = generate_terraform_json(categories_data)
 with open("main.tf.json", "w") as f:
     json.dump(config, f, indent=2)
 
@@ -423,29 +569,21 @@ print("Generated main.tf.json successfully!")
 {
   "terraform": {
     "required_providers": {
-      "aws": {
-        "source": "hashicorp/aws",
-        "version": "~> 5.0"
+      "jamfpro": {
+        "source": "deploymenttheory/jamfpro",
+        "version": "~> 0.24"
       }
     }
   },
   "resource": {
-    "aws_instance": {
-      "web1": {
-        "ami": "ami-12345",
-        "instance_type": "t2.micro",
-        "tags": {
-          "Name": "web-server-1",
-          "Environment": "prod"
-        }
+    "jamfpro_category": {
+      "security_tools": {
+        "name": "Security Tools",
+        "priority": 5
       },
-      "web2": {
-        "ami": "ami-12345",
-        "instance_type": "t2.micro",
-        "tags": {
-          "Name": "web-server-2",
-          "Environment": "prod"
-        }
+      "productivity_apps": {
+        "name": "Productivity Applications",
+        "priority": 10
       }
     }
   }
