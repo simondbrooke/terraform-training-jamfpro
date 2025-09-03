@@ -29,30 +29,72 @@ By the end of this module, you will be able to:
 **🏗️ HCL vs Terraform Language:**
 ```mermaid
 graph TB
-    subgraph "HCL Core"
-        HC[HCL Syntax]
-        HF[HCL Functions]
-        HT[HCL Types]
+    subgraph "HCL Foundation Layer"
+        direction TB
+        HSyn[HCL Syntax<br/>• Blocks<br/>• Arguments<br/>• Expressions]
+        HFunc[HCL Functions<br/>• Built-in functions<br/>• String manipulation<br/>• Math operations]
+        HType[HCL Types<br/>• string, number, bool<br/>• list, map, object<br/>• null, any]
+        HComment[Comments<br/>• # single line<br/>• // alternative<br/>• /* multi-line */]
     end
     
-    subgraph "Terraform Language"
-        TS[Terraform Settings]
-        TR[Resources]
-        TD[Data Sources]
-        TV[Variables]
-        TO[Outputs]
-        TM[Modules]
+    subgraph "Terraform Language Layer"
+        direction TB
+        subgraph "Core Constructs"
+            TS[terraform {} blocks]
+            TP[provider {} blocks]
+        end
+        subgraph "Infrastructure Elements"
+            TR[resource {} blocks]
+            TD[data {} blocks]
+        end
+        subgraph "Configuration Elements"
+            TV[variable {} blocks]
+            TO[output {} blocks]
+            TL[locals {} blocks]
+            TM[module {} blocks]
+        end
     end
     
-    HC --> TS
-    HF --> TR
-    HT --> TD
-    HC --> TV
-    HF --> TO
-    HT --> TM
+    HSyn -.-> TS
+    HSyn -.-> TP
+    HSyn -.-> TR
+    HSyn -.-> TD
+    HSyn -.-> TV
+    HSyn -.-> TO
+    HSyn -.-> TL
+    HSyn -.-> TM
     
-    style HC fill:#7B42BC,color:#fff
+    HFunc -.-> TR
+    HFunc -.-> TD
+    HFunc -.-> TV
+    HFunc -.-> TO
+    HFunc -.-> TL
+    
+    HType -.-> TR
+    HType -.-> TD
+    HType -.-> TV
+    HType -.-> TO
+    HType -.-> TL
+    
+    HComment -.-> TR
+    HComment -.-> TD
+    HComment -.-> TV
+    HComment -.-> TO
+    HComment -.-> TL
+    HComment -.-> TM
+    
+    style HSyn fill:#7B42BC,color:#fff
+    style HFunc fill:#7B42BC,color:#fff
+    style HType fill:#7B42BC,color:#fff
+    style HComment fill:#7B42BC,color:#fff
     style TS fill:#FF6B35,color:#fff
+    style TP fill:#FF6B35,color:#fff
+    style TR fill:#FF6B35,color:#fff
+    style TD fill:#FF6B35,color:#fff
+    style TV fill:#FF6B35,color:#fff
+    style TO fill:#FF6B35,color:#fff
+    style TL fill:#FF6B35,color:#fff
+    style TM fill:#FF6B35,color:#fff
 ```
 
 **📋 HCL is used in:**
