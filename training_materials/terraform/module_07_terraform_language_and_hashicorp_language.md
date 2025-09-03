@@ -1053,16 +1053,90 @@ Initializing provider plugins...
 Terraform has been successfully initialized!
 ```
 
+**9. Advanced Constraint Examples with Azure Provider:**
+
+Let's test the `!=` (not equal) operator and more complex constraints:
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.0, != 3.45.0, < 4.0"  # Complex constraint
+    }
+  }
+}
+```
+
+Clean and initialize:
+```bash
+$ rm -rf .terraform .terraform.lock.hcl
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/azurerm versions matching ">= 3.0.0, != 3.45.0, < 4.0.0"...
+- Installing hashicorp/azurerm v3.117.1...
+- Installed hashicorp/azurerm v3.117.1 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+```
+
+**10. Pre-release Version Example:**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    # Note: This is a hypothetical example - most providers don't have pre-release versions available
+    example = {
+      source  = "hashicorp/example"
+      version = "= 2.1.0-beta"  # Exact pre-release version
+    }
+  }
+}
+```
+*Note: Pre-release versions require exact matching with `=` operator*
+
+**📚 Official Documentation:**
+For complete details on version constraints, see: [Terraform Version Constraints Documentation](https://developer.hashicorp.com/terraform/language/expressions/version-constraints)
+
+**🔧 Complete Version Constraint Operator Reference:**
+
+| Operator | Description | Example | Behavior |
+|----------|-------------|---------|----------|
+| `=` or none | Allows only exact version | `= 1.2.0` or `1.2.0` | Installs exactly version 1.2.0 |
+| `!=` | Excludes exact version | `!= 1.2.0` | Any version except 1.2.0 |
+| `>`, `>=` | Greater than (or equal) | `>= 1.2.0` | Version 1.2.0 or newer |
+| `<`, `<=` | Less than (or equal) | `< 2.0.0` | Any version before 2.0.0 |
+| `~>` | Pessimistic constraint | `~> 1.2.0` | Allows 1.2.x but not 1.3.0 |
+| `,` | Multiple constraints | `>= 1.2.0, < 2.0.0` | Version between 1.2.0 and 2.0.0 |
+
 **Key Observations:**
-- Exact, pessimistic, and greater-than constraints that include v0.24.0 all install the latest matching version (v0.24.0)
-- Less than constraints work as expected - `< 0.25.0` installs v0.24.0, while `< 0.20.0` installs an older version (v0.19.1)
+- **Exact matching**: `=` and no operator work identically for exact versions
+- **Exclusion**: `!=` excludes specific problematic versions while allowing others
 - **Range constraints** (`>= 0.20.0, < 0.25.0`) allow precise control over acceptable versions
-- **Pessimistic constraints** behave differently based on precision:
-  - `~> 5.31` allows 5.31.0, 5.31.1, 5.31.2, etc. but NOT 5.32.0
-  - `~> 5.0` allows 5.0.0, 5.1.0, 5.75.0, etc. but NOT 6.0.0
+- **Pessimistic constraints** (`~>`) behavior depends on precision:
+  - `~> 5.31.0` allows 5.31.1, 5.31.2, etc. but NOT 5.32.0
+  - `~> 5.31` allows 5.31.0, 5.32.0, 5.99.0, etc. but NOT 6.0.0
+  - `~> 5.0` allows 5.1.0, 5.75.0, etc. but NOT 6.0.0
+- **Pre-release versions** require exact matching and don't work with range operators
+- **Complex constraints** can combine multiple operators for fine-grained control
 - Invalid version constraints result in clear error messages
 - Terraform provides helpful suggestions when constraints fail
 - Multiple providers with different constraints can be specified in the same block
+
+**🎯 Best Practices from HashiCorp:**
+- **Root modules**: Use `~>` constraints to set both lower and upper bounds
+- **Reusable modules**: Constrain only minimum versions (e.g., `>= 0.12.0`) for flexibility
+- **Production environments**: Pin to specific ranges to avoid unexpected updates
+- **Development**: Use broader constraints for latest features and bug fixes
 
 ---
 
