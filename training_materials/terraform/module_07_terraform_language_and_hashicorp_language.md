@@ -40,18 +40,18 @@ graph TB
     subgraph "Terraform Language Layer"
         direction TB
         subgraph "Core Constructs"
-            TS[terraform {} blocks]
-            TP[provider {} blocks]
+            TS["terraform blocks"]
+            TP["provider blocks"]
         end
         subgraph "Infrastructure Elements"
-            TR[resource {} blocks]
-            TD[data {} blocks]
+            TR["resource blocks"]
+            TD["data blocks"]
         end
         subgraph "Configuration Elements"
-            TV[variable {} blocks]
-            TO[output {} blocks]
-            TL[locals {} blocks]
-            TM[module {} blocks]
+            TV["variable blocks"]
+            TO["output blocks"]
+            TL["locals blocks"]
+            TM["module blocks"]
         end
     end
     
