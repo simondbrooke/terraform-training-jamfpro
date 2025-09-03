@@ -27,64 +27,186 @@ Terraform providers are **plugins** that enable Terraform to interact with APIs,
 - **🏗️ Resource Management**: Providers define what resources and data sources are available
 - **🔄 CRUD Operations**: Providers handle Create, Read, Update, Delete operations
 
-**🏗️ Jamf Pro Provider Architecture:**
+**🏗️ Terraform Provider Registry Ecosystem:**
+
 ```mermaid
-graph TB
-    subgraph "Terraform Core"
-        TC[Terraform Core Engine]
-        Config[HCL Configuration Files]
+flowchart TB
+    subgraph "Provider Development & Release"
+        Dev[Provider Developers]
+        GoSDK[Terraform Go SDK]
+        DevProcess[Development Process]
+        
+        subgraph "Build & Release"
+            GoReleaser[GoReleaser]
+            Platforms[Multi-Platform Builds]
+            Signing[GPG Signing]
+        end
     end
     
-    subgraph "Provider Layer"
-        JamfPro[Jamf Pro Provider]
-        Random[Random Provider]
-        HTTP[HTTP Provider]
-        Local[Local Provider]
+    subgraph "Terraform Registry"
+        Registry["🏪 registry.terraform.io"]
+        
+        subgraph "Provider Tiers"
+            Official["🏢 Official\n(hashicorp)"]
+            Partner["🤝 Partner\n(mongodb/mongodbatlas)"]
+            Community["👥 Community\n(deploymenttheory/jamfpro)"]
+            Archived["📦 Archived"]
+        end
+        
+        subgraph "Validation"
+            PartnerProgram[Partner Development Program]
+            Validation[Validation & Testing]
+        end
     end
     
-    subgraph "External Services"
-        JamfAPI[Jamf Pro Classic API]
-        JamfUAPI[Jamf Pro Universal API]
-        CertAuth[Certificate Authority]
-        HTTPAPI[External HTTP APIs]
+    subgraph "Required Platforms"
+        Darwin_AMD64[Darwin/AMD64]
+        Darwin_ARM64[Darwin/ARM64]
+        Linux_AMD64["Linux/AMD64\n(Required for HCP Terraform)"]
+        Linux_ARM64[Linux/ARM64]
+        Windows_AMD64[Windows/AMD64]
     end
     
-    Config --> TC
-    TC --> JamfPro
-    TC --> Random
-    TC --> HTTP
-    TC --> Local
+    Dev --> GoSDK
+    GoSDK --> DevProcess
+    DevProcess --> GoReleaser
+    GoReleaser --> Platforms
+    Platforms --> Signing
+    Signing --> Registry
     
-    JamfPro --> JamfAPI
-    JamfPro --> JamfUAPI
-    HTTP --> HTTPAPI
-    HTTP --> CertAuth
-    Local --> Config
+    Registry --> Official
+    Registry --> Partner
+    Registry --> Community
+    Registry --> Archived
     
-    style TC fill:#7B42BC,color:#fff
-    style JamfPro fill:#00B4A6,color:#fff
-    style Random fill:#FFA500,color:#fff
-    style HTTP fill:#4169E1,color:#fff
+    Partner --> PartnerProgram
+    PartnerProgram --> Validation
+    
+    Platforms --> Darwin_AMD64
+    Platforms --> Darwin_ARM64
+    Platforms --> Linux_AMD64
+    Platforms --> Linux_ARM64
+    Platforms --> Windows_AMD64
+    
+    style Registry fill:#7B42BC,color:#fff
+    style Official fill:#FF6B35,color:#fff
+    style Partner fill:#4ECDC4,color:#fff
+    style Community fill:#45B7D1,color:#fff
+    style Linux_AMD64 fill:#FF9F43,color:#fff
 ```
 
-#### 🏪 Terraform Registry
+**🔄 Provider Initialization Flow:**
 
-The [Terraform Registry](https://registry.terraform.io/) is the **central repository** for Terraform providers and modules.
+```mermaid
+sequenceDiagram
+    participant HCL as HCL Configuration
+    participant CLI as Terraform CLI
+    participant Registry as Terraform Registry
+    participant FS as Local File System
+    participant APIs as External APIs
+    
+    Note over HCL: terraform { required_providers { ... } }
+    HCL->>CLI: terraform init
+    CLI->>Registry: Query required providers
+    
+    Note over Registry: deploymenttheory/jamfpro ~> 0.24.0
+    Registry->>CLI: Provider metadata & download URLs
+    CLI->>Registry: Download provider binaries
+    Registry->>CLI: Provider binaries + checksums
+    
+    CLI->>FS: Install to .terraform/providers/
+    CLI->>CLI: Verify signatures & checksums
+    
+    Note over HCL: provider "jamfpro" { ... }
+    HCL->>CLI: Provider configuration
+    CLI->>APIs: Initialize provider connections
+    
+    Note over APIs: Jamf Pro, HTTP endpoints, etc.
+    APIs-->>CLI: Connection established
+    CLI-->>HCL: Providers ready for use
+```
 
-**🌟 Registry Categories:**
-- **🏢 Official Providers**: Maintained by HashiCorp (Random, HTTP, Local, etc.)
-- **🤝 Partner Providers**: Maintained by technology partners
-- **👥 Community Providers**: Maintained by the community
+#### 🏪 Terraform Registry Overview
 
-**📊 Device Management Providers:**
-| Provider | Maintainer | Resources | Use Case |
-|----------|------------|-----------|----------|
-| **Jamf Pro** | DeploymentTheory | 50+ | Jamf Pro device management |
-| **Random** | HashiCorp | 10+ | Generate unique identifiers |
-| **HTTP** | HashiCorp | 5+ | Fetch external configuration data |
-| **Local** | HashiCorp | 5+ | Manage local files and certificates |
-| **Time** | HashiCorp | 5+ | Time-based operations |
-| **External** | HashiCorp | 2+ | Execute external programs |
+**Providers are how Terraform integrates with any upstream API.** The [Terraform Registry](https://registry.terraform.io/) is the main source for publicly available Terraform providers. It offers a browsable and searchable interface for finding providers, and makes it possible for Terraform CLI to automatically install any of the providers it hosts.
+
+If you want Terraform to support a new infrastructure service, you can create your own provider using Terraform's Go SDK. Once you've developed a provider, you can use the Registry to share it with the rest of the community.
+
+**Using Providers From the Registry:** The Registry is directly integrated with Terraform. To use any provider from the Registry, all you need to do is require it within your Terraform configuration; Terraform can then automatically install that provider when initializing a working directory, and your configuration can take advantage of any resources implemented by that provider.
+
+#### 🔧 Provider Installation Methods
+
+Terraform supports multiple methods for provider installation, each suited for different deployment scenarios and security requirements. Understanding these installation methods is crucial for enterprise environments and air-gapped deployments.
+
+**Direct Registry Installation (Default Method):** The standard method where Terraform directly contacts the official registry to download providers. This is the most common approach for development and standard deployments where internet access is available. During `terraform init`, Terraform queries the registry for provider metadata, downloads the appropriate binaries based on your platform, verifies signatures and checksums, and installs providers to the `.terraform/providers/` directory.
+
+**Filesystem Mirror Installation:** For air-gapped environments or organizations with strict security policies, Terraform supports filesystem mirrors. This method allows you to pre-download providers to a local directory structure and configure Terraform to use this local mirror instead of contacting the registry directly. You can create a filesystem mirror using `terraform providers mirror ./mirror-directory`, which downloads all required providers for your configuration.
+
+**Network Mirror Installation:** Network mirrors provide a middle ground between direct registry access and filesystem mirrors. Organizations can set up internal HTTP servers that mirror provider binaries, allowing centralized control over which provider versions are available while still supporting dynamic installation. This method is particularly useful for large organizations that want to maintain control over provider versions while supporting multiple development teams.
+
+**Provider Plugin Caching:** To improve performance and reduce bandwidth usage, Terraform supports provider plugin caching. When enabled, Terraform stores downloaded providers in a shared cache directory that can be reused across multiple Terraform configurations. This is especially beneficial in CI/CD environments where multiple projects might use the same providers. You can enable caching by setting the `TF_PLUGIN_CACHE_DIR` environment variable or configuring it in the CLI configuration file.
+
+**Development Overrides for Provider Development:** Provider developers can use development overrides to test local provider builds without publishing to the registry. This feature allows you to override specific provider sources with local filesystem paths, enabling rapid development and testing cycles. Development overrides are configured in the CLI configuration file and only affect the local development environment, ensuring that production configurations remain unaffected.
+
+Each installation method serves different organizational needs, from the simplicity of direct registry access to the security and control of filesystem mirrors. The choice of method depends on your security requirements, network access, and organizational policies regarding third-party software.
+
+**🎖️ Provider Tiers & Namespaces:**
+
+Terraform providers are published and maintained by a variety of sources. The Registry uses tiers and badges to denote the source of a provider:
+
+| Tier | Description | Namespace | Example |
+|------|-------------|-----------|----------|
+| **🏢 Official** | Owned and maintained by HashiCorp | `hashicorp` | `hashicorp/random` |
+| **🤝 Partner** | Written, maintained, validated and published by third-party companies through the HashiCorp Technology Partner Program | Third-party organization | `mongodb/mongodbatlas` |
+| **👥 Community** | Published by individual maintainers, groups, or community members | Individual or organization account | `deploymenttheory/jamfpro` |
+| **📦 Archived** | Official or Partner providers no longer maintained | `hashicorp` or third-party | Deprecated APIs |
+
+**🏆 Partner Provider Development Program:** Sets standards for publishing providers and marks approved providers with a Partner badge. This program ensures quality and compatibility standards.
+
+**🛠️ Provider Binary Requirements:**
+
+Recommended operating system and architecture combinations for compiled binaries:
+- **Darwin/AMD64** & **Darwin/ARM64** - macOS support
+- **Linux/AMD64** - **Required for HCP Terraform compatibility**
+- **Linux/ARM64** - Modern ARM processors
+- **Windows/AMD64** - Windows support
+
+*Note: Providers must not have CGO enabled and should not depend on external tools for HCP Terraform compatibility.*
+
+#### ⚙️ Provider Plugin Caching Configuration
+
+Provider plugin caching significantly improves Terraform's performance by storing downloaded providers in a shared cache directory, eliminating redundant downloads across multiple configurations. This is particularly valuable in CI/CD environments where multiple pipelines might use identical providers, and in development environments where engineers work on multiple Terraform projects.
+
+**Configuring Provider Caching:** You can enable provider caching through environment variables or CLI configuration. The simplest method is setting the `TF_PLUGIN_CACHE_DIR` environment variable to point to your desired cache directory. For example, `export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"` creates a cache in your home directory. Alternatively, you can configure caching in the Terraform CLI configuration file located at `~/.terraformrc` (Unix) or `%APPDATA%\terraform.rc` (Windows).
+
+**Cache Directory Structure:** The cache directory follows a specific structure based on provider registry hostname, namespace, type, and version. When Terraform downloads a provider, it stores both the provider binary and associated metadata. The cache is shared across all Terraform configurations on the system, but each configuration maintains its own `.terraform/providers` directory with symlinks to the cached providers.
+
+**Enterprise Caching Strategies:** In enterprise environments, organizations often implement centralized caching strategies. This might involve mounting shared cache directories across development machines, configuring CI/CD runners to use persistent cache volumes, or implementing cache warming strategies where commonly used providers are pre-downloaded during system setup. These approaches can significantly reduce bandwidth usage and improve deployment times.
+
+#### 🛠️ Development Overrides for Provider Development
+
+Development overrides provide a powerful mechanism for provider developers and organizations building custom providers to test local provider builds without the need to publish them to a registry. This feature streamlines the development workflow by allowing developers to point Terraform to local provider binaries, enabling rapid iteration and testing of provider changes.
+
+**Configuring Development Overrides:** Development overrides are configured in the Terraform CLI configuration file, typically located at `~/.terraformrc` on Unix systems or `%APPDATA%\terraform.rc` on Windows. The configuration uses a `provider_installation` block with a `dev_overrides` section that maps provider addresses to local filesystem paths. For example, you might override the Jamf Pro provider during development by pointing it to a local build directory where your custom provider binary resides.
+
+**Override Scope and Behavior:** Development overrides apply globally to all Terraform configurations on the system where they're configured, but they only affect the local development environment. When an override is active, Terraform completely bypasses the normal provider installation process for that specific provider, instead using the binary at the specified local path. This means that version constraints and provider lock files are ignored for overridden providers, giving developers complete control over which provider version is used.
+
+**Production Safety and Best Practices:** Development overrides include several safety features to prevent accidental use in production environments. Terraform prominently displays warnings when dev overrides are active, making it clear that non-standard provider installation is occurring. The overrides only affect the local machine where they're configured and have no impact on other team members or production deployments. However, it's crucial to remove or comment out development overrides before committing Terraform configurations to version control, as team members without the same local provider builds would encounter errors.
+
+**Integration with Provider Development Workflows:** Development overrides integrate seamlessly with typical provider development workflows. Developers can build their provider locally, install it to a known directory, configure the override to point to that directory, and immediately test changes without needing to publish releases or manage complex installation procedures. This is particularly valuable when developing new resources, fixing bugs, or testing compatibility changes, as it allows for immediate feedback and iteration.
+
+🔗 **Learn More:** [Provider Development Documentation](https://developer.hashicorp.com/terraform/registry/providers)
+
+**📊 Jamf Pro Ecosystem Providers:**
+
+| Provider | Tier | Namespace | Resources | Use Case |
+|----------|------|-----------|-----------|----------|
+| **Jamf Pro** | 👥 Community | `deploymenttheory/jamfpro` | 50+ | Jamf Pro device management |
+| **Random** | 🏢 Official | `hashicorp/random` | 10+ | Generate unique identifiers |
+| **HTTP** | 🏢 Official | `hashicorp/http` | 5+ | Fetch external configuration data |
+| **Local** | 🏢 Official | `hashicorp/local` | 5+ | Manage local files and certificates |
+| **Time** | 🏢 Official | `hashicorp/time` | 5+ | Time-based operations |
+| **External** | 🏢 Official | `hashicorp/external` | 2+ | Execute external programs |
 
 #### ⚙️ Provider Configuration
 
@@ -594,31 +716,46 @@ cat .terraform.lock.hcl
 
 💡 **Pro Tip**: Notice how each provider has its own authentication method and resource naming conventions!
 
-#### 🛠️ Provider Commands
+#### 🛠️ Provider Commands & Registry Authentication
 
-**🔍 Essential Provider Commands:**
+**Registry Authentication and Login:** The Terraform Registry supports authentication mechanisms for private registries and providers. While the public registry doesn't require authentication for public providers, private registries and enterprise installations often require login credentials. Terraform supports various authentication methods including API tokens, OAuth flows, and credential helpers that integrate with existing enterprise identity systems.
+
+**Provider Registry Login:** When working with private registries or publishing providers, you can use `terraform login` to authenticate with the registry. This command guides you through an OAuth flow and stores the resulting credentials locally for future use. The credentials are stored securely in the CLI configuration directory and are automatically used for subsequent registry operations.
+
+**Essential Provider Commands:** Understanding Terraform's provider commands is crucial for managing provider lifecycles, troubleshooting issues, and optimizing development workflows. The `terraform init` command is the cornerstone of provider management, downloading and installing all required providers based on your configuration. The `terraform providers` command provides visibility into installed providers, their versions, and installation sources, which is invaluable for debugging and ensuring consistency across environments.
+
+**Provider Version Management Commands:** Version management commands help maintain consistency and security in your infrastructure deployments. The `terraform providers lock` command creates or updates the dependency lock file, pinning provider versions and checksums to ensure reproducible builds. The `terraform init -upgrade` command updates providers to the latest versions allowed by your version constraints, while `terraform providers mirror` creates local mirrors for air-gapped environments.
+
+**Debugging and Troubleshooting Commands:** When provider issues occur, several debugging commands can help identify and resolve problems. Setting the `TF_LOG=DEBUG` environment variable enables detailed logging that shows provider communication, authentication attempts, and error details. The `terraform validate` command checks provider configuration syntax, while `terraform providers schema` provides detailed information about available resources and data sources.
+
 ```bash
 # Initialize and download providers
 terraform init
 
-# List installed providers
+# List installed providers with versions
 terraform providers
 
-# Show provider requirements
+# Show provider requirements and versions
 terraform version
 
-# Force provider re-initialization
+# Update providers to latest allowed versions
 terraform init -upgrade
 
-# Lock provider versions
+# Lock provider versions for reproducible builds
 terraform providers lock
 
-# Mirror providers for air-gapped environments
+# Create provider mirror for air-gapped environments
 terraform providers mirror ./mirror
 
-# Debug provider issues
+# Debug provider communication issues
 export TF_LOG=DEBUG
 terraform plan
+
+# Login to private registries
+terraform login
+
+# Show provider schemas for development
+terraform providers schema -json
 ```
 
 #### 🐛 Debugging Jamf Pro Provider Issues
@@ -1107,6 +1244,9 @@ EOF
 - **🛡️ Security best practices** are essential for enterprise deployments
 
 ### 🔑 Essential Commands Learned
+
+The provider management commands you've learned form the foundation of effective Terraform operations. The `terraform init` command not only downloads and installs providers but also establishes the provider ecosystem for your configuration, setting up the necessary plugin architecture that enables Terraform to communicate with external APIs. Understanding the nuances of provider initialization, including upgrade paths and troubleshooting scenarios, is crucial for maintaining reliable infrastructure deployments.
+
 ```bash
 terraform init              # Download and install providers
 terraform providers         # List installed providers  
@@ -1116,12 +1256,14 @@ terraform version          # Show Terraform and provider versions
 ```
 
 ### 💡 Pro Tips Recap
-- 🟢 **Use `~>` version constraints** for production stability
-- 🔵 **Always use provider aliases** for multi-region deployments
-- 🔴 **Never hardcode credentials** in configuration files
-- 🟡 **Use default tags** for consistent resource management
-- 🟠 **Monitor provider API usage** for cost optimization
-- 🟣 **Test provider configurations** in development first
+
+**Version Management Best Practices:** Using pessimistic version constraints with `~>` provides the optimal balance between stability and feature updates. This constraint allows patch-level updates that include bug fixes and minor improvements while preventing potentially breaking changes that could destabilize your infrastructure. This approach is particularly important for production environments where reliability is paramount.
+
+**Multi-Environment Architecture:** Provider aliases enable sophisticated multi-environment and multi-region deployments that are essential for modern infrastructure management. Rather than maintaining separate configurations for each environment, aliases allow you to define multiple provider configurations within a single codebase, promoting consistency while accommodating environment-specific requirements such as different authentication methods or performance settings.
+
+**Security and Credential Management:** Never hardcoding credentials in configuration files is a fundamental security principle that extends beyond just Terraform. This practice prevents accidental exposure of sensitive information in version control systems and promotes the use of proper secrets management solutions. Combined with OAuth2 authentication where available, this approach significantly reduces the attack surface of your infrastructure management processes.
+
+**Resource Organization and Monitoring:** Implementing consistent tagging strategies through default provider tags ensures that all resources are properly categorized and traceable. This practice becomes increasingly important as infrastructure scales, enabling effective cost allocation, security auditing, and operational monitoring. Monitoring provider API usage helps prevent rate limiting issues and enables cost optimization through usage pattern analysis.
 
 ---
 
@@ -1550,7 +1692,7 @@ terraform init
 terraform providers
 
 # 🔍 Show provider schemas (helpful for learning!)
-terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/hashicorp/aws"'
+terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/deploymenttheory/jamfpro"'
 
 # 🔒 Lock provider versions
 terraform providers lock -platform=linux_amd64 -platform=darwin_amd64
@@ -1569,16 +1711,20 @@ TF_LOG_PROVIDER=DEBUG terraform apply
 terraform validate
 ```
 
-**🐛 Common Provider Debugging:**
-```hcl
-# 🔍 Debug provider authentication
-resource "aws_caller_identity" "current" {}
+**🐛 Common Jamf Pro Provider Debugging:**
 
-output "debug_aws_account" {
+```hcl
+# 🔍 Test Jamf Pro provider connectivity
+resource "jamfpro_category" "debug_test" {
+  name     = "Debug Test - ${timestamp()}"
+  priority = 1
+}
+
+output "jamfpro_debug_info" {
   value = {
-    account_id = aws_caller_identity.current.account_id
-    arn        = aws_caller_identity.current.arn
-    user_id    = aws_caller_identity.current.user_id
+    category_id     = jamfpro_category.debug_test.id
+    category_name   = jamfpro_category.debug_test.name
+    provider_status = "Connected to Jamf Pro successfully"
   }
 }
 
@@ -1597,106 +1743,78 @@ output "debug_http_response" {
 
 # 📁 Verify local provider file operations
 resource "local_file" "test_file" {
-  content  = "Provider test successful at ${timestamp()}"
-  filename = "${path.module}/test-output.txt"
+  content  = "Jamf Pro provider test successful at ${timestamp()}"
+  filename = "${path.module}/jamfpro-test-output.txt"
 }
 ```
 
 ---
 
-## 🧠 Knowledge Check: Module 5 Quiz
+## 🧜 Knowledge Check: Module 6 Quiz
 
-Test your understanding of Terraform Providers with these questions:
+Test your understanding of Terraform Providers with Jamf Pro:
 
 ### 📝 Quiz Questions
 
-**1. What are Terraform providers?**
-- A) Configuration files for infrastructure
-- B) Plugins that enable Terraform to interact with APIs and services
-- C) Command-line tools for deployment
-- D) Version control systems
+**1. What is the Jamf Pro Terraform provider source?**
+- A) hashicorp/jamfpro
+- B) deploymenttheory/jamfpro
+- C) jamf/jamfpro
+- D) terraform/jamfpro
 
-**2. Which provider version constraint allows patch updates but prevents minor version changes?**
-- A) `>= 5.0`
-- B) `~> 5.31.0`
-- C) `= 5.31.0`
-- D) `< 6.0`
+**2. Which authentication method is recommended for production Jamf Pro instances?**
+- A) basic
+- B) bearer
+- C) oauth2
+- D) api_key
 
-**3. What is the purpose of provider aliases?**
-- A) To rename providers for clarity
-- B) To use multiple configurations of the same provider
-- C) To create shortcuts for long provider names
-- D) To version providers differently
+**3. What provider alias syntax allows multiple Jamf Pro environments?**
+- A) `provider "jamfpro" { environment = "staging" }`
+- B) `provider "jamfpro" { alias = "staging" }`
+- C) `provider "jamfpro.staging" {}`
+- D) `provider "jamfpro_staging" {}`
 
-**4. Which provider is useful for generating random values in training environments?**
+**4. Which version constraint allows patch updates for the Jamf Pro provider?**
+- A) `version = "= 0.24.0"`
+- B) `version = ">= 0.24.0"`
+- C) `version = "~> 0.24.0"`
+- D) `version = "< 1.0.0"`
+
+**5. What provider performance setting prevents API conflicts in Jamf Pro?**
+- A) `jamfpro_api_timeout`
+- B) `jamfpro_load_balancer_lock`
+- C) `jamfpro_max_retry_attempts`
+- D) `hide_sensitive_data`
+
+**6. Which provider helps generate unique names for Jamf Pro resources?**
 - A) local
 - B) http
 - C) random
 - D) external
 
-**5. What does the `http` provider allow you to do?**
-- A) Host web servers
-- B) Make HTTP requests and fetch data
-- C) Configure network protocols
-- D) Manage DNS records
-
-**6. Which command initializes providers in your Terraform configuration?**
+**7. What command shows the Jamf Pro provider resource schema?**
 - A) `terraform providers`
-- B) `terraform init`
-- C) `terraform apply`
-- D) `terraform plan`
+- B) `terraform show`
+- C) `terraform providers schema -json`
+- D) `terraform validate`
 
-**7. What is the purpose of the `.terraform.lock.hcl` file?**
-- A) Lock the Terraform binary version
-- B) Lock provider versions for consistency
-- C) Lock state files from modification
-- D) Lock configuration files
-
-**8. Which provider is best for working with local files and directories?**
-- A) file
-- B) local
-- C) directory
-- D) filesystem
-
-**9. In a multi-provider setup, which resource attribute specifies which provider to use?**
-- A) `source`
-- B) `version`
-- C) `provider`
-- D) `alias`
-
-**10. What does the `external` provider allow you to do?**
-- A) Manage external APIs only
-- B) Execute external programs and use their output
-- C) Connect to external databases
-- D) Import external configurations
-
-**11. Which of these is a practical combination for training environments?**
-- A) aws + azure + gcp
-- B) aws + random + http + local
-- C) kubernetes + docker + helm
-- D) vault + consul + nomad
-
-**12. What happens when you run `terraform init -upgrade`?**
-- A) Upgrades Terraform binary
-- B) Upgrades providers to latest versions within constraints
-- C) Upgrades all infrastructure resources
-- D) Upgrades the lock file format
+**8. How do you specify a provider alias for a Jamf Pro resource?**
+- A) `jamfpro = jamfpro.staging`
+- B) `provider = jamfpro.staging`
+- C) `alias = "staging"`
+- D) `environment = "staging"`
 
 <details>
 <summary>🔍 Click for Answers</summary>
 
-1. **B** - Providers are plugins that enable Terraform to interact with APIs and services
-2. **B** - `~> 5.31.0` allows patch updates (5.31.1, 5.31.2) but prevents minor version changes
-3. **B** - Provider aliases allow using multiple configurations of the same provider (e.g., different regions)
-4. **C** - The `random` provider generates random values like passwords, IDs, and pet names
-5. **B** - The `http` provider makes HTTP requests and fetches data from APIs or web endpoints
-6. **B** - `terraform init` downloads and installs providers specified in your configuration
-7. **B** - The lock file ensures consistent provider versions across different environments
-8. **B** - The `local` provider works with local files, directories, and file operations
-9. **C** - The `provider` attribute specifies which provider configuration to use for a resource
-10. **B** - The `external` provider executes external programs and uses their output in Terraform
-11. **B** - This combination works well for training as it doesn't require multiple cloud accounts
-12. **B** - This command upgrades providers to their latest versions within the specified constraints
+1. **B** - deploymenttheory/jamfpro is the official provider source
+2. **C** - OAuth2 is recommended for production security and scalability
+3. **B** - `alias = "staging"` is the correct syntax for provider aliases
+4. **C** - `~> 0.24.0` allows patch updates while maintaining compatibility
+5. **B** - `jamfpro_load_balancer_lock` prevents concurrent API calls
+6. **C** - The random provider generates unique identifiers and names
+7. **C** - `terraform providers schema -json` shows detailed provider schemas
+8. **B** - `provider = jamfpro.staging` specifies which provider alias to use
 
 </details>
 
