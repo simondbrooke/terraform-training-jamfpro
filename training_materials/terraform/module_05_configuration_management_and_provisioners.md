@@ -1,473 +1,706 @@
-
 # 🛠️ Module 05: Configuration Management and Provisioners
 
 *Duration: 3 hours | Labs: 5* | 🟡 Intermediate*
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:
-- ✅ **Implement Cloud-Init for reliable instance initialization**
-- ✅ **Use Packer to build pre-configured machine images**  
-- ✅ **Understand modern approaches to infrastructure configuration**
-- ✅ Work with terraform_data resources for advanced workflows
-- ✅ Identify when configuration management tools are appropriate
-- ✅ Understand Terraform provisioners and their limitations
-- ✅ Know when provisioners are still appropriate (edge cases)
-- ✅ Configure provisioners only when modern approaches aren't suitable
+- ✅ **Implement declarative Jamf Pro resources for standard device management**
+- ✅ **Understand when declarative resources aren't enough**  
+- ✅ **Identify scenarios requiring imperative actions and API calls**
+- ✅ Work with terraform_data resources for device management workflows
+- ✅ Recognize when MDM commands and external integrations are necessary
+- ✅ Understand Terraform provisioners and their limitations in device management
+- ✅ Know when to use provisioners for security events and CVE responses
+- ✅ Configure provisioners appropriately for real-time device management scenarios
 
 ### 📚 Topics Covered
 
-## ⚡ Modern Infrastructure Configuration Approaches
+## ⚡ Modern Device Configuration Management Approaches
 
-**🎯 The Modern Way**: Instead of configuring resources after creation, modern infrastructure follows **immutable infrastructure** principles:
+**🎯 The Problem This Module Solves**: Sometimes declarative Terraform resources aren't enough - you need imperative actions triggered by real-world events and security requirements.
 
-1. **☁️ Cloud-Init**: Built-in VM initialization (recommended for most cases)
-2. **📦 Packer**: Pre-built golden images with software already installed  
-3. **🔧 Configuration Management**: Dedicated tools for complex configuration
-4. **📋 User Data**: Cloud-provider native initialization scripts
+**🔑 Core Concept**: Modern device management primarily uses **declarative configuration** through native Jamf Pro resources, but certain scenarios require **imperative actions** that go beyond standard resource management.
 
-**⚠️ Why Avoid Provisioners?**
-- **🐌 Slower**: Network-dependent, runs after resource creation
-- **❌ Less Reliable**: Connection failures, timing issues
-- **🔄 Not Idempotent**: May fail on re-runs
-- **🤝 Coupling**: Creates tight coupling between infrastructure and configuration
-- **🔐 Security**: Requires SSH/WinRM access and credentials
+### 📋 **Declarative Approach** (Preferred for Standard Management):
 
-**✅ When Modern Approaches Are Better:**
-- **📦 Software Installation**: Use pre-built images (Packer) or Cloud-Init
-- **⚙️ Service Configuration**: Use Cloud-Init YAML or config management tools
-- **📁 File Management**: Bake files into images or use Cloud-Init write_files
-- **🔄 Service Management**: Use Cloud-Init runcmd or systemd units
-- **🏗️ Initial Setup**: Always prefer Cloud-Init over provisioners
+1. **📱 Configuration Profiles**: Built-in macOS/iOS configuration management
+2. **📦 Jamf Packages**: Pre-built software installers with dependency management  
+3. **🎯 Smart Policies**: Automated deployment based on device criteria and schedules
+4. **🛍️ Self Service**: User-initiated installations and configurations
+
+### 🚨 **When Declarative Resources Fall Short - Real-World Scenarios:**
+
+#### **1. Security Event Response**
+- **🔓 CVE Published** → Need immediate assessment of exposure across device fleet
+- **⚡ Zero-day exploit detected** → Emergency lockdown of vulnerable devices
+- **🚩 Breach indicators found** → Instant device isolation and forensic data collection
+- **📊 Vulnerability scanner integration** → Automated patch deployment based on scan results
+
+#### **2. Immediate Actions Required**
+- **💻 Device compromised** → Immediate device lock, wipe, or isolation
+- **🏃‍♂️ Employee termination** → Instant access revocation across all systems
+- **🔄 Critical policy update** → Force immediate device check-in and compliance verification
+
+#### **3. Workflow Orchestration**
+- **📋 After deploying policy** → Trigger device check-in to apply immediately
+- **✅ After device enrollment** → Verify compliance before network access
+- **🔗 System integration** → Coordinate between Jamf and ITSM/monitoring/security tools
+
+#### **4. Dynamic Response to State Changes**
+- **❌ Device non-compliance** → Auto-create incident tickets and remediation workflows
+- **📈 New threat intelligence** → Push emergency configurations fleet-wide
+- **⚠️ Policy deployment failure** → Automated retry logic and administrator notifications
+
+### ⚠️ **Why Standard Provisioners Are Problematic for Device Management:**
+- **🐌 Slower**: API-dependent, runs after Terraform resource creation
+- **❌ Less Reliable**: Network failures, API rate limiting, MDM command delays
+- **🔄 Not Idempotent**: MDM commands can't be safely repeated
+- **🤝 Coupling**: Creates tight dependency between Terraform state and live device state
+- **🔐 Security**: Requires elevated API credentials and careful permission management
+
+### ✅ **When Modern Declarative Approaches Are Better:**
+- **📦 Software Installation**: Use native Jamf packages and policies
+- **⚙️ Device Configuration**: Use Configuration Profiles for settings and restrictions
+- **📁 File Management**: Deploy files through packages or configuration profiles
+- **🔄 Service Management**: Use policies with maintenance and script payloads
+- **🏗️ Standard Setup**: Always prefer declarative resources for routine management
 
 ---
 
-## ☁️ Cloud-Init: The Recommended Approach
+## 📱 Declarative Device Management: The Recommended Approach
 
-**Cloud-Init** is an industry standard for cross-platform cloud instance initialization. It's the **first choice** for most instance setup tasks.
+**Declarative Jamf Pro resources** are the industry standard for device configuration management. They represent the **first choice** for most device setup and management tasks.
 
-**🎯 Why Cloud-Init is Superior:**
-- **🚀 Faster**: Runs during instance boot, no network setup delay
-- **🔒 More Secure**: No SSH/WinRM credentials needed
-- **✅ More Reliable**: Built into cloud images, handles retries automatically
-- **🔄 Idempotent**: Safe to run multiple times
-- **📱 Standardized**: Works across all major cloud providers
-- **🔧 Feature-Rich**: Package management, file creation, user management, service control
+**🎯 Why Declarative Resources Are Superior:**
+- **🚀 Faster**: Applied during device check-in, no additional API delays
+- **🔒 More Secure**: No elevated credentials needed beyond provider authentication
+- **✅ More Reliable**: Built into Jamf Pro, handles device offline/online scenarios automatically
+- **🔄 Idempotent**: Safe to apply multiple times, Terraform manages desired state
+- **📱 Standardized**: Works across macOS, iOS, iPadOS, and tvOS devices
+- **🔧 Feature-Rich**: Software deployment, configuration profiles, compliance policies, user management
 
-**📝 Basic Cloud-Init with User Data:**
+**📝 Basic Declarative Device Configuration:**
 ```hcl
-# Modern approach - Cloud-Init handles everything
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
+# Modern approach - Declarative resources handle everything
+resource "jamfpro_smart_computer_group" "development_machines" {
+  name = "Development Machines"
   
-  # Cloud-Init configuration - runs on first boot
-  user_data = <<-EOF
-    #!/bin/bash
-    yum update -y
-    yum install -y httpd git nodejs npm
-    systemctl start httpd
-    systemctl enable httpd
-    
-    # Create web content
-    cat > /var/www/html/index.html <<HTML
-    <h1>Modern Web Server</h1>
-    <p>Configured with Cloud-Init - No provisioners needed!</p>
-    <p>Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id)</p>
-    HTML
-    
-    # Download and setup application
-    git clone https://github.com/company/web-app.git /opt/app
-    cd /opt/app && npm install
-    systemctl restart httpd
-  EOF
+  criteria {
+    name          = "Department"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "is"
+    value         = "Engineering"
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+resource "jamfpro_policy" "dev_software_bundle" {
+  name                        = "Development Software Bundle"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = true
+  frequency                  = "Once per computer"
+  target_drive               = "/"
   
-  tags = {
-    Name = "cloud-init-web-server"
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.development_machines.id]
+  }
+  
+  # Software installation through packages
+  payloads {
+    packages = [
+      {
+        id     = jamfpro_package.xcode.id
+        action = "install"
+      },
+      {
+        id     = jamfpro_package.docker.id  
+        action = "install"
+      },
+      {
+        id     = jamfpro_package.vscode.id
+        action = "install"
+      }
+    ]
+  }
+  
+  # System maintenance
+  payloads {
+    maintenance {
+      recon                       = true
+      permissions                 = true
+      system_cache                = true
+      verify                      = true
+    }
   }
 }
 ```
 
-**🔧 Advanced Cloud-Init with YAML Configuration:**
+**🔧 Advanced Declarative Configuration with Multiple Resources:**
 ```hcl
-# Advanced Cloud-Init with structured YAML
-locals {
-  cloud_init_config = <<-EOF
-    #cloud-config
-    package_update: true
-    package_upgrade: true
-    
-    packages:
-      - httpd
-      - git
-      - nodejs
-      - npm
-      - docker
-    
-    # Create users
-    users:
-      - name: appuser
-        groups: wheel,docker
-        shell: /bin/bash
-        sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    
-    # Write configuration files
-    write_files:
-      - path: /etc/httpd/conf.d/app.conf
-        content: |
-          <VirtualHost *:80>
-              ServerName ${var.domain_name}
-              DocumentRoot /var/www/html
-              ErrorLog /var/log/httpd/error.log
-              CustomLog /var/log/httpd/access.log combined
-          </VirtualHost>
-        permissions: '0644'
-        owner: root:root
+# Advanced device configuration with multiple coordinated resources
+resource "jamfpro_category" "security" {
+  name     = "Security Configuration"
+  priority = 1
+}
+
+resource "jamfpro_smart_computer_group" "executive_devices" {
+  name = "Executive Devices"
+  
+  criteria {
+    name          = "Department"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "is"
+    value         = "Executive"
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+# Security configuration profile with multiple payloads
+resource "jamfpro_macos_configuration_profile_plist" "executive_security" {
+  name                = "Executive Security Baseline"
+  description         = "Enhanced security configuration for executive devices"
+  level               = "System"
+  distribution_method = "Install Automatically"
+  redeploy_on_update  = "Newly Assigned"
+  user_removable      = false
+  category_id         = jamfpro_category.security.id
+  
+  # Multi-payload configuration profile
+  payloads = file("${path.module}/profiles/executive-security.mobileconfig")
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.executive_devices.id]
+  }
+}
+
+# Comprehensive security policy
+resource "jamfpro_policy" "executive_security_policy" {
+  name                        = "Executive Security Policy"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = true
+  frequency                  = "Ongoing"
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.executive_devices.id]
+  }
+  
+  # Security software installation
+  payloads {
+    packages = [
+      {
+        id     = jamfpro_package.crowdstrike.id
+        action = "install"
+      },
+      {
+        id     = jamfpro_package.vpn_client.id
+        action = "install"
+      }
+    ]
+  }
+  
+  # System hardening
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = true
+      permissions                 = true
+      system_cache                = true
+      verify                      = true
+    }
+  }
+  
+  # Custom script for additional security measures
+  payloads {
+    scripts = [
+      {
+        id       = jamfpro_script.security_audit.id
+        priority = "After"
+      }
+    ]
+  }
+}
+```
+
+**💡 Declarative Device Management Best Practices:**
+- ✅ Use smart computer groups for dynamic device targeting
+- ✅ Leverage native Jamf packages instead of custom scripts
+- ✅ Use configuration profiles for system settings and restrictions
+- ✅ Set appropriate scope and frequency for policies
+- ✅ Use categories and priorities for organized policy deployment
+- ✅ Test configurations in development groups before production rollout
+
+---
+
+## 📦 Jamf Packages: Pre-Built Software Deployment
+
+**Jamf Packages** combined with **Smart Policies** represent the **ultimate solution** for efficient, scalable software deployment across device fleets.
+
+**🎯 Why Package-Based Deployment is Superior:**
+- **⚡ Fastest Deployment**: Software pre-packaged, just install and configure
+- **🏗️ Immutable Packages**: Same package = same result every time
+- **🔒 Security**: Signed packages with verified checksums = reduced attack surface  
+- **📊 Consistency**: Identical software deployment across all environments
+- **🧪 Testable**: Test packages with pilot groups before fleet rollout
+- **📦 Reusable**: One package, deployed to thousands of devices
+
+**📝 Basic Package Definition and Deployment:**
+```hcl
+# Define reusable software packages
+resource "jamfpro_package" "development_tools" {
+  name                = "Development Tools Bundle v${var.app_version}"
+  filename            = "dev-tools-${var.app_version}.pkg"
+  category_id         = jamfpro_category.software.id
+  priority            = 10
+  os_requirements     = "macOS 14.0"
+  required_processor  = "None"
+  info                = "Essential development tools including Docker, Node.js, and VS Code"
+  notes               = "Automatically deployed to development machines"
+  reboot_required     = false
+  fill_user_template  = false
+  fill_existing_users = false
+  boot_volume_required = true
+  allow_downgrade     = false
+  
+  # Package manifest details
+  manifest_filename = "dev-tools-manifest.plist"
+}
+
+resource "jamfpro_package" "security_tools" {
+  name                = "Security Tools Bundle v${var.app_version}"
+  filename            = "security-tools-${var.app_version}.pkg"  
+  category_id         = jamfpro_category.security.id
+  priority            = 5
+  os_requirements     = "macOS 13.0"
+  info                = "Security software including CrowdStrike, VPN client, and certificate management"
+  notes               = "Required for all corporate devices"
+  reboot_required     = true
+  fill_user_template  = false
+  fill_existing_users = false
+  boot_volume_required = true
+  allow_downgrade     = false
+}
+
+# Smart policy for automated package deployment
+resource "jamfpro_policy" "software_deployment" {
+  name                        = "Automated Software Deployment v${var.app_version}"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = true
+  frequency                  = "Once per computer"
+  target_drive               = "/"
+  category_id                = jamfpro_category.software.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.development_machines.id]
+  }
+  
+  # Deploy packages in priority order
+  payloads {
+    packages = [
+      {
+        id     = jamfpro_package.security_tools.id
+        action = "install"
+      },
+      {
+        id     = jamfpro_package.development_tools.id
+        action = "install"
+      }
+    ]
+  }
+}
+```
+
+**🔄 Using Package-Based Deployment Patterns:**
+```hcl
+# Data source to find existing packages (useful for referencing pre-built packages)
+data "jamfpro_package" "latest_security_tools" {
+  name = "Security Tools Bundle v${var.latest_version}"
+}
+
+# Smart computer group for phased rollout
+resource "jamfpro_smart_computer_group" "pilot_group" {
+  name = "Pilot Deployment Group"
+  
+  criteria {
+    name          = "Computer Name"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "like"
+    value         = "pilot-*"
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+# Deploy using pre-built packages - minimal configuration needed
+resource "jamfpro_policy" "pilot_deployment" {
+  name                        = "Pilot Software Deployment"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = false
+  frequency                  = "Once per computer"
+  target_drive               = "/"
+  category_id                = jamfpro_category.software.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.pilot_group.id]
+  }
+  
+  # Everything is pre-packaged, just deploy and configure
+  payloads {
+    packages = [
+      {
+        id     = data.jamfpro_package.latest_security_tools.id
+        action = "install"
+      }
+    ]
+  }
+  
+  # Minimal post-installation configuration
+  payloads {
+    scripts = [
+      {
+        id       = jamfpro_script.environment_config.id
+        priority = "After"
+        parameter4 = var.environment  # Pass environment variable
+      }
+    ]
+  }
+  
+  # System verification after deployment
+  payloads {
+    maintenance {
+      recon                = true
+      permissions          = true
+      verify              = true
+    }
+  }
+}
+```
+
+**💡 Package + Policy Workflow:**
+1. **🔨 Build Phase**: Create and test packages with all required software
+2. **🚀 Deploy Phase**: Terraform creates policies that deploy packages to device groups
+3. **⚡ Result**: Fastest, most reliable device configuration possible
+
+**🛠️ Package-Based Deployment Best Practices:**
+- ✅ Version your packages with semantic versioning (e.g., v2.1.0)
+- ✅ Test packages with pilot groups before production rollout
+- ✅ Use different policies for different device types/environments
+- ✅ Keep environment-specific data in scripts, not packages
+- ✅ Automate package building and deployment in CI/CD pipelines
+
+---
+
+## 🔧 When to Use Imperative Actions - MDM Commands & API Integration
+
+For **time-critical security responses, workflow orchestration, and external system integration**, imperative actions are necessary beyond declarative Terraform resources:
+
+**🎯 Scenarios Requiring Imperative Actions:**
+
+### **🚨 Security Event Response**
+- **CVE Published**: Immediate vulnerability assessment across device fleet
+- **Device Compromised**: Instant device lock, wipe, or isolation commands
+- **Zero-day Exploit**: Emergency policy push and device quarantine
+- **Compliance Breach**: Automated remediation and incident response
+
+### **🔄 Workflow Orchestration** 
+- **Policy Deployment**: Force immediate device check-in after configuration changes
+- **Enrollment Verification**: Validate device compliance before network access
+- **Multi-system Coordination**: Sync between Jamf Pro, ITSM, monitoring, and security tools
+
+### **📊 Dynamic Response Integration**
+- **External Vulnerability Scanners**: Automated patch deployment based on scan results
+- **SIEM Integration**: Device isolation based on threat intelligence
+- **Ticketing Systems**: Auto-create incidents for compliance failures
+- **Monitoring Systems**: Push configuration changes based on performance metrics
+
+**✅ Use Imperative Actions When:**
+- Immediate response required (security incidents, compliance failures)
+- Real-time workflow orchestration across multiple systems
+- Dynamic policy adjustment based on external data sources
+- Integration with non-Jamf systems that require API calls
+- CVE response and emergency configuration deployment
+
+**🔄 Terraform + MDM Command Integration Pattern:**
+```hcl
+# Terraform manages declarative device configuration
+resource "jamfpro_policy" "security_update_policy" {
+  name                        = "Critical Security Update - CVE Response"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = false
+  frequency                  = "Once per computer"
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.vulnerable_devices.id]
+  }
+  
+  payloads {
+    packages = [
+      {
+        id     = jamfpro_package.security_patch.id
+        action = "install"
+      }
+    ]
+  }
+  
+  # Imperative action: Force immediate device check-in after policy creation
+  provisioner "local-exec" {
+    command = <<-EOF
+      # Send MDM command to force policy check-in immediately
+      curl -X POST "${var.jamf_url}/api/v2/mdm-commands" \
+        -H "Authorization: Bearer ${var.api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "commandData": {
+            "commandType": "DEVICE_INFORMATION"
+          },
+          "clientData": [
+            {
+              "managementId": "all-computers-in-group"
+            }
+          ]
+        }'
       
-      - path: /opt/app/config.json
-        content: |
-          {
-            "environment": "${var.environment}",
-            "database_url": "${var.db_connection_string}",
-            "log_level": "info"
-          }
-        permissions: '0640'
-        owner: appuser:appuser
-    
-    # Run commands in order
-    runcmd:
-      - systemctl enable httpd docker
-      - systemctl start httpd docker
-      - usermod -aG docker appuser
-      - git clone https://github.com/company/web-app.git /opt/app
-      - chown -R appuser:appuser /opt/app
-      - cd /opt/app && npm install --production
-      - systemctl restart httpd
-      - docker pull nginx:alpine
-    
-    # Final message
-    final_message: "Server setup completed successfully with Cloud-Init!"
-  EOF
-}
-
-resource "aws_instance" "web_advanced" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
-  
-  # Base64 encode for complex YAML configurations
-  user_data = base64encode(local.cloud_init_config)
-  
-  tags = {
-    Name = "advanced-cloud-init-server"
-  }
-}
-```
-
-**💡 Cloud-Init Best Practices:**
-- ✅ Use YAML format for complex configurations
-- ✅ Leverage package management instead of manual installs
-- ✅ Use write_files for configuration templates
-- ✅ Set proper file permissions and ownership
-- ✅ Use runcmd for ordered command execution
-- ✅ Test configurations with cloud-init validate
-
----
-
-## 📦 Packer: Pre-Built Golden Images
-
-**Packer** is HashiCorp's tool for building immutable, pre-configured machine images. This is the **ultimate solution** for complex software stacks.
-
-**🎯 Why Packer is Superior:**
-- **⚡ Fastest Deployment**: Everything pre-installed, just boot and run
-- **🏗️ Immutable Infrastructure**: Same image = same result every time
-- **🔒 Security**: No runtime configuration = reduced attack surface  
-- **📊 Consistency**: Identical environments across dev/stage/prod
-- **🧪 Testable**: Test images before deployment
-- **📦 Reusable**: One image, many instances
-
-**📝 Basic Packer Template:**
-```json
-{
-  "variables": {
-    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
-    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
-    "region": "us-west-2",
-    "app_version": "{{env `APP_VERSION`}}"
-  },
-  
-  "builders": [
-    {
-      "type": "amazon-ebs",
-      "access_key": "{{user `aws_access_key`}}",
-      "secret_key": "{{user `aws_secret_key`}}",
-      "region": "{{user `region`}}",
-      "source_ami": "ami-12345",
-      "instance_type": "t2.micro",
-      "ssh_username": "ec2-user",
-      "ami_name": "web-app-{{user `app_version`}}-{{timestamp}}"
-    }
-  ],
-  
-  "provisioners": [
-    {
-      "type": "shell",
-      "inline": [
-        "sudo yum update -y",
-        "sudo yum install -y httpd nodejs npm docker git",
-        "sudo systemctl enable httpd docker"
-      ]
-    },
-    {
-      "type": "file",
-      "source": "./app/",
-      "destination": "/tmp/app/"
-    },
-    {
-      "type": "shell",
-      "inline": [
-        "sudo mv /tmp/app /opt/",
-        "sudo chown -R ec2-user:ec2-user /opt/app",
-        "cd /opt/app && npm install --production",
-        "sudo systemctl start httpd",
-        "sudo docker pull nginx:alpine",
-        "sudo systemctl stop httpd"
-      ]
-    }
-  ],
-  
-  "post-processors": [
-    {
-      "type": "manifest",
-      "output": "manifest.json"
-    }
-  ]
-}
-```
-
-**🔄 Using Packer Images with Terraform:**
-```hcl
-# Data source to find latest Packer-built AMI
-data "aws_ami" "web_app" {
-  most_recent = true
-  owners      = ["self"]
-  
-  filter {
-    name   = "name"
-    values = ["web-app-*"]
-  }
-  
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-  
-  # Optional: filter by tag
-  filter {
-    name   = "tag:Environment"
-    values = [var.environment]
-  }
-}
-
-# Deploy using pre-built image - minimal configuration needed
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.web_app.id
-  instance_type = "t2.micro"
-  
-  # Minimal user data - just environment-specific config
-  user_data = <<-EOF
-    #!/bin/bash
-    # Everything is pre-installed, just configure environment
-    sed -i 's/ENVIRONMENT_PLACEHOLDER/${var.environment}/g' /opt/app/config.json
-    systemctl start httpd
-    systemctl start docker
-    
-    # Optional: Pull latest application data
-    cd /opt/app && git pull origin main
-    systemctl reload httpd
-  EOF
-  
-  tags = {
-    Name = "packer-web-server"
-    Version = data.aws_ami.web_app.tags["Version"]
-  }
-}
-```
-
-**💡 Packer + Terraform Workflow:**
-1. **🔨 Build Phase**: Packer creates golden images with all software
-2. **🚀 Deploy Phase**: Terraform deploys instances from those images  
-3. **⚡ Result**: Fastest, most reliable deployments possible
-
-**🛠️ Packer Best Practices:**
-- ✅ Version your images with timestamps or git commits
-- ✅ Test images before tagging as production-ready
-- ✅ Use multiple builders for different environments
-- ✅ Keep sensitive data in runtime configuration, not images
-- ✅ Automate image building in CI/CD pipelines
-
----
-
-## 🔧 When to Use Configuration Management Tools
-
-For **complex, ongoing configuration management**, dedicated tools are often better than Terraform:
-
-**🎯 Popular Configuration Management Tools:**
-- **📘 Ansible**: Agentless, YAML-based, great for ad-hoc tasks
-- **🐙 Chef**: Ruby-based, powerful, enterprise-focused
-- **🎭 Puppet**: Declarative, strong compliance features
-- **🧂 Salt**: Fast, scalable, event-driven
-
-**✅ Use Configuration Management When:**
-- Complex application deployments across many servers
-- Ongoing configuration drift remediation
-- Compliance and security policy enforcement  
-- Multi-stage application rollouts
-- Integration with existing CM infrastructure
-
-**🔄 Terraform + Configuration Management Pattern:**
-```hcl
-# Terraform provisions infrastructure
-resource "aws_instance" "app_servers" {
-  count         = var.server_count
-  ami           = data.aws_ami.base.id
-  instance_type = "t3.medium"
-  
-  # Minimal Cloud-Init for CM tool bootstrap
-  user_data = <<-EOF
-    #!/bin/bash
-    yum update -y
-    
-    # Install Ansible
-    amazon-linux-extras install ansible2 -y
-    
-    # Download and run playbook
-    cd /tmp
-    git clone https://github.com/company/ansible-playbooks.git
-    ansible-playbook -i localhost, -c local playbooks/web-server.yml
-  EOF
-  
-  tags = {
-    Name = "app-server-${count.index + 1}"
-    Role = "web-server"
-  }
-}
-```
-
----
-
-## 🚀 terraform_data Resource (Modern Approach)
-
-The `terraform_data` resource is the **modern replacement** for the deprecated `null_resource`. Use it for advanced Terraform workflows.
-
-**📝 Basic Usage for Triggers:**
-```hcl
-# Use terraform_data to trigger actions based on changes
-resource "terraform_data" "app_deployment" {
-  input = {
-    app_version    = var.app_version
-    config_hash    = filemd5("configs/app.conf")
-    deploy_trigger = var.force_redeploy ? timestamp() : null
-  }
-}
-
-resource "aws_instance" "app" {
-  ami           = data.aws_ami.app.id
-  instance_type = "t2.micro"
-  
-  # Reference terraform_data to trigger replacement
-  replace_triggered_by = [
-    terraform_data.app_deployment.output
-  ]
-  
-  # Modern approach: everything in Cloud-Init
-  user_data = base64encode(templatefile("templates/cloud-init.yaml", {
-    app_version = terraform_data.app_deployment.input.app_version
-    config_hash = terraform_data.app_deployment.input.config_hash
-  }))
-  
-  tags = {
-    Name = "app-server"
-    Version = terraform_data.app_deployment.input.app_version
-  }
-}
-```
-
----
-
-## ⚠️ Legacy Provisioners: Edge Cases Only
-
-**🚨 Use provisioners ONLY when modern approaches won't work:**
-
-### When Provisioners Might Still Be Needed:
-
-**🔍 Rare Edge Cases:**
-1. **🔧 Legacy Systems**: Working with very old systems that don't support Cloud-Init
-2. **🌐 Non-Cloud Resources**: On-premise resources without modern initialization
-3. **🔗 External Integrations**: Calling external APIs after resource creation
-4. **📊 Custom Notifications**: Complex logging or monitoring integrations
-5. **🧪 Testing/Development**: Quick one-off scripts during development
-
-### ⚠️ Provisioner Types (Use Sparingly)
-
-**🏠 Local Provisioners** (run on your local machine):
-- `local-exec`: Execute commands locally - **use only for notifications/logging**
-
-**🌐 Remote Provisioners** (run on the target resource):
-- `remote-exec`: Execute commands on remote resource
-- `file`: Copy files to remote resource
-
-#### 💻 Local-Exec Provisioner
-
-The `local-exec` provisioner executes commands on the machine running Terraform (your local machine or CI/CD server).
-
-**📝 Basic Syntax:**
-```hcl
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
-  
-  provisioner "local-exec" {
-    command = "echo 'Instance ${self.id} created!'"
-  }
-}
-```
-
-**🔧 Advanced Example:**
-```hcl
-resource "aws_instance" "web" {
-  ami           = "ami-12345"
-  instance_type = "t2.micro"
-  
-  tags = {
-    Name = "web-server"
-  }
-  
-  provisioner "local-exec" {
-    command = "echo 'Instance Details:' > instance-info.txt"
-  }
-  
-  provisioner "local-exec" {
-    command = "echo 'ID: ${self.id}' >> instance-info.txt"
-  }
-  
-  provisioner "local-exec" {
-    command = "echo 'Public IP: ${self.public_ip}' >> instance-info.txt"
-  }
-  
-  # Run a script with environment variables
-  provisioner "local-exec" {
-    command = "./notify-team.sh"
+      # Notify security team of deployment
+      python3 /scripts/notify-security-team.py \
+        --policy-id "${self.id}" \
+        --cve-id "${var.cve_id}" \
+        --affected-devices "${length(jamfpro_smart_computer_group.vulnerable_devices.criteria)}"
+    EOF
     
     environment = {
-      INSTANCE_ID = self.id
-      PUBLIC_IP   = self.public_ip
-      ENVIRONMENT = "production"
+      JAMF_URL       = var.jamf_url
+      API_TOKEN      = var.api_token
+      SECURITY_EMAIL = var.security_team_email
+      ENVIRONMENT    = var.environment
     }
   }
   
-  # Run only on destroy
+  # Create ticket in external system
+  provisioner "local-exec" {
+    command = "python3 /scripts/create-security-ticket.py --policy '${self.name}' --cve '${var.cve_id}'"
+  }
+}
+```
+
+---
+
+## 🚀 terraform_data Resource for Device Management Workflows
+
+The `terraform_data` resource is the **modern replacement** for the deprecated `null_resource`. Use it for advanced device management workflows and triggering imperative actions.
+
+**📝 Basic Usage for Device Management Triggers:**
+```hcl
+# Use terraform_data to trigger device actions based on configuration changes
+resource "terraform_data" "device_configuration_trigger" {
+  input = {
+    policy_version    = var.policy_version
+    config_hash       = filemd5("configs/security-baseline.mobileconfig")
+    cve_response      = var.force_security_update ? timestamp() : null
+    affected_devices  = length(jamfpro_smart_computer_group.vulnerable_devices.criteria)
+  }
+}
+
+resource "jamfpro_policy" "security_baseline" {
+  name                        = "Security Baseline Configuration v${terraform_data.device_configuration_trigger.input.policy_version}"
+  enabled                     = true
+  trigger_checkin            = true
+  trigger_enrollment_complete = false
+  frequency                  = "Ongoing"
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  # Reference terraform_data to trigger policy updates
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.device_configuration_trigger.output
+    ]
+  }
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.vulnerable_devices.id]
+  }
+  
+  # Modern approach: declarative configuration with dynamic values
+  payloads {
+    packages = [
+      {
+        id     = jamfpro_package.security_patch.id
+        action = "install"
+      }
+    ]
+  }
+  
+  # Imperative action triggered by configuration changes
+  provisioner "local-exec" {
+    command = <<-EOF
+      # Send MDM command to force immediate policy application
+      python3 /scripts/trigger-device-checkin.py \
+        --group-id "${jamfpro_smart_computer_group.vulnerable_devices.id}" \
+        --policy-version "${terraform_data.device_configuration_trigger.input.policy_version}" \
+        --config-hash "${terraform_data.device_configuration_trigger.input.config_hash}"
+    EOF
+    
+    environment = {
+      JAMF_URL    = var.jamf_url
+      API_TOKEN   = var.api_token
+      POLICY_ID   = self.id
+    }
+  }
+}
+```
+
+---
+
+## ⚠️ Provisioners for Device Management: When Declarative Resources Aren't Enough
+
+**🚨 Use provisioners ONLY when declarative Jamf Pro resources can't handle the scenario:**
+
+### When Provisioners Are Needed in Device Management:
+
+**🔍 Specific Use Cases:**
+1. **🚨 Emergency MDM Commands**: Immediate device lock, wipe, or isolation for security incidents
+2. **🔗 External System Integration**: Calling vulnerability scanners, ITSM, or security tools APIs
+3. **📊 Real-time Monitoring**: Integration with SIEM, compliance, or monitoring systems
+4. **⚡ CVE Response Workflow**: Automated vulnerability assessment and patch coordination
+5. **🔄 Multi-system Orchestration**: Coordinating between Jamf Pro and other enterprise systems
+
+### ⚠️ Provisioner Types for Device Management (Use Sparingly)
+
+**🏠 Local Provisioners** (run on your Terraform execution environment):
+- `local-exec`: Execute API calls, scripts, notifications - **primary tool for device management**
+
+**🌐 Remote Provisioners** (limited applicability for device management):
+- `remote-exec`: Rarely used - devices don't typically allow SSH access
+- `file`: Limited use - configuration profiles and packages preferred
+
+#### 💻 Local-Exec Provisioner for Device Management
+
+The `local-exec` provisioner executes commands on the machine running Terraform - perfect for MDM API calls and external integrations.
+
+**📝 Basic MDM Command Syntax:**
+```hcl
+resource "jamfpro_policy" "emergency_security_policy" {
+  name                        = "Emergency Security Response"
+  enabled                     = true
+  trigger_checkin            = true
+  frequency                  = "Once per computer"
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.compromised_devices.id]
+  }
+  
+  # Immediate MDM command after policy creation
+  provisioner "local-exec" {
+    command = <<-EOF
+      # Send immediate device lock command
+      curl -X POST "${var.jamf_url}/api/v2/mdm-commands" \
+        -H "Authorization: Bearer ${var.api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "commandData": {
+            "commandType": "DEVICE_LOCK",
+            "lockMessage": "Device locked due to security incident - Contact IT immediately"
+          },
+          "clientData": [
+            {
+              "managementId": "all-computers-in-group"
+            }
+          ]
+        }'
+        
+      echo "Emergency device lock sent for policy ${self.id}"
+    EOF
+  }
+}
+```
+
+**🔧 Advanced CVE Response Example:**
+```hcl
+resource "jamfpro_policy" "cve_response_policy" {
+  name                        = "CVE-2024-12345 Response Policy"
+  enabled                     = true
+  trigger_checkin            = true
+  frequency                  = "Once per computer"  
+  target_drive               = "/"
+  category_id                = jamfpro_category.security.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.vulnerable_devices.id]
+  }
+  
+  # Log policy deployment
+  provisioner "local-exec" {
+    command = "echo 'CVE Response Policy Details:' > cve-response-${formatdate("YYYY-MM-DD", timestamp())}.log"
+  }
+  
+  provisioner "local-exec" {
+    command = "echo 'Policy ID: ${self.id}' >> cve-response-${formatdate("YYYY-MM-DD", timestamp())}.log"
+  }
+  
+  provisioner "local-exec" {
+    command = "echo 'CVE ID: ${var.cve_id}' >> cve-response-${formatdate("YYYY-MM-DD", timestamp())}.log"
+  }
+  
+  # Multi-step response workflow with environment variables
+  provisioner "local-exec" {
+    command = "./scripts/cve-response-workflow.py"
+    
+    environment = {
+      POLICY_ID      = self.id
+      CVE_ID         = var.cve_id
+      JAMF_URL       = var.jamf_url
+      API_TOKEN      = var.api_token
+      AFFECTED_COUNT = length(jamfpro_smart_computer_group.vulnerable_devices.criteria)
+      ENVIRONMENT    = var.environment
+    }
+  }
+  
+  # External system notifications
+  provisioner "local-exec" {
+    command = <<-EOF
+      # Create ITSM ticket
+      python3 ./scripts/create-itsm-ticket.py \
+        --title "CVE-${var.cve_id} Response Deployment" \
+        --policy-id "${self.id}" \
+        --severity "High"
+        
+      # Notify security team
+      python3 ./scripts/notify-security.py \
+        --event "cve-response-deployed" \
+        --policy "${self.name}" \
+        --devices-affected "${length(jamfpro_smart_computer_group.vulnerable_devices.criteria)}"
+    EOF
+  }
+  
+  # Cleanup actions on policy destruction
   provisioner "local-exec" {
     when    = destroy
-    command = "echo 'Instance ${self.id} is being destroyed'"
+    command = "python3 ./scripts/cleanup-cve-response.py --policy-id '${self.id}' --cve-id '${var.cve_id}'"
   }
 }
 ```

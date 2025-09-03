@@ -11,7 +11,7 @@ By the end of this module, you will be able to:
 - ✅ Configure multiple providers in a single configuration
 - ✅ Use provider aliases for multi-region deployments
 - ✅ Understand provider versioning and constraints
-- ✅ Work with major cloud providers (AWS, Azure, GCP)
+- ✅ Work with supporting providers (random, http, local, time)
 - ✅ Use community and partner providers
 - ✅ Debug provider-related issues
 
@@ -19,7 +19,7 @@ By the end of this module, you will be able to:
 
 #### 🔌 What are Terraform Providers?
 
-Terraform providers are **plugins** that enable Terraform to interact with APIs, cloud services, and other platforms. They act as a **translation layer** between Terraform's configuration language and external services.
+Terraform providers are **plugins** that enable Terraform to interact with APIs, device management platforms, and other services. They act as a **translation layer** between Terraform's configuration language and external services like Jamf Pro.
 
 **🎯 Key Concepts:**
 - **🔧 Plugins**: Providers are executable plugins that Terraform downloads and runs
@@ -27,43 +27,44 @@ Terraform providers are **plugins** that enable Terraform to interact with APIs,
 - **🏗️ Resource Management**: Providers define what resources and data sources are available
 - **🔄 CRUD Operations**: Providers handle Create, Read, Update, Delete operations
 
-**🏗️ Provider Architecture:**
+**🏗️ Jamf Pro Provider Architecture:**
 ```mermaid
 graph TB
     subgraph "Terraform Core"
         TC[Terraform Core Engine]
-        Config[Configuration Files]
+        Config[HCL Configuration Files]
     end
     
     subgraph "Provider Layer"
-        AWS[AWS Provider]
-        Azure[Azure Provider]
-        GCP[GCP Provider]
-        K8s[Kubernetes Provider]
+        JamfPro[Jamf Pro Provider]
+        Random[Random Provider]
+        HTTP[HTTP Provider]
+        Local[Local Provider]
     end
     
     subgraph "External Services"
-        AWSAPI[AWS API]
-        AzureAPI[Azure API]
-        GCPAPI[GCP API]
-        K8sAPI[Kubernetes API]
+        JamfAPI[Jamf Pro Classic API]
+        JamfUAPI[Jamf Pro Universal API]
+        CertAuth[Certificate Authority]
+        HTTPAPI[External HTTP APIs]
     end
     
     Config --> TC
-    TC --> AWS
-    TC --> Azure
-    TC --> GCP
-    TC --> K8s
+    TC --> JamfPro
+    TC --> Random
+    TC --> HTTP
+    TC --> Local
     
-    AWS --> AWSAPI
-    Azure --> AzureAPI
-    GCP --> GCPAPI
-    K8s --> K8sAPI
+    JamfPro --> JamfAPI
+    JamfPro --> JamfUAPI
+    HTTP --> HTTPAPI
+    HTTP --> CertAuth
+    Local --> Config
     
     style TC fill:#7B42BC,color:#fff
-    style AWS fill:#FF9900,color:#fff
-    style Azure fill:#0078D4,color:#fff
-    style GCP fill:#4285F4,color:#fff
+    style JamfPro fill:#00B4A6,color:#fff
+    style Random fill:#FFA500,color:#fff
+    style HTTP fill:#4169E1,color:#fff
 ```
 
 #### 🏪 Terraform Registry
@@ -71,182 +72,209 @@ graph TB
 The [Terraform Registry](https://registry.terraform.io/) is the **central repository** for Terraform providers and modules.
 
 **🌟 Registry Categories:**
-- **🏢 Official Providers**: Maintained by HashiCorp (AWS, Azure, GCP, etc.)
+- **🏢 Official Providers**: Maintained by HashiCorp (Random, HTTP, Local, etc.)
 - **🤝 Partner Providers**: Maintained by technology partners
 - **👥 Community Providers**: Maintained by the community
 
-**📊 Popular Providers:**
+**📊 Device Management Providers:**
 | Provider | Maintainer | Resources | Use Case |
 |----------|------------|-----------|----------|
-| **AWS** | HashiCorp | 900+ | Amazon Web Services |
-| **Azure** | HashiCorp | 500+ | Microsoft Azure |
-| **Google** | HashiCorp | 400+ | Google Cloud Platform |
-| **Kubernetes** | HashiCorp | 100+ | Kubernetes clusters |
-| **Docker** | Community | 50+ | Container management |
-| **Helm** | HashiCorp | 20+ | Kubernetes package management |
+| **Jamf Pro** | DeploymentTheory | 50+ | Jamf Pro device management |
+| **Random** | HashiCorp | 10+ | Generate unique identifiers |
+| **HTTP** | HashiCorp | 5+ | Fetch external configuration data |
+| **Local** | HashiCorp | 5+ | Manage local files and certificates |
+| **Time** | HashiCorp | 5+ | Time-based operations |
+| **External** | HashiCorp | 2+ | Execute external programs |
 
 #### ⚙️ Provider Configuration
 
-**📝 Basic Provider Configuration:**
+**📝 Basic Jamf Pro Provider Configuration:**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
   
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
     }
   }
 }
 
-# Configure AWS Provider
-provider "aws" {
-  region = "us-west-2"
+# Configure Jamf Pro Provider
+provider "jamfpro" {
+  jamfpro_instance_fqdn = "https://your-company.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = var.jamfpro_client_id
+  client_secret         = var.jamfpro_client_secret
 }
 
-# Configure Azure Provider
-provider "azurerm" {
-  features {}
+# Configure Random Provider for unique naming
+provider "random" {
+  # No configuration needed
 }
 ```
 
-**🔧 Advanced Provider Configuration:**
+**🔧 Advanced Jamf Pro Provider Configuration:**
+
 ```hcl
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
   }
 }
 
-provider "aws" {
-  region = var.aws_region
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
   
-  # Authentication (multiple options)
-  access_key = var.aws_access_key  # Not recommended
-  secret_key = var.aws_secret_key  # Not recommended
-  profile    = "default"           # AWS CLI profile
+  # Authentication methods (choose one)
+  auth_method   = "oauth2"  # Recommended for production
+  client_id     = var.jamfpro_client_id
+  client_secret = var.jamfpro_client_secret
   
-  # Assume role for cross-account access
-  assume_role {
-    role_arn     = "arn:aws:iam::123456789012:role/TerraformRole"
-    session_name = "terraform-session"
-  }
+  # Alternative: Basic authentication
+  # auth_method = "basic"
+  # username    = var.jamfpro_username
+  # password    = var.jamfpro_password
   
-  # Default tags for all resources
-  default_tags {
-    tags = {
-      Environment = "production"
-      ManagedBy   = "terraform"
-      Owner       = "platform-team"
-    }
-  }
+  # Alternative: Bearer token
+  # auth_method   = "bearer"
+  # bearer_token  = var.jamfpro_bearer_token
   
-  # Retry configuration
-  retry_mode      = "adaptive"
-  max_retries     = 3
+  # Performance and reliability settings
+  jamfpro_load_balancer_lock    = true   # Prevent concurrent API calls
+  jamfpro_api_timeout           = 30     # API timeout in seconds
+  jamfpro_max_retry_attempts    = 3      # Retry failed requests
   
-  # Endpoints (for testing or custom endpoints)
-  endpoints {
-    s3  = "http://localhost:4566"  # LocalStack
-    ec2 = "http://localhost:4566"
+  # Custom HTTP client settings
+  client_sdk_log_level = "INFO"  # DEBUG, INFO, WARN, ERROR
+  
+  # Hide sensitive values in logs
+  hide_sensitive_data = true
+  
+  # Custom User-Agent for API requests
+  custom_cookies = {
+    "terraform-managed" = "true"
   }
 }
 ```
 
 #### 🏷️ Provider Aliases
 
-Provider aliases allow you to use **multiple configurations** of the same provider (e.g., different regions or accounts).
+Provider aliases allow you to use **multiple configurations** of the same provider (e.g., different Jamf Pro instances or environments).
 
-**🌍 Multi-Region Example:**
+**🏢 Multi-Environment Jamf Pro Example:**
+
 ```hcl
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
   }
 }
 
-# Default provider (us-west-2)
-provider "aws" {
-  region = "us-west-2"
+# Default provider (Production)
+provider "jamfpro" {
+  jamfpro_instance_fqdn = "https://company-prod.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = var.prod_client_id
+  client_secret         = var.prod_client_secret
 }
 
-# Alias for East Coast
-provider "aws" {
-  alias  = "east"
-  region = "us-east-1"
+# Alias for Staging environment
+provider "jamfpro" {
+  alias                 = "staging"
+  jamfpro_instance_fqdn = "https://company-staging.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = var.staging_client_id
+  client_secret         = var.staging_client_secret
 }
 
-# Alias for Europe
-provider "aws" {
-  alias  = "europe"
-  region = "eu-west-1"
+# Alias for Development environment
+provider "jamfpro" {
+  alias                 = "dev"
+  jamfpro_instance_fqdn = "https://company-dev.jamfcloud.com"
+  auth_method           = "basic"
+  username              = var.dev_username
+  password              = var.dev_password
 }
 
-# Resources using different providers
-resource "aws_s3_bucket" "west_coast" {
-  bucket = "my-app-west-coast-bucket"
-  # Uses default provider (us-west-2)
+# Resources using different Jamf Pro instances
+resource "jamfpro_category" "production" {
+  name     = "Production Software"
+  priority = 10
+  # Uses default provider (production)
 }
 
-resource "aws_s3_bucket" "east_coast" {
-  provider = aws.east
-  bucket   = "my-app-east-coast-bucket"
+resource "jamfpro_category" "staging_test" {
+  provider = jamfpro.staging
+  name     = "Staging Test Software"
+  priority = 5
 }
 
-resource "aws_s3_bucket" "europe" {
-  provider = aws.europe
-  bucket   = "my-app-europe-bucket"
+resource "jamfpro_policy" "dev_testing" {
+  provider = jamfpro.dev
+  name     = "Development Testing Policy"
+  enabled  = true
 }
 ```
 
-**🏢 Multi-Account Example:**
+**🏭 Multi-Organization Jamf Pro Example:**
+
 ```hcl
-provider "aws" {
-  alias  = "production"
-  region = "us-west-2"
+provider "jamfpro" {
+  alias                 = "corp_main"
+  jamfpro_instance_fqdn = "https://corporate.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = var.corp_client_id
+  client_secret         = var.corp_client_secret
   
-  assume_role {
-    role_arn = "arn:aws:iam::111111111111:role/TerraformRole"
+  # Corporate-specific settings
+  jamfpro_load_balancer_lock = true
+  jamfpro_api_timeout        = 60
+}
+
+provider "jamfpro" {
+  alias                 = "subsidiary"
+  jamfpro_instance_fqdn = "https://subsidiary.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = var.sub_client_id
+  client_secret         = var.sub_client_secret
+  
+  # Subsidiary-specific settings
+  jamfpro_load_balancer_lock = false
+  jamfpro_api_timeout        = 30
+}
+
+# Corporate policies
+resource "jamfpro_policy" "corporate_security" {
+  provider = jamfpro.corp_main
+  name     = "Corporate Security Baseline"
+  enabled  = true
+  
+  category {
+    name = "Corporate IT"
   }
 }
 
-provider "aws" {
-  alias  = "staging"
-  region = "us-west-2"
+# Subsidiary policies
+resource "jamfpro_policy" "subsidiary_apps" {
+  provider = jamfpro.subsidiary
+  name     = "Subsidiary Application Install"
+  enabled  = true
   
-  assume_role {
-    role_arn = "arn:aws:iam::222222222222:role/TerraformRole"
-  }
-}
-
-# Production resources
-resource "aws_vpc" "prod" {
-  provider   = aws.production
-  cidr_block = "10.0.0.0/16"
-  
-  tags = {
-    Name = "production-vpc"
-  }
-}
-
-# Staging resources
-resource "aws_vpc" "staging" {
-  provider   = aws.staging
-  cidr_block = "10.1.0.0/16"
-  
-  tags = {
-    Name = "staging-vpc"
+  category {
+    name = "Local IT"
   }
 }
 ```
@@ -262,286 +290,283 @@ Provider versioning ensures **consistency** and **compatibility** across your in
 - **`~> 1.2.0`**: Any version from 1.2.0 to 1.2.x (but not 1.3.0)
 - **`>= 1.2, < 2.0`**: Version 1.2 or newer, but less than 2.0
 
-**📝 Version Examples:**
+**📝 Jamf Pro Provider Version Examples:**
+
 ```hcl
 terraform {
   required_providers {
     # Exact version (not recommended for production)
-    aws = {
-      source  = "hashicorp/aws"
-      version = "= 5.31.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "= 0.24.0"
     }
     
-    # Pessimistic constraint (recommended)
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.80"  # 3.80.x series
+    # Pessimistic constraint (recommended for Jamf Pro)
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"  # 0.24.x series
     }
     
     # Range constraint
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 4.0, < 6.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0, < 1.0.0"
     }
     
-    # Minimum version
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.0"
+    # Minimum version (for newer features)
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.24.0"
+    }
+    
+    # Supporting providers with compatible versions
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
+    }
+    
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
     }
   }
 }
 ```
 
-💡 **Pro Tip**: Use `~>` (pessimistic constraint) for production to get patch updates while avoiding breaking changes!
+💡 **Pro Tip**: Use `~>` (pessimistic constraint) for the Jamf Pro provider to get bug fixes and new resources while avoiding breaking API changes!
 
-### 💻 **Exercise 5.1**: Multi-Cloud Provider Configuration
+### 💻 **Exercise 6.1**: Basic Jamf Pro Provider Configuration
 **Duration**: 30 minutes
 
-Let's practice configuring multiple providers and using aliases for a multi-cloud deployment.
+Let's practice configuring the Jamf Pro provider with proper authentication and basic resource management.
 
 **Step 1: Setup Project Structure**
+
 ```bash
 # Create new project directory
-mkdir ~/terraform-multi-cloud
-cd ~/terraform-multi-cloud
+mkdir ~/terraform-jamfpro-basics
+cd ~/terraform-jamfpro-basics
 
-# Create directories
+# Create directories for organization
+mkdir templates
 mkdir scripts
-mkdir configs
 
 # Open in VS Code
 code .
 ```
 
-**Step 2: Create Multi-Cloud Configuration**
+**Step 2: Create Jamf Pro Configuration**
 
 Create `main.tf`:
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
   
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.0"
+      version = "~> 3.4"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
     }
   }
 }
 
 # Generate random suffix for unique resource names
-resource "random_id" "suffix" {
-  byte_length = 4
+resource "random_pet" "app_name" {
+  length    = 2
+  separator = "-"
 }
+
+resource "random_id" "suffix" {
+  byte_length = 3
+}
+
+# Create timestamp for resource tracking
+resource "time_static" "deployment_time" {}
 
 locals {
-  suffix = random_id.suffix.hex
-  common_tags = {
-    Project     = "multi-cloud-demo"
-    Environment = "learning"
-    ManagedBy   = "terraform"
+  app_name = random_pet.app_name.id
+  suffix   = random_id.suffix.hex
+  
+  common_labels = {
+    project     = "jamfpro-terraform-training"
+    environment = var.environment
+    managed_by  = "terraform"
+    created_at  = formatdate("YYYY-MM-DD", time_static.deployment_time.rfc3339)
   }
 }
 ```
 
-**Step 3: Configure AWS Providers**
+**Step 3: Configure Jamf Pro Provider**
 
 Add to `main.tf`:
+
 ```hcl
-# AWS Primary Region (us-west-2)
-provider "aws" {
-  region = "us-west-2"
+# Configure Jamf Pro Provider
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method           = "oauth2"
+  client_id             = var.jamfpro_client_id
+  client_secret         = var.jamfpro_client_secret
   
-  default_tags {
-    tags = local.common_tags
-  }
+  # Performance settings
+  jamfpro_load_balancer_lock = true
+  jamfpro_api_timeout        = 30
 }
 
-# AWS Secondary Region (us-east-1)
-provider "aws" {
-  alias  = "east"
-  region = "us-east-1"
+# Create a category for organization
+resource "jamfpro_category" "terraform_managed" {
+  name     = "Terraform Managed - ${local.app_name}"
+  priority = 10
+}
+
+# Create a smart computer group
+resource "jamfpro_smart_computer_group" "test_devices" {
+  name = "Test Devices - ${local.app_name} - ${local.suffix}"
   
-  default_tags {
-    tags = local.common_tags
+  criteria {
+    name          = "Computer Name"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "like"
+    value         = "test"
+    opening_paren = false
+    closing_paren = false
   }
 }
 
-# AWS Resources
-resource "aws_s3_bucket" "west" {
-  bucket = "terraform-demo-west-${local.suffix}"
-}
-
-resource "aws_s3_bucket" "east" {
-  provider = aws.east
-  bucket   = "terraform-demo-east-${local.suffix}"
-}
-
-resource "aws_s3_bucket_versioning" "west" {
-  bucket = aws_s3_bucket.west.id
-  versioning_configuration {
-    status = "Enabled"
+# Create a policy using the category and group
+resource "jamfpro_policy" "inventory_update" {
+  name                        = "Inventory Update - ${local.app_name}"
+  enabled                     = true
+  trigger_checkin             = true
+  trigger_enrollment_complete = false
+  frequency                   = "Once per day"
+  target_drive                = "/"
+  category_id                 = jamfpro_category.terraform_managed.id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.test_devices.id]
   }
-}
-
-resource "aws_s3_bucket_versioning" "east" {
-  provider = aws.east
-  bucket   = aws_s3_bucket.east.id
-  versioning_configuration {
-    status = "Enabled"
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
   }
 }
 ```
 
-**Step 4: Configure Azure Provider**
-
-Add to `main.tf`:
-```hcl
-# Azure Provider
-provider "azurerm" {
-  features {}
-}
-
-# Azure Resources
-resource "azurerm_resource_group" "main" {
-  name     = "terraform-demo-${local.suffix}"
-  location = "West US 2"
-  
-  tags = local.common_tags
-}
-
-resource "azurerm_storage_account" "main" {
-  name                     = "terraformdemo${local.suffix}"
-  resource_group_name      = azurerm_resource_group.main.name
-  location                 = azurerm_resource_group.main.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  
-  tags = local.common_tags
-}
-
-resource "azurerm_storage_container" "main" {
-  name                  = "demo-container"
-  storage_account_name  = azurerm_storage_account.main.name
-  container_access_type = "private"
-}
-```
-
-**Step 5: Configure Google Cloud Provider**
-
-Add to `main.tf`:
-```hcl
-# Google Cloud Provider
-provider "google" {
-  project = var.gcp_project_id
-  region  = "us-west1"
-}
-
-# Google Cloud Resources
-resource "google_storage_bucket" "main" {
-  name          = "terraform-demo-gcp-${local.suffix}"
-  location      = "US-WEST1"
-  force_destroy = true
-  
-  versioning {
-    enabled = true
-  }
-  
-  labels = {
-    project     = "multi-cloud-demo"
-    environment = "learning"
-    managed-by  = "terraform"
-  }
-}
-
-resource "google_storage_bucket_object" "demo" {
-  name    = "demo.txt"
-  bucket  = google_storage_bucket.main.name
-  content = "Hello from Google Cloud Storage!"
-}
-```
-
-**Step 6: Create Variables and Outputs**
+**Step 4: Create Variables File**
 
 Create `variables.tf`:
+
 ```hcl
-variable "gcp_project_id" {
-  description = "Google Cloud Project ID"
+variable "jamfpro_instance_fqdn" {
+  description = "Jamf Pro instance FQDN (e.g., https://company.jamfcloud.com)"
   type        = string
-  default     = "my-demo-project"  # Replace with your project ID
+  validation {
+    condition     = can(regex("^https://.*", var.jamfpro_instance_fqdn))
+    error_message = "Jamf Pro instance FQDN must start with 'https://'."
+  }
 }
 
-variable "aws_region_primary" {
-  description = "Primary AWS region"
+variable "jamfpro_client_id" {
+  description = "Jamf Pro OAuth2 Client ID"
   type        = string
-  default     = "us-west-2"
+  sensitive   = true
 }
 
-variable "aws_region_secondary" {
-  description = "Secondary AWS region"
+variable "jamfpro_client_secret" {
+  description = "Jamf Pro OAuth2 Client Secret"
   type        = string
-  default     = "us-east-1"
+  sensitive   = true
+}
+
+variable "environment" {
+  description = "Environment name for resource naming"
+  type        = string
+  default     = "dev"
+  
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod."
+  }
 }
 ```
 
-Create `outputs.tf`:
+**Step 5: Create Terraform Variables File**
+
+Create `terraform.tfvars.example`:
+
 ```hcl
-# AWS Outputs
-output "aws_s3_buckets" {
-  description = "AWS S3 bucket information"
+# Copy this file to terraform.tfvars and update with your values
+
+# Jamf Pro Configuration
+jamfpro_instance_fqdn = "https://your-company.jamfcloud.com"
+jamfpro_client_id     = "your-oauth2-client-id"
+jamfpro_client_secret = "your-oauth2-client-secret"
+
+# Environment
+environment = "dev"
+```
+
+**Step 6: Create Outputs File**
+
+Create `outputs.tf`:
+
+```hcl
+# Jamf Pro Resource Outputs
+output "jamfpro_resources" {
+  description = "Information about created Jamf Pro resources"
   value = {
-    west = {
-      name   = aws_s3_bucket.west.bucket
-      region = aws_s3_bucket.west.region
-      arn    = aws_s3_bucket.west.arn
+    category = {
+      id   = jamfpro_category.terraform_managed.id
+      name = jamfpro_category.terraform_managed.name
     }
-    east = {
-      name   = aws_s3_bucket.east.bucket
-      region = aws_s3_bucket.east.region
-      arn    = aws_s3_bucket.east.arn
+    computer_group = {
+      id   = jamfpro_smart_computer_group.test_devices.id
+      name = jamfpro_smart_computer_group.test_devices.name
+    }
+    policy = {
+      id   = jamfpro_policy.inventory_update.id
+      name = jamfpro_policy.inventory_update.name
     }
   }
 }
 
-# Azure Outputs
-output "azure_storage" {
-  description = "Azure storage account information"
+# Generated Values
+output "generated_values" {
+  description = "Random values generated for this deployment"
   value = {
-    resource_group   = azurerm_resource_group.main.name
-    storage_account  = azurerm_storage_account.main.name
-    container_name   = azurerm_storage_container.main.name
-    location         = azurerm_resource_group.main.location
-  }
-}
-
-# Google Cloud Outputs
-output "gcp_storage" {
-  description = "Google Cloud storage information"
-  value = {
-    bucket_name = google_storage_bucket.main.name
-    bucket_url  = google_storage_bucket.main.url
-    location    = google_storage_bucket.main.location
+    app_name      = local.app_name
+    suffix        = local.suffix
+    deployment_id = "${local.app_name}-${local.suffix}"
+    created_at    = time_static.deployment_time.rfc3339
   }
 }
 
 # Provider Information
-output "provider_versions" {
-  description = "Provider versions used"
+output "provider_info" {
+  description = "Provider configuration information"
   value = {
-    random_suffix = local.suffix
-    terraform_version = "Used Terraform >= 1.0"
+    jamfpro_instance = var.jamfpro_instance_fqdn
+    environment      = var.environment
+    terraform_version = ">= 1.0"
+    provider_versions = {
+      jamfpro = "~> 0.24.0"
+      random  = "~> 3.4"
+      time    = "~> 0.9"
+    }
   }
 }
 ```
@@ -557,7 +582,7 @@ terraform validate
 # Plan the deployment
 terraform plan
 
-# Apply (Note: This requires valid cloud credentials)
+# Apply (requires valid Jamf Pro credentials)
 # terraform apply
 
 # View provider information
@@ -596,85 +621,481 @@ export TF_LOG=DEBUG
 terraform plan
 ```
 
-#### 🐛 Debugging Provider Issues
+#### 🐛 Debugging Jamf Pro Provider Issues
 
-**🔧 Common Provider Problems:**
+**🔧 Common Jamf Pro Provider Problems:**
 
-1. **Authentication Issues:**
+**1. Authentication Issues:**
+
 ```bash
-# Check AWS credentials
-aws sts get-caller-identity
+# Test OAuth2 credentials (if using curl)
+curl -X POST "https://your-instance.jamfcloud.com/api/oauth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET"
 
-# Check Azure login
-az account show
+# Test basic auth credentials
+curl -u "username:password" "https://your-instance.jamfcloud.com/JSSResource/categories"
 
-# Check GCP authentication
-gcloud auth list
+# Check Jamf Pro instance accessibility
+curl -I "https://your-instance.jamfcloud.com"
 ```
 
-2. **Version Conflicts:**
-```bash
-# Check lock file
-cat .terraform.lock.hcl
+**2. Provider Version Issues:**
 
-# Update providers
+```bash
+# Check current provider version
+terraform providers
+
+# Check lock file for Jamf Pro provider
+grep -A 5 "deploymenttheory/jamfpro" .terraform.lock.hcl
+
+# Update to latest compatible version
 terraform init -upgrade
 
-# Force specific version
-terraform init -upgrade -provider=hashicorp/aws
+# Force specific Jamf Pro provider version
+terraform init -upgrade -provider=deploymenttheory/jamfpro
 ```
 
-3. **Provider Download Issues:**
+**3. API Rate Limiting:**
+
 ```bash
-# Use different registry mirror
-terraform init -plugin-dir=/path/to/providers
+# Enable detailed logging
+export TF_LOG=DEBUG
+export TF_LOG_PROVIDER=DEBUG
 
-# Skip provider verification (not recommended)
-terraform init -verify-plugins=false
+# Run with increased timeout
+terraform apply -parallelism=1
+
+# Check for load balancer lock issues
+terraform apply -target=jamfpro_category.test
 ```
 
-#### 🏢 Enterprise Provider Considerations
+**4. Resource Configuration Issues:**
 
-**🔒 Security Best Practices:**
-- **🔐 Never hardcode credentials** in configuration files
-- **🎭 Use IAM roles and service principals** for authentication
-- **🔄 Rotate credentials regularly** using automated tools
-- **📊 Monitor provider API usage** for cost and security
-- **🛡️ Use least-privilege access** for Terraform service accounts
+```bash
+# Validate Jamf Pro resource syntax
+terraform validate
 
-**🏭 Enterprise Features:**
+# Plan with detailed output
+terraform plan -detailed-exitcode
+
+# Import existing Jamf Pro resources
+terraform import jamfpro_category.existing 123
+```
+
+### 💻 **Exercise 6.3**: Provider Integration with External Data
+**Duration**: 25 minutes
+
+Let's practice integrating the Jamf Pro provider with external data sources using HTTP and local providers.
+
+**Step 1: Setup Integration Project**
+
+```bash
+# Create new project directory
+mkdir ~/terraform-jamfpro-integration
+cd ~/terraform-jamfpro-integration
+
+# Create directories
+mkdir data
+mkdir templates
+
+code .
+```
+
+**Step 2: Create Configuration with External Data**
+
+Create `main.tf`:
+
 ```hcl
-# Provider configuration with enterprise features
-provider "aws" {
-  region = var.aws_region
+terraform {
+  required_version = ">= 1.0"
   
-  # Use assume role for cross-account access
-  assume_role {
-    role_arn     = var.terraform_role_arn
-    session_name = "terraform-${var.environment}"
-    external_id  = var.external_id
-  }
-  
-  # Default tags for compliance
-  default_tags {
-    tags = {
-      ManagedBy    = "terraform"
-      Environment  = var.environment
-      CostCenter   = var.cost_center
-      Owner        = var.owner_email
-      Compliance   = "required"
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
     }
   }
+}
+
+# Configure Jamf Pro Provider
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method           = "oauth2"
+  client_id             = var.jamfpro_client_id
+  client_secret         = var.jamfpro_client_secret
+}
+
+# Fetch department list from external API
+data "http" "department_list" {
+  url = "https://jsonplaceholder.typicode.com/users"
   
-  # Retry configuration for reliability
-  retry_mode  = "adaptive"
-  max_retries = 5
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+# Parse department data
+locals {
+  departments = [for user in jsondecode(data.http.department_list.response_body) : user.company.name]
+  unique_departments = toset(local.departments)
+}
+
+# Generate random deployment ID
+resource "random_uuid" "deployment" {}
+
+# Create local configuration file
+resource "local_file" "deployment_config" {
+  content = templatefile("${path.module}/templates/config.json.tpl", {
+    deployment_id = random_uuid.deployment.result
+    departments   = local.unique_departments
+    jamf_instance = var.jamfpro_instance_fqdn
+  })
+  filename = "${path.module}/data/deployment-config.json"
+}
+
+# Create categories for each department
+resource "jamfpro_category" "departments" {
+  for_each = local.unique_departments
+  
+  name     = "${each.value} Department"
+  priority = 10
+}
+
+# Create smart computer groups for departments
+resource "jamfpro_smart_computer_group" "dept_computers" {
+  for_each = local.unique_departments
+  
+  name = "${each.value} Computers"
+  
+  criteria {
+    name          = "Department"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "is"
+    value         = each.value
+    opening_paren = false
+    closing_paren = false
+  }
+}
+
+# Create policies for each department
+resource "jamfpro_policy" "dept_policies" {
+  for_each = local.unique_departments
+  
+  name                = "${each.value} Department Policy"
+  enabled             = true
+  trigger_checkin     = true
+  frequency          = "Once per day"
+  category_id        = jamfpro_category.departments[each.key].id
+  
+  scope {
+    all_computers      = false
+    computer_group_ids = [jamfpro_smart_computer_group.dept_computers[each.key].id]
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
+  }
 }
 ```
 
+**Step 3: Create Template File**
+
+Create `templates/config.json.tpl`:
+
+```json
+{
+  "deployment": {
+    "id": "${deployment_id}",
+    "jamf_instance": "${jamf_instance}",
+    "created_at": "${timestamp()}"
+  },
+  "departments": [
+%{ for dept in departments ~}
+    {
+      "name": "${dept}",
+      "category": "${dept} Department",
+      "computer_group": "${dept} Computers"
+    }%{ if dept != departments[length(departments)-1] },%{ endif }
+%{ endfor ~}
+  ],
+  "terraform_managed": true
+}
+```
+
+**Step 4: Create Variables and Outputs**
+
+Create `variables.tf`:
+
+```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "Jamf Pro instance FQDN"
+  type        = string
+}
+
+variable "jamfpro_client_id" {
+  description = "Jamf Pro OAuth2 Client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "jamfpro_client_secret" {
+  description = "Jamf Pro OAuth2 Client Secret"
+  type        = string
+  sensitive   = true
+}
+```
+
+Create `outputs.tf`:
+
+```hcl
+output "external_data_summary" {
+  description = "Summary of external data integration"
+  value = {
+    departments_found    = length(local.unique_departments)
+    categories_created   = length(jamfpro_category.departments)
+    computer_groups_created = length(jamfpro_smart_computer_group.dept_computers)
+    policies_created     = length(jamfpro_policy.dept_policies)
+    deployment_id        = random_uuid.deployment.result
+  }
+}
+
+output "department_resources" {
+  description = "Resources created for each department"
+  value = {
+    for dept in local.unique_departments : dept => {
+      category       = jamfpro_category.departments[dept].name
+      computer_group = jamfpro_smart_computer_group.dept_computers[dept].name
+      policy         = jamfpro_policy.dept_policies[dept].name
+    }
+  }
+}
+
+output "config_file_location" {
+  description = "Location of generated configuration file"
+  value       = local_file.deployment_config.filename
+}
+```
+
+💡 **Pro Tip**: Integrating external data sources with Jamf Pro provider enables dynamic infrastructure that adapts to organizational changes!
+
+#### 🏭 Enterprise Jamf Pro Provider Considerations
+
+**🔒 Security Best Practices:**
+- **🔐 Never hardcode credentials** in configuration files
+- **🔑 Use OAuth2 with scoped permissions** for API access
+- **🔄 Rotate credentials regularly** using automated tools
+- **📊 Monitor API usage** for performance and security
+- **🛡️ Use least-privilege access** for Jamf Pro API accounts
+
+**🏭 Enterprise Jamf Pro Configuration:**
+
+```hcl
+# Enterprise Jamf Pro provider configuration
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method           = "oauth2"
+  client_id             = var.jamfpro_client_id
+  client_secret         = var.jamfpro_client_secret
+  
+  # Enterprise performance settings
+  jamfpro_load_balancer_lock    = true   # Prevent API conflicts
+  jamfpro_api_timeout           = 120    # Extended timeout for large operations
+  jamfpro_max_retry_attempts    = 5      # Retry failed requests
+  
+  # Security and logging
+  hide_sensitive_data          = true    # Hide credentials in logs
+  client_sdk_log_level         = "INFO"  # Appropriate logging level
+  
+  # Custom headers for enterprise compliance
+  custom_cookies = {
+    "terraform-managed"     = "true"
+    "environment"          = var.environment
+    "compliance-required"  = "true"
+  }
+}
+```
+
+### 💻 **Exercise 6.4**: Provider Commands & Debugging
+**Duration**: 20 minutes
+
+Let's practice essential provider commands and troubleshoot common issues with the Jamf Pro provider.
+
+**Step 1: Provider Information Commands**
+
+```bash
+# Initialize a new Terraform project
+mkdir ~/terraform-provider-debugging
+cd ~/terraform-provider-debugging
+
+# Create a basic configuration
+cat > main.tf << EOF
+terraform {
+  required_version = ">= 1.0"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
+    }
+  }
+}
+EOF
+
+# Initialize and examine providers
+terraform init
+
+# List installed providers
+terraform providers
+
+# Show detailed provider information
+terraform version
+
+# Examine provider lock file
+cat .terraform.lock.hcl | grep -A 10 "deploymenttheory/jamfpro"
+```
+
+**Step 2: Provider Debugging Commands**
+
+```bash
+# Enable debug logging for providers
+export TF_LOG=DEBUG
+export TF_LOG_PROVIDER=DEBUG
+
+# Create a test configuration with authentication
+cat > provider-test.tf << EOF
+provider "jamfpro" {
+  jamfpro_instance_fqdn = "https://test.jamfcloud.com"
+  auth_method           = "oauth2"
+  client_id             = "test-client"
+  client_secret         = "test-secret"
+}
+
+resource "jamfpro_category" "debug_test" {
+  name     = "Debug Test Category"
+  priority = 1
+}
+EOF
+
+# Validate the configuration
+terraform validate
+
+# Plan with debugging (will show authentication attempts)
+terraform plan 2>&1 | head -50
+
+# Disable debug logging
+unset TF_LOG
+unset TF_LOG_PROVIDER
+```
+
+**Step 3: Provider Version Management**
+
+```bash
+# Check current provider versions
+terraform providers
+
+# Update providers to latest versions
+terraform init -upgrade
+
+# Lock provider versions for consistency
+terraform providers lock -platform=darwin_amd64 -platform=linux_amd64
+
+# Check what changed
+git diff .terraform.lock.hcl  # if using git
+
+# Show provider schema (helpful for development)
+terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/deploymenttheory/jamfpro"' > jamfpro-schema.json
+
+# View available resources and data sources
+terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/deploymenttheory/jamfpro".resource_schemas | keys[]'
+```
+
+**Step 4: Troubleshooting Common Issues**
+
+Create `debug-scenarios.tf`:
+
+```hcl
+# Test authentication with debug resource
+resource "jamfpro_api_authentication" "debug" {
+  # This resource helps test API connectivity
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+}
+
+# Test resource creation with validation
+resource "jamfpro_category" "test_validation" {
+  name = "Test-${random_id.test.hex}"
+  
+  # Validation to catch common errors
+  validation {
+    condition     = length(self.name) > 0 && length(self.name) <= 100
+    error_message = "Category name must be between 1 and 100 characters."
+  }
+}
+
+resource "random_id" "test" {
+  byte_length = 4
+}
+
+# Output for debugging
+output "debug_info" {
+  value = {
+    category_id   = jamfpro_category.test_validation.id
+    category_name = jamfpro_category.test_validation.name
+    auth_test     = "Check logs for authentication details"
+  }
+}
+```
+
+**Step 5: Provider Mirror for Offline Use**
+
+```bash
+# Create provider mirror for air-gapped environments
+mkdir provider-mirror
+
+# Mirror the Jamf Pro provider
+terraform providers mirror -platform=darwin_amd64 -platform=linux_amd64 ./provider-mirror
+
+# Check mirrored providers
+ls -la provider-mirror/registry.terraform.io/deploymenttheory/jamfpro/
+
+# Use mirrored providers (for offline scenarios)
+cat > .terraformrc << EOF
+provider_installation {
+  filesystem_mirror {
+    path    = "./provider-mirror"
+    include = ["deploymenttheory/*"]
+  }
+  direct {
+    exclude = ["deploymenttheory/*"]
+  }
+}
+EOF
+```
+
+💡 **Pro Tip**: Regular provider debugging helps identify API issues early and ensures reliable infrastructure deployments!
+
 ---
 
-## ✅ Module 5 Summary
+## ✅ Module 6 Summary
 
 ### 🎯 Key Takeaways
 - **🔌 Providers** are plugins that enable Terraform to interact with external APIs
@@ -682,7 +1103,7 @@ provider "aws" {
 - **🏷️ Provider aliases** enable multi-region and multi-account deployments
 - **📊 Version constraints** ensure consistency and prevent breaking changes
 - **🔧 Provider configuration** supports authentication, retry logic, and defaults
-- **🌍 Multi-cloud strategies** are enabled by provider flexibility
+- **🔗 Multi-provider integration** enables comprehensive device management workflows
 - **🛡️ Security best practices** are essential for enterprise deployments
 
 ### 🔑 Essential Commands Learned
@@ -704,11 +1125,73 @@ terraform version          # Show Terraform and provider versions
 
 ---
 
-## 🚀 Practical Provider Labs
+## 🧜 Knowledge Check: Module 6 Quiz
 
-### 🎯 Lab 3: Working with Multiple Provider Types
+Test your understanding of Terraform Providers with Jamf Pro:
 
-**Scenario**: Build a practical application using common providers that work together - no multiple cloud accounts needed!
+### 📝 Quiz Questions
+
+**1. What is the Jamf Pro Terraform provider source?**
+- A) hashicorp/jamfpro
+- B) deploymenttheory/jamfpro
+- C) jamf/jamfpro
+- D) terraform/jamfpro
+
+**2. Which authentication method is recommended for production Jamf Pro instances?**
+- A) basic
+- B) bearer
+- C) oauth2
+- D) api_key
+
+**3. What provider alias syntax allows multiple Jamf Pro environments?**
+- A) `provider "jamfpro" { environment = "staging" }`
+- B) `provider "jamfpro" { alias = "staging" }`
+- C) `provider "jamfpro.staging" {}`
+- D) `provider "jamfpro_staging" {}`
+
+**4. Which version constraint allows patch updates for the Jamf Pro provider?**
+- A) `version = "= 0.24.0"`
+- B) `version = ">= 0.24.0"`
+- C) `version = "~> 0.24.0"`
+- D) `version = "< 1.0.0"`
+
+**5. What provider performance setting prevents API conflicts in Jamf Pro?**
+- A) `jamfpro_api_timeout`
+- B) `jamfpro_load_balancer_lock`
+- C) `jamfpro_max_retry_attempts`
+- D) `hide_sensitive_data`
+
+**6. Which provider helps generate unique names for Jamf Pro resources?**
+- A) local
+- B) http
+- C) random
+- D) external
+
+**7. What command shows the Jamf Pro provider resource schema?**
+- A) `terraform providers`
+- B) `terraform show`
+- C) `terraform providers schema -json`
+- D) `terraform validate`
+
+**8. How do you specify a provider alias for a Jamf Pro resource?**
+- A) `jamfpro = jamfpro.staging`
+- B) `provider = jamfpro.staging`
+- C) `alias = "staging"`
+- D) `environment = "staging"`
+
+<details>
+<summary>🔍 Click for Answers</summary>
+
+1. **B** - deploymenttheory/jamfpro is the official provider source
+2. **C** - OAuth2 is recommended for production security and scalability
+3. **B** - `alias = "staging"` is the correct syntax for provider aliases
+4. **C** - `~> 0.24.0` allows patch updates while maintaining compatibility
+5. **B** - `jamfpro_load_balancer_lock` prevents concurrent API calls
+6. **C** - The random provider generates unique identifiers and names
+7. **C** - `terraform providers schema -json` shows detailed provider schemas
+8. **B** - `provider = jamfpro.staging` specifies which provider alias to use
+
+</details>
 
 **📁 File: `providers.tf` - Training-Friendly Multi-Provider Setup**
 ```hcl
@@ -1219,11 +1702,9 @@ Test your understanding of Terraform Providers with these questions:
 
 ---
 
-**🎉 Congratulations!** You've completed Module 5 and now understand how to work with Terraform providers effectively. You've learned about the registry, versioning, aliases, and practical multi-provider configurations!
+**🎉 Congratulations!** You've completed Module 6 and now understand how to work with Terraform providers effectively, specifically focusing on the Jamf Pro provider for device management infrastructure!
 
-**➡️ Ready for Module 6?** Let me know when you'd like to continue with Terraform Language - where we'll dive deep into HCL syntax and advanced language features!
-
----
+**➡️ Ready for Module 7?** Let me know when you'd like to continue with Terraform Language - where we'll dive deep into HCL syntax and advanced language features!
 
 ---
 
