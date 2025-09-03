@@ -240,5 +240,5 @@ Follow the steps below to create the Self Service Health Check:
 7. Now that the script is uploaded, browse to your Jamf Pro tenant and find the ID of the script that has been uploaded
 8. Once you have the scirpt ID, you can create the Policy
 9. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `policies.tf`
-10. Using the policy resource example above, create a policy that uses the script that was previously uploaded by pointing the script payload to the script ID you had from the previous step
+10. Using the policy resource example above, create a policy that uses the script that was previously uploaded by pointing the script payload to the script ID you had from the previous step, ensure that the scope of the policy is set to **All Devices**
 11. Run your terraform and create your policy by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
