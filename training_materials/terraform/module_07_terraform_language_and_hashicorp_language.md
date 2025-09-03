@@ -1237,31 +1237,123 @@ provider "jamfpro" {
 ```hcl
 # Create category.tf
 resource "jamfpro_category" "security" {
-  name     = "Security Tools"
-  priority = 10
+  name     = "Security Tools"  # Category display name
+  priority = 10               # Priority level (1-20)
 }
 ```
 
+**Expected Terminal Output:**
+
+```bash
+$ terraform validate
+```
+
+```
+Success! The configuration is valid.
+```
+
+```bash
+$ terraform plan
+```
+
+```
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # jamfpro_category.security will be created
+  + resource "jamfpro_category" "security" {
+      + id       = (known after apply)
+      + name     = "Security Tools"
+      + priority = 10
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+```
+
+```bash
+$ terraform apply -auto-approve
+```
+
+```
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # jamfpro_category.security will be created
+  + resource "jamfpro_category" "security" {
+      + id       = (known after apply)
+      + name     = "Security Tools"
+      + priority = 10
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+jamfpro_category.security: Creating...
+jamfpro_category.security: Creation complete after 1s [id=36650]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+```
+
 **Practice**: 
-- Add inline comments
-- Try different category names
-- Experiment with priority values
+- Add inline comments explaining each parameter
+- Try different category names and priority values
+- Observe the resource creation process and assigned ID
 
 ---
 
 #### **Exercise 4: Data Source Practice**
 **Duration**: 5 minutes
 
-**Task**: Create a `data.tf` file to read existing JamfPro data
+**Task**: Create a `data.tf` file to read existing JamfPro data (references the category created in Exercise 3)
 
 ```hcl
 # Create data.tf
 data "jamfpro_category" "existing" {
-  name = "Production"
+  name = "Security Tools"  # References the category created in Exercise 3
 }
 ```
 
+**Expected Terminal Output:**
+
+```bash
+$ terraform plan
+```
+
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+```
+
 **Practice**: Use the data source in a resource reference
+
+**Example of referencing data source attributes:**
+```hcl
+# Example: Create another resource that references the data source
+resource "jamfpro_policy" "example" {
+  name                        = "Example Policy"
+  enabled                     = true
+  category_id                 = data.jamfpro_category.existing.id  # Reference data source ID
+  frequency                   = "Once per computer"
+  trigger_checkin             = true
+}
+```
+
+**Key Observations:**
+- Data sources are **read-only** - they retrieve information without managing resources
+- Data sources are evaluated during `terraform plan` and `terraform apply`
+- You can reference data source attributes using `data.<type>.<name>.<attribute>` syntax
+- Data sources must reference **existing** resources (created in Exercise 3)
+- The data source ID matches the resource ID (`36650` in this example)
 
 ---
 
@@ -1820,9 +1912,10 @@ It supports complex data types and nested structures, making it more powerful th
 
 ---
 
-### 🎯 **Module 6 Summary**
+### 🎯 **Module 7 Summary**
 
 **🏆 Key Learning Achievements:**
+
 - ✅ Distinguished between **HCL** and **Terraform Language**
 - ✅ Mastered the **four basic elements**: Blocks, Labels, Arguments, Expressions
 - ✅ Understood **Terraform settings** block configuration
