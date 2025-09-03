@@ -15,3 +15,7 @@ In this section, you will be covering the following topics:
 - [Lesson 5 - Computer Configurations]()
 - [Lesson 6 - Mobile Device Configurations]()
 - [Section 2 Review]()
+
+In this section, to create the Configuration Profiles, you are going to need to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) in the deploymenttheory GitHub repo. Please download this and follow the setup guide in the repo prior to the Configuration Profile lesson. You will also need to install the Go programming language on the machine which you can follow the steps on the [go.dev webpage](https://go.dev/doc/install).
+
+Use **Option 2** in the setup guide when it is discussing your variables for authentication and create a config file.
