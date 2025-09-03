@@ -1576,64 +1576,114 @@ Test your understanding of Terraform Providers with Jamf Pro:
 ### 📝 Quiz Questions
 
 **1. What is the Jamf Pro Terraform provider source?**
+
 - A) hashicorp/jamfpro
 - B) deploymenttheory/jamfpro
 - C) jamf/jamfpro
 - D) terraform/jamfpro
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - deploymenttheory/jamfpro is the official provider source
+
+</details>
+
 **2. Which authentication method is recommended for production Jamf Pro instances?**
+
 - A) basic
 - B) bearer
 - C) oauth2
 - D) api_key
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - OAuth2 is recommended for production security and scalability
+
+</details>
+
 **3. What provider alias syntax allows multiple Jamf Pro environments?**
+
 - A) `provider "jamfpro" { environment = "staging" }`
 - B) `provider "jamfpro" { alias = "staging" }`
 - C) `provider "jamfpro.staging" {}`
 - D) `provider "jamfpro_staging" {}`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - `alias = "staging"` is the correct syntax for provider aliases
+
+</details>
+
 **4. Which version constraint allows patch updates for the Jamf Pro provider?**
+
 - A) `version = "= 0.24.0"`
 - B) `version = ">= 0.24.0"`
 - C) `version = "~> 0.24.0"`
 - D) `version = "< 1.0.0"`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - `~> 0.24.0` allows patch updates while maintaining compatibility
+
+</details>
+
 **5. What provider performance setting prevents API conflicts in Jamf Pro?**
+
 - A) `jamfpro_api_timeout`
 - B) `jamfpro_load_balancer_lock`
 - C) `jamfpro_max_retry_attempts`
 - D) `hide_sensitive_data`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**B** - `jamfpro_load_balancer_lock` prevents concurrent API calls
+
+</details>
+
 **6. Which provider helps generate unique names for Jamf Pro resources?**
+
 - A) local
 - B) http
 - C) random
 - D) external
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - The random provider generates unique identifiers and names
+
+</details>
+
 **7. What command shows the Jamf Pro provider resource schema?**
+
 - A) `terraform providers`
 - B) `terraform show`
 - C) `terraform providers schema -json`
 - D) `terraform validate`
 
+<details>
+<summary>🔍 Click for Answer</summary>
+
+**C** - `terraform providers schema -json` shows detailed provider schemas
+
+</details>
+
 **8. How do you specify a provider alias for a Jamf Pro resource?**
+
 - A) `jamfpro = jamfpro.staging`
 - B) `provider = jamfpro.staging`
 - C) `alias = "staging"`
 - D) `environment = "staging"`
 
 <details>
-<summary>🔍 Click for Answers</summary>
+<summary>🔍 Click for Answer</summary>
 
-1. **B** - deploymenttheory/jamfpro is the official provider source
-2. **C** - OAuth2 is recommended for production security and scalability
-3. **B** - `alias = "staging"` is the correct syntax for provider aliases
-4. **C** - `~> 0.24.0` allows patch updates while maintaining compatibility
-5. **B** - `jamfpro_load_balancer_lock` prevents concurrent API calls
-6. **C** - The random provider generates unique identifiers and names
-7. **C** - `terraform providers schema -json` shows detailed provider schemas
-8. **B** - `provider = jamfpro.staging` specifies which provider alias to use
+**B** - `provider = jamfpro.staging` specifies which provider alias to use
 
 </details>
 
@@ -2049,76 +2099,6 @@ resource "local_file" "test_file" {
   filename = "${path.module}/jamfpro-test-output.txt"
 }
 ```
-
----
-
-## 🧜 Knowledge Check: Module 6 Quiz
-
-Test your understanding of Terraform Providers with Jamf Pro:
-
-### 📝 Quiz Questions
-
-**1. What is the Jamf Pro Terraform provider source?**
-- A) hashicorp/jamfpro
-- B) deploymenttheory/jamfpro
-- C) jamf/jamfpro
-- D) terraform/jamfpro
-
-**2. Which authentication method is recommended for production Jamf Pro instances?**
-- A) basic
-- B) bearer
-- C) oauth2
-- D) api_key
-
-**3. What provider alias syntax allows multiple Jamf Pro environments?**
-- A) `provider "jamfpro" { environment = "staging" }`
-- B) `provider "jamfpro" { alias = "staging" }`
-- C) `provider "jamfpro.staging" {}`
-- D) `provider "jamfpro_staging" {}`
-
-**4. Which version constraint allows patch updates for the Jamf Pro provider?**
-- A) `version = "= 0.24.0"`
-- B) `version = ">= 0.24.0"`
-- C) `version = "~> 0.24.0"`
-- D) `version = "< 1.0.0"`
-
-**5. What provider performance setting prevents API conflicts in Jamf Pro?**
-- A) `jamfpro_api_timeout`
-- B) `jamfpro_load_balancer_lock`
-- C) `jamfpro_max_retry_attempts`
-- D) `hide_sensitive_data`
-
-**6. Which provider helps generate unique names for Jamf Pro resources?**
-- A) local
-- B) http
-- C) random
-- D) external
-
-**7. What command shows the Jamf Pro provider resource schema?**
-- A) `terraform providers`
-- B) `terraform show`
-- C) `terraform providers schema -json`
-- D) `terraform validate`
-
-**8. How do you specify a provider alias for a Jamf Pro resource?**
-- A) `jamfpro = jamfpro.staging`
-- B) `provider = jamfpro.staging`
-- C) `alias = "staging"`
-- D) `environment = "staging"`
-
-<details>
-<summary>🔍 Click for Answers</summary>
-
-1. **B** - deploymenttheory/jamfpro is the official provider source
-2. **C** - OAuth2 is recommended for production security and scalability
-3. **B** - `alias = "staging"` is the correct syntax for provider aliases
-4. **C** - `~> 0.24.0` allows patch updates while maintaining compatibility
-5. **B** - `jamfpro_load_balancer_lock` prevents concurrent API calls
-6. **C** - The random provider generates unique identifiers and names
-7. **C** - `terraform providers schema -json` shows detailed provider schemas
-8. **B** - `provider = jamfpro.staging` specifies which provider alias to use
-
-</details>
 
 ---
 
