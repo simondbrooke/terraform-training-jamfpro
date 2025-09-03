@@ -1360,37 +1360,203 @@ resource "jamfpro_policy" "example" {
 #### **Exercise 5: Variables and Outputs**
 **Duration**: 7 minutes
 
-**Task**: Create `variables.tf` and `outputs.tf`
+**Task**: Create `variables.tf` and `outputs.tf` files, then test variables and view outputs
 
-**variables.tf:**
+**Step 1**: Create variables.tf
 ```hcl
+# Input variables for JamfPro configuration
 variable "category_name" {
   description = "Name of the JamfPro category"
   type        = string
-  default     = "Demo Category"
+  default     = "Security Tools"
 }
 
 variable "category_priority" {
-  description = "Priority level (1-20)"
+  description = "Priority level for the category (1-20)"
   type        = number
   default     = 10
   
   validation {
     condition     = var.category_priority >= 1 && var.category_priority <= 20
-    error_message = "Priority must be between 1 and 20."
+    error_message = "Category priority must be between 1 and 20."
   }
 }
-```
 
-**outputs.tf:**
-```hcl
-output "category_id" {
-  description = "The ID of the created category"
-  value       = jamfpro_category.security.id
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "sandbox"
 }
 ```
 
-**Practice**: Reference variables in your resource blocks
+**Step 2**: Create outputs.tf
+```hcl
+# Output values from JamfPro resources
+output "category_id" {
+  description = "ID of the created JamfPro category"
+  value       = jamfpro_category.security.id
+}
+
+output "category_name" {
+  description = "Name of the created JamfPro category"
+  value       = jamfpro_category.security.name
+}
+
+output "category_priority" {
+  description = "Priority of the created JamfPro category"
+  value       = jamfpro_category.security.priority
+}
+
+output "data_source_reference" {
+  description = "Category name from data source"
+  value       = data.jamfpro_category.existing.name
+}
+```
+
+**Step 3**: Update category.tf to use variables
+```hcl
+# Create a JamfPro category using variables
+resource "jamfpro_category" "security" {
+  name     = var.category_name     # Category display name from variable
+  priority = var.category_priority # Priority level from variable (1-20)
+}
+```
+
+**Step 4**: Validate and apply to see outputs
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+Success! The configuration is valid.
+```
+
+```bash
+terraform plan
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 1s [id=36650]
+
+Changes to Outputs:
+  + category_id           = "36650"
+  + category_name         = "Security Tools"
+  + category_priority     = 10
+  + data_source_reference = "Security Tools"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+```
+
+```bash
+terraform apply -auto-approve
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+Changes to Outputs:
+  + category_id           = "36650"
+  + category_name         = "Security Tools"
+  + category_priority     = 10
+  + data_source_reference = "Security Tools"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+category_id = "36650"
+category_name = "Security Tools"
+category_priority = 10
+data_source_reference = "Security Tools"
+```
+
+**Step 5**: Test with custom variable values
+```bash
+terraform plan -var="category_name=Development Tools" -var="category_priority=5"
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # jamfpro_category.security will be updated in-place
+  ~ resource "jamfpro_category" "security" {
+        id       = "36650"
+      ~ name     = "Security Tools" -> "Development Tools"
+      ~ priority = 10 -> 5
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+
+Changes to Outputs:
+  ~ category_name         = "Security Tools" -> "Development Tools"
+  ~ category_priority     = 10 -> 5
+```
+
+**Step 6**: Test variable validation
+```bash
+terraform plan -var="category_priority=25"
+```
+**Expected Output:**
+```
+╷
+│ Error: Invalid value for variable
+│ 
+│   on variables.tf line 8:
+│    8: variable "category_priority" {
+│     ├────────────────
+│     │ var.category_priority is 25
+│ 
+│ Category priority must be between 1 and 20.
+│ 
+│ This was checked by the validation rule at variables.tf:13,3-13.
+╵
+```
+
+**Step 7**: View outputs
+```bash
+terraform output
+```
+**Expected Output:**
+```
+category_id = "36650"
+category_name = "Security Tools"
+category_priority = 10
+data_source_reference = "Security Tools"
+```
+
+```bash
+terraform output category_id
+```
+**Expected Output:**
+```
+"36650"
+```
+
+**Step 8**: Create terraform.tfvars (optional)
+```hcl
+# Example variable values file
+category_name     = "Security Tools"
+category_priority = 10
+environment      = "sandbox"
+```
+
+**Practice**: Variables provide flexibility and reusability. Outputs expose values for other configurations or external systems to use.
 
 ---
 
