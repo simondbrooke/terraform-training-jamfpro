@@ -1,11 +1,16 @@
 
+# Module 06: Terraform Providers
+
 ---
 
-## 🔌 Module 06: Terraform Providers
+## 🔌 Terraform Providers
+
 *Duration: 2.5 hours | Labs: 4 | Difficulty: 🟡 Intermediate*
 
 ### 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Understand what Terraform providers are and how they work
 - ✅ Navigate and use the Terraform Registry
 - ✅ Configure multiple providers in a single configuration
@@ -22,6 +27,7 @@ By the end of this module, you will be able to:
 Terraform providers are **plugins** that enable Terraform to interact with APIs, device management platforms, and other services. They act as a **translation layer** between Terraform's configuration language and external services like Jamf Pro.
 
 **🎯 Key Concepts:**
+
 - **🔧 Plugins**: Providers are executable plugins that Terraform downloads and runs
 - **📡 API Interface**: Each provider knows how to communicate with specific APIs
 - **🏗️ Resource Management**: Providers define what resources and data sources are available
@@ -53,9 +59,9 @@ flowchart TB
             Archived["📦 Archived"]
         end
         
-        subgraph "Validation"
+        subgraph "Validation Process"
             PartnerProgram[Partner Development Program]
-            Validation[Validation & Testing]
+            ValidationTesting[Validation & Testing]
         end
     end
     
@@ -80,7 +86,7 @@ flowchart TB
     Registry --> Archived
     
     Partner --> PartnerProgram
-    PartnerProgram --> Validation
+    PartnerProgram --> ValidationTesting
     
     Platforms --> Darwin_AMD64
     Platforms --> Darwin_ARM64
