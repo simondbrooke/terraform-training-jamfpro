@@ -1067,12 +1067,12 @@ Test your understanding of Terraform Basics with these questions:
 - C) State file tracking of current infrastructure
 - D) Execution plan generation
 
-**8. Which validation constraint ensures a variable contains a valid email address?**
+**8. Which validation constraint ensures a variable contains a valid semantic version format (e.g., "v1.0")?**
 
-- A) `validation { condition = length(var.email) > 0 }`
-- B) `validation { condition = can(regex(".*@.*", var.email)) }`
-- C) `validation { condition = var.email != "" }`
-- D) `validation { condition = contains(var.email, "@") }`
+- A) `validation { condition = length(var.version_number) > 0 }`
+- B) `validation { condition = can(regex("^v\\d+\\.\\d+$", var.version_number)) }`
+- C) `validation { condition = var.version_number != "" }`
+- D) `validation { condition = contains(var.version_number, "v") }`
 
 <details>
 <summary>🔍 Click for Answers</summary>
