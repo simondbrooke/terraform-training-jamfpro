@@ -754,8 +754,29 @@ Success! The configuration is valid.
 **Practice**: Try different version constraints (`>=`, `<`, `~>`, exact versions)
 
 **Testing Different Version Constraints:**
+*For each test, update your `terraform.tf` file with the new version constraint, remove existing `.terraform` directory and `.terraform.lock.hcl` file, then run `terraform init` to see the behavior.*
 
 **1. Exact Version (`= 0.24.0`):**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "= 0.24.0"  # Exact version
+    }
+  }
+}
+```
+
+Clean and initialize:
+```bash
+$ rm -rf .terraform .terraform.lock.hcl
+$ terraform init
+```
 ```bash
 $ terraform init
 ```
@@ -770,7 +791,24 @@ Terraform has been successfully initialized!
 ```
 
 **2. Pessimistic Constraint (`~> 0.24`):**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"  # Pessimistic constraint
+    }
+  }
+}
+```
+
+Clean and initialize:
 ```bash
+$ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
 ```
@@ -784,7 +822,24 @@ Terraform has been successfully initialized!
 ```
 
 **3. Greater Than or Equal (`>= 0.20.0`):**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0"  # Greater than or equal
+    }
+  }
+}
+```
+
+Clean and initialize:
 ```bash
+$ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
 ```
@@ -798,7 +853,24 @@ Terraform has been successfully initialized!
 ```
 
 **4. Less Than Constraint (`< 0.25.0`):**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "< 0.25.0"  # Less than
+    }
+  }
+}
+```
+
+Clean and initialize:
 ```bash
+$ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
 ```
@@ -812,7 +884,24 @@ Terraform has been successfully initialized!
 ```
 
 **5. Restrictive Less Than (`< 0.20.0`) - Uses Older Version:**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "< 0.20.0"  # Restrictive less than
+    }
+  }
+}
+```
+
+Clean and initialize:
 ```bash
+$ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
 ```
@@ -826,7 +915,24 @@ Terraform has been successfully initialized!
 ```
 
 **6. Invalid Version (`= 0.99.0`) - Shows Error:**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "= 0.99.0"  # Non-existent version
+    }
+  }
+}
+```
+
+Clean and initialize:
 ```bash
+$ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
 ```
@@ -845,12 +951,118 @@ Initializing provider plugins...
 - Finding deploymenttheory/jamfpro versions matching "0.99.0"...
 ```
 
+**7. Range Constraints (Combined `>=` and `<`):**
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = ">= 0.20.0, < 0.25.0"  # Range constraint
+    }
+  }
+}
+```
+
+Clean and initialize:
+```bash
+$ rm -rf .terraform .terraform.lock.hcl
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching ">= 0.20.0, < 0.25.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**8. Pessimistic Constraint Examples with AWS Provider:**
+
+Let's test pessimistic constraints with AWS provider to see major/minor version behavior:
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.31"  # Allows 5.31.x but not 5.32.x
+    }
+  }
+}
+```
+
+Clean and initialize:
+```bash
+$ rm -rf .terraform .terraform.lock.hcl
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Finding hashicorp/aws versions matching "~> 5.31"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installing hashicorp/aws v5.31.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+- Installed hashicorp/aws v5.31.0 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+```
+
+Now try with a broader pessimistic constraint:
+
+Update your `terraform.tf`:
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"  # Allows any 5.x version
+    }
+  }
+}
+```
+
+Clean and initialize:
+```bash
+$ rm -rf .terraform .terraform.lock.hcl
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.0"...
+- Installing hashicorp/aws v5.75.0...  # Latest 5.x version
+- Installed hashicorp/aws v5.75.0 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+```
+
 **Key Observations:**
 - Exact, pessimistic, and greater-than constraints that include v0.24.0 all install the latest matching version (v0.24.0)
 - Less than constraints work as expected - `< 0.25.0` installs v0.24.0, while `< 0.20.0` installs an older version (v0.19.1)
+- **Range constraints** (`>= 0.20.0, < 0.25.0`) allow precise control over acceptable versions
+- **Pessimistic constraints** behave differently based on precision:
+  - `~> 5.31` allows 5.31.0, 5.31.1, 5.31.2, etc. but NOT 5.32.0
+  - `~> 5.0` allows 5.0.0, 5.1.0, 5.75.0, etc. but NOT 6.0.0
 - Invalid version constraints result in clear error messages
 - Terraform provides helpful suggestions when constraints fail
-- The less than operator (`<`) effectively prevents upgrading beyond a certain version
+- Multiple providers with different constraints can be specified in the same block
 
 ---
 
