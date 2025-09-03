@@ -1970,8 +1970,9 @@ resource "jamfpro_category" "example" {
 #### **Exercise 9: Error Debugging**
 **Duration**: 5 minutes
 
-**Task**: Fix these intentional syntax errors
+**Task**: Fix these intentional syntax errors and learn debugging techniques
 
+**Step 1**: Create error_demo.tf with intentional errors
 ```hcl
 # Error 1: Missing quotes
 resource jamfpro_category demo {
@@ -1983,13 +1984,119 @@ resource "jamfpro_building" "office"
   name = "Branch Office"
   city = "New York"
 
-# Error 3: Invalid identifier
-resource "jamfpro_category" "my-category" {
+# Error 3: Invalid identifier (number starting)
+resource "jamfpro_category" "1invalid_name" {
   name = "Test Category"
 }
 ```
 
-**Practice**: Use `terraform validate` to identify and fix errors
+**Step 2**: Run validation to see errors
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+╷
+│ Error: Missing newline after argument
+│ 
+│   on error_demo.tf line 3, in resource "jamfpro_category" "demo":
+│    3:   name = Security Tools
+│ 
+│ An argument definition must end with a newline.
+╵
+╷
+│ Error: Invalid block definition
+│ 
+│   on error_demo.tf line 7:
+│    7: resource "jamfpro_building" "office" 
+│    8:   name = "Branch Office"
+│ 
+│ A block definition must have block content delimited by "{" and "}",
+│ starting on the same line as the block header.
+╵
+╷
+│ Error: Invalid resource name
+│ 
+│   on error_demo.tf line 13, in resource "jamfpro_category" "1invalid_name":
+│   13: resource "jamfpro_category" "1invalid_name" {
+│ 
+│ A name must start with a letter or underscore and may contain only letters,
+│ digits, underscores, and dashes.
+╵
+```
+
+**Step 3**: Fix Error 1 - Add missing quotes
+```hcl
+# Error 1: Fixed - Added missing quotes
+resource "jamfpro_category" "demo" {
+  name = "Security Tools"
+}
+```
+
+**Step 4**: Fix Error 2 - Add missing braces
+```hcl
+# Error 2: Fixed - Added missing braces
+resource "jamfpro_building" "office" {
+  name = "Branch Office"
+  city = "New York"
+}
+```
+
+**Step 5**: Fix Error 3 - Use valid identifier
+```hcl
+# Error 3: Fixed - Valid identifier
+resource "jamfpro_category" "valid_name" {
+  name = "Test Category"
+}
+```
+
+**Step 6**: Validate all fixes
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+Success! The configuration is valid.
+```
+
+**Step 7**: Demonstrate formatting
+Create a poorly formatted file:
+```hcl
+resource "jamfpro_category"     "poorly_formatted"   {
+name="Test"
+     priority=5
+}
+```
+
+Run terraform fmt:
+```bash
+terraform fmt
+```
+**Expected Output:**
+```
+format_demo.tf
+```
+
+**After formatting:**
+```hcl
+resource "jamfpro_category" "poorly_formatted" {
+  name     = "Test"
+  priority = 5
+}
+```
+
+**Common Error Types:**
+- **Syntax Errors**: Missing quotes, braces, or semicolons
+- **Block Structure**: Incorrect resource/data block formatting
+- **Identifier Rules**: Names must start with letter/underscore
+- **Argument Issues**: Invalid or missing required arguments
+
+**Debugging Commands:**
+- `terraform validate` - Check syntax and configuration errors
+- `terraform fmt` - Auto-format code for consistency
+- `terraform plan` - Preview changes and catch logic errors
+
+**Practice**: Always validate after making changes. Use terraform fmt to maintain consistent code style.
 
 ---
 
