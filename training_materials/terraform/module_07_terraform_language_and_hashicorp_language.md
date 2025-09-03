@@ -710,7 +710,117 @@ terraform {
 }
 ```
 
+**Expected Terminal Output:**
+
+```bash
+$ terraform init
+```
+
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+```
+
+```bash
+$ terraform validate
+```
+
+```
+Success! The configuration is valid.
+```
+
 **Practice**: Try different version constraints (`>=`, `<`, `~>`, exact versions)
+
+**Testing Different Version Constraints:**
+
+**1. Exact Version (`= 0.24.0`):**
+```bash
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "0.24.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**2. Pessimistic Constraint (`~> 0.24`):**
+```bash
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**3. Greater Than or Equal (`>= 0.20.0`):**
+```bash
+$ terraform init
+```
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching ">= 0.20.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**4. Invalid Version (`= 0.99.0`) - Shows Error:**
+```bash
+$ terraform init
+```
+```
+Error: Failed to query available provider packages
+
+Could not retrieve the list of available versions for provider
+deploymenttheory/jamfpro: no available releases match the given constraints
+0.99.0
+
+To see which modules are currently depending on deploymenttheory/jamfpro
+and what versions are specified, run the following command:
+    terraform providers
+
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "0.99.0"...
+```
+
+**Key Observations:**
+- All valid constraints install the same version (v0.24.0) as it's the latest matching version
+- Invalid version constraints result in clear error messages
+- Terraform provides helpful suggestions when constraints fail
 
 ---
 
@@ -722,11 +832,21 @@ terraform {
 ```hcl
 # Create providers.tf
 provider "jamfpro" {
-  jamfpro_instance_fqdn = "https://company.jamfcloud.com"
-  auth_method           = "oauth2"
-  client_id             = "your-client-id"
-  client_secret         = "your-client-secret"
+  jamfpro_instance_fqdn = "https://company.jamfcloud.com"  # JamfPro server URL
+  auth_method           = "oauth2"                         # Authentication method
+  client_id             = "your-client-id"                 # OAuth2 client ID
+  client_secret         = "your-client-secret"             # OAuth2 client secret
 }
+```
+
+**Expected Terminal Output:**
+
+```bash
+$ terraform validate
+```
+
+```
+Success! The configuration is valid.
 ```
 
 **Practice**: Add comments explaining each parameter
@@ -850,7 +970,7 @@ resource "jamfpro_building" "hq" {
 }
 ```
 
-**Practice**: Document your configuration thoroughly
+**Practice**: Document your configuration with 'why' comments, not 'what' comments.
 
 ---
 
