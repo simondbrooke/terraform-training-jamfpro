@@ -1563,10 +1563,11 @@ environment      = "sandbox"
 #### **Exercise 6: Local Values**
 **Duration**: 4 minutes
 
-**Task**: Create `locals.tf` for computed values
+**Task**: Create `locals.tf` for computed values and use them in resources
 
+**Step 1**: Create locals.tf
 ```hcl
-# Create locals.tf
+# Local values for computed expressions
 locals {
   environment = "production"
   
@@ -1577,10 +1578,122 @@ locals {
   }
   
   category_name = "${local.environment}-${var.category_name}"
+  category_full_name = "${local.common_tags.Team}-${local.category_name}"
 }
 ```
 
-**Practice**: Use locals in your resources
+**Step 2**: Update category.tf to use local value
+```hcl
+# Create a JamfPro category using variables and locals
+resource "jamfpro_category" "security" {
+  name     = local.category_name   # Category display name from local value
+  priority = var.category_priority # Priority level from variable (1-20)
+}
+```
+
+**Step 3**: Update data.tf to use local value
+```hcl
+# Read an existing JamfPro category using data source
+data "jamfpro_category" "existing" {
+  name = local.category_name  # References the category with computed local name
+}
+```
+
+**Step 4**: Add local outputs to outputs.tf
+```hcl
+output "local_environment" {
+  description = "Environment from local value"
+  value       = local.environment
+}
+
+output "local_common_tags" {
+  description = "Common tags from local value"
+  value       = local.common_tags
+}
+
+output "local_category_name" {
+  description = "Computed category name from local"
+  value       = local.category_name
+}
+
+output "local_category_full_name" {
+  description = "Full computed category name"
+  value       = local.category_full_name
+}
+```
+
+**Step 5**: Validate and apply
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+Success! The configuration is valid.
+```
+
+```bash
+terraform apply -auto-approve
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+Changes to Outputs:
+  ~ data_source_reference    = "Security Tools" -> "production-Security Tools"
+  + local_category_full_name = "platform-production-Security Tools"
+  + local_category_name      = "production-Security Tools"
+  + local_common_tags        = {
+      + Environment = "production"
+      + ManagedBy   = "terraform"
+      + Team        = "platform"
+    }
+  + local_environment        = "production"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+category_id = "36650"
+category_name = "production-Security Tools"
+category_priority = 10
+data_source_reference = "production-Security Tools"
+local_category_full_name = "platform-production-Security Tools"
+local_category_name = "production-Security Tools"
+local_common_tags = {
+  "Environment" = "production"
+  "ManagedBy" = "terraform"
+  "Team" = "platform"
+}
+local_environment = "production"
+```
+
+**Step 6**: View specific local outputs
+```bash
+terraform output local_environment
+```
+**Expected Output:**
+```
+"production"
+```
+
+```bash
+terraform output local_common_tags
+```
+**Expected Output:**
+```
+{
+  "Environment" = "production"
+  "ManagedBy" = "terraform"
+  "Team" = "platform"
+}
+```
+
+**Practice**: Locals compute and store expressions for reuse. They help reduce duplication and improve maintainability by centralizing computed values.
 
 ---
 
@@ -1589,22 +1702,120 @@ locals {
 
 **Task**: Add all three comment styles to your existing files
 
+**Step 1**: Add comprehensive comments to category.tf
 ```hcl
-# Single line comment explaining the resource
-resource "jamfpro_building" "hq" {
-  name = "Headquarters"  // Inline comment
-  city = "San Francisco"
+# Create a JamfPro category using variables and locals
+# This category will be used to organize security-related policies and packages
+resource "jamfpro_category" "security" {
+  name     = local.category_name   // Uses computed local value for consistency
+  priority = var.category_priority // Inline comment: Priority affects ordering in JamfPro UI
   
   /*
-    Multi-line comment explaining
-    why we need this building resource
-    for organizational structure
+    Multi-line comment explaining the purpose:
+    This category serves as an organizational structure for security tools
+    and policies within the JamfPro environment. The priority setting
+    determines where this category appears in lists and menus.
   */
-  country = "United States"
 }
 ```
 
-**Practice**: Document your configuration with 'why' comments, not 'what' comments.
+**Step 2**: Add comments to variables.tf demonstrating all three styles
+```hcl
+# Input variables for JamfPro configuration
+# These variables allow customization of the category configuration
+
+/*
+  The category_name variable defines the base name for our JamfPro category.
+  This will be combined with environment prefixes in local values
+  to create a consistent naming convention across environments.
+*/
+variable "category_name" {
+  description = "Name of the JamfPro category"
+  type        = string
+  default     = "Security Tools" // Default focuses on security tooling
+}
+
+# Priority variable with validation to ensure JamfPro compatibility
+variable "category_priority" {
+  description = "Priority level for the category (1-20)"
+  type        = number
+  default     = 10 // Mid-range priority for general security tools
+  
+  /*
+    Validation block ensures the priority value is within JamfPro's
+    accepted range. Values outside 1-20 would cause API errors
+    when creating or updating categories in JamfPro.
+  */
+  validation {
+    condition     = var.category_priority >= 1 && var.category_priority <= 20
+    error_message = "Category priority must be between 1 and 20."
+  }
+}
+```
+
+**Step 3**: Add comments to locals.tf
+```hcl
+# Local values for computed expressions
+# These locals centralize string manipulation and tagging logic
+
+/*
+  Local values help avoid repetition and provide computed values
+  that can be reused throughout the configuration. This approach
+  ensures consistency and makes it easier to maintain naming conventions.
+*/
+locals {
+  environment = "production" // Override for production deployment
+  
+  /*
+    Standard tags applied to all resources for:
+    - Environment identification
+    - Resource ownership tracking  
+    - Team accountability
+  */
+  common_tags = {
+    Environment = local.environment  // References the local environment value
+    ManagedBy   = "terraform"        // Indicates infrastructure as code
+    Team        = "platform"         // Responsible team for maintenance
+  }
+  
+  # Computed category name with environment prefix for uniqueness
+  category_name = "${local.environment}-${var.category_name}"
+  
+  # Full category name including team prefix for complete identification
+  category_full_name = "${local.common_tags.Team}-${local.category_name}" // Combines team and category info
+}
+```
+
+**Step 4**: Validate configuration with comments
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+Success! The configuration is valid.
+```
+
+```bash
+terraform plan
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+```
+
+**Comment Style Guidelines:**
+- **Single-line comments (#)**: Use for brief explanations above blocks
+- **Inline comments (//)**: Use for short clarifications on specific lines  
+- **Multi-line comments (/* */)**: Use for detailed explanations of complex logic
+
+**Practice**: Document your configuration with 'why' comments, not 'what' comments. Comments should explain the reasoning and context behind decisions.
 
 ---
 
