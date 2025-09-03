@@ -26,76 +26,22 @@ By the end of this module, you will be able to:
 - **🔧 Extensible**: Can be extended for different use cases
 - **🌍 Multi-purpose**: Used across HashiCorp products
 
-**🏗️ HCL vs Terraform Language:**
+**🏗️ HCL Foundation vs Terraform Language:**
+
+**💡 Key Relationship**: HCL provides the foundational syntax and capabilities, while Terraform Language uses these foundations to create infrastructure-specific constructs.
+
 ```mermaid
-graph TB
-    subgraph "HCL Foundation Layer"
-        direction TB
-        HSyn[HCL Syntax<br/>• Blocks<br/>• Arguments<br/>• Expressions]
-        HFunc[HCL Functions<br/>• Built-in functions<br/>• String manipulation<br/>• Math operations]
-        HType[HCL Types<br/>• string, number, bool<br/>• list, map, object<br/>• null, any]
-        HComment[Comments<br/>• # single line<br/>• // alternative<br/>• /* multi-line */]
-    end
+graph LR
+    HCL["🏗️ HCL Foundation<br/>• Syntax & Grammar<br/>• Functions & Types<br/>• Comments & Structure"] 
+    TF["⚙️ Terraform Language<br/>• Infrastructure Blocks<br/>• Resource Management<br/>• Configuration Logic"]
     
-    subgraph "Terraform Language Layer"
-        direction TB
-        subgraph "Core Constructs"
-            TS["terraform blocks"]
-            TP["provider blocks"]
-        end
-        subgraph "Infrastructure Elements"
-            TR["resource blocks"]
-            TD["data blocks"]
-        end
-        subgraph "Configuration Elements"
-            TV["variable blocks"]
-            TO["output blocks"]
-            TL["locals blocks"]
-            TM["module blocks"]
-        end
-    end
+    HCL --> TF
     
-    HSyn -.-> TS
-    HSyn -.-> TP
-    HSyn -.-> TR
-    HSyn -.-> TD
-    HSyn -.-> TV
-    HSyn -.-> TO
-    HSyn -.-> TL
-    HSyn -.-> TM
-    
-    HFunc -.-> TR
-    HFunc -.-> TD
-    HFunc -.-> TV
-    HFunc -.-> TO
-    HFunc -.-> TL
-    
-    HType -.-> TR
-    HType -.-> TD
-    HType -.-> TV
-    HType -.-> TO
-    HType -.-> TL
-    
-    HComment -.-> TR
-    HComment -.-> TD
-    HComment -.-> TV
-    HComment -.-> TO
-    HComment -.-> TL
-    HComment -.-> TM
-    
-    style HSyn fill:#7B42BC,color:#fff
-    style HFunc fill:#7B42BC,color:#fff
-    style HType fill:#7B42BC,color:#fff
-    style HComment fill:#7B42BC,color:#fff
-    style TS fill:#FF6B35,color:#fff
-    style TP fill:#FF6B35,color:#fff
-    style TR fill:#FF6B35,color:#fff
-    style TD fill:#FF6B35,color:#fff
-    style TV fill:#FF6B35,color:#fff
-    style TO fill:#FF6B35,color:#fff
-    style TL fill:#FF6B35,color:#fff
-    style TM fill:#FF6B35,color:#fff
+    style HCL fill:#7B42BC,color:#fff
+    style TF fill:#FF6B35,color:#fff
 ```
+
+**📚 Throughout this module, we'll explore each HCL foundation layer in detail with focused diagrams.**
 
 **📋 HCL is used in:**
 - **Terraform**: Infrastructure as Code
@@ -160,6 +106,26 @@ resource "jamfpro_policy" "demo_policy" {
 **🎯 Key Takeaway**: If you encounter **HCL** in documentation or discussions, think "Terraform Language" - they're essentially the same in the context of Terraform configurations!
 
 #### 🧱 HCL Syntax Fundamentals
+
+**📊 HCL Syntax Components:**
+```mermaid
+graph TB
+    subgraph "HCL Syntax Elements"
+        B["📦 Blocks<br/>Container structures<br/>resource 'type' 'name' { }"]
+        A["🏷️ Arguments<br/>Key-value assignments<br/>name = value"]
+        E["🔧 Expressions<br/>Values & references<br/>var.example, 'literal'"]
+        L["📝 Labels<br/>Block identifiers<br/>resource 'aws_instance' 'web'"]
+    end
+    
+    B --> A
+    A --> E
+    B --> L
+    
+    style B fill:#7B42BC,color:#fff
+    style A fill:#9B59B6,color:#fff
+    style E fill:#8E44AD,color:#fff
+    style L fill:#A569BD,color:#fff
+```
 
 **📝 Basic Structure:**
 ```hcl
@@ -320,6 +286,34 @@ terraform {
 
 #### 📊 Version Constraint Operators
 
+**🔢 HCL Types in Version Constraints:**
+```mermaid
+graph TB
+    subgraph "HCL Type System"
+        S["📝 string<br/>'~> 1.0', '= 0.24.0'<br/>Version specifications"]
+        N["🔢 number<br/>1, 2, 24<br/>Version numbers"]
+        B["✅ bool<br/>true, false<br/>Feature flags"]
+        O["📋 object<br/>{ source = '...', version = '...' }<br/>Provider configurations"]
+    end
+    
+    subgraph "Version Expressions"
+        VC["Version Constraints<br/>>=, <, ~>, ="]
+        PR["Provider Requirements<br/>source + version"]
+    end
+    
+    S --> VC
+    N --> VC
+    O --> PR
+    B --> PR
+    
+    style S fill:#3498DB,color:#fff
+    style N fill:#E74C3C,color:#fff
+    style B fill:#2ECC71,color:#fff
+    style O fill:#F39C12,color:#fff
+    style VC fill:#9B59B6,color:#fff
+    style PR fill:#1ABC9C,color:#fff
+```
+
 Understanding version constraints is crucial for managing provider and Terraform versions effectively. These operators control which versions are acceptable.
 
 **🔧 Version Constraint Operators:**
@@ -437,6 +431,32 @@ terraform {
 
 #### 💬 Comments and Formatting
 
+**💬 HCL Comment System:**
+```mermaid
+graph LR
+    subgraph "Comment Types"
+        SL["# Single Line<br/>Quick explanations<br/>End-of-line notes"]
+        AL["// Alternative<br/>C-style comments<br/>Developer preference"]
+        ML["/* Multi-line */<br/>Documentation blocks<br/>Detailed explanations"]
+    end
+    
+    subgraph "Best Practices"
+        DOC["📚 Documentation<br/>Explain complex logic<br/>Resource purposes"]
+        ORG["🗂️ Organization<br/>Section separators<br/>File structure"]
+    end
+    
+    SL --> DOC
+    AL --> DOC
+    ML --> DOC
+    ML --> ORG
+    
+    style SL fill:#3498DB,color:#fff
+    style AL fill:#2ECC71,color:#fff
+    style ML fill:#E74C3C,color:#fff
+    style DOC fill:#9B59B6,color:#fff
+    style ORG fill:#F39C12,color:#fff
+```
+
 **📝 Comment Styles:**
 ```hcl
 # Single line comment
@@ -506,6 +526,41 @@ variable "jamfpro_environment" {
 ```
 
 #### 🔄 Alternate JSON Syntax
+
+**🔄 HCL Functions in Action:**
+```mermaid
+graph TB
+    subgraph "HCL Built-in Functions"
+        STR["📝 String Functions<br/>format(), join(), split()<br/>upper(), lower(), trim()"]
+        MATH["🔢 Math Functions<br/>max(), min(), ceil()<br/>floor(), abs()"]
+        COL["📋 Collection Functions<br/>length(), keys(), values()<br/>merge(), concat()"]
+        DT["📅 Date/Time Functions<br/>timestamp(), formatdate()<br/>timeadd()"]
+    end
+    
+    subgraph "Usage Contexts"
+        VAR["Variables<br/>default values"]
+        RES["Resources<br/>dynamic values"]
+        OUT["Outputs<br/>computed values"]
+        LOC["Locals<br/>calculations"]
+    end
+    
+    STR --> VAR
+    STR --> RES
+    MATH --> RES
+    MATH --> LOC
+    COL --> OUT
+    COL --> LOC
+    DT --> OUT
+    
+    style STR fill:#3498DB,color:#fff
+    style MATH fill:#E74C3C,color:#fff
+    style COL fill:#2ECC71,color:#fff
+    style DT fill:#F39C12,color:#fff
+    style VAR fill:#9B59B6,color:#fff
+    style RES fill:#8E44AD,color:#fff
+    style OUT fill:#A569BD,color:#fff
+    style LOC fill:#7B68EE,color:#fff
+```
 
 Terraform supports **JSON syntax** as an alternative to HCL for programmatic generation. This is particularly useful when you need to generate Terraform configurations dynamically using existing JSON libraries or APIs.
 
