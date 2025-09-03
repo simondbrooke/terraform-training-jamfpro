@@ -1141,21 +1141,48 @@ For complete details on version constraints, see: [Terraform Version Constraints
 ---
 
 #### **Exercise 2: Provider Configuration**
-**Duration**: 3 minutes
+**Duration**: 5 minutes
 
-**Task**: Create a `providers.tf` file with JamfPro provider setup
+**Task**: Create a `providers.tf` file with JamfPro provider setup using official configuration from the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs)
 
+**OAuth2 Authentication (Recommended):**
+
+Create `providers.tf`:
 ```hcl
-# Create providers.tf
+# JamfPro provider configuration using OAuth2 authentication
 provider "jamfpro" {
-  jamfpro_instance_fqdn = "https://company.jamfcloud.com"  # JamfPro server URL
-  auth_method           = "oauth2"                         # Authentication method
-  client_id             = "your-client-id"                 # OAuth2 client ID
-  client_secret         = "your-client-secret"             # OAuth2 client secret
+  jamfpro_instance_fqdn    = "https://company.jamfcloud.com"  # Your JamfPro server URL
+  auth_method              = "oauth2"                         # Authentication method (oauth2 or basic_auth)
+  client_id                = "your-client-id"                 # OAuth2 client ID
+  client_secret            = "your-client-secret"             # OAuth2 client secret
+  jamfpro_load_balancer_lock = true                          # Recommended for Jamf Cloud instances
 }
 ```
 
 **Expected Terminal Output:**
+
+```bash
+$ terraform init
+```
+
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+```
 
 ```bash
 $ terraform validate
@@ -1165,7 +1192,40 @@ $ terraform validate
 Success! The configuration is valid.
 ```
 
-**Practice**: Add comments explaining each parameter
+**Alternative: Basic Authentication**
+
+You can also use basic authentication (though OAuth2 is recommended):
+
+```hcl
+# JamfPro provider configuration using basic authentication
+provider "jamfpro" {
+  jamfpro_instance_fqdn = "https://company.jamfcloud.com"  # Your JamfPro server URL
+  auth_method           = "basic_auth"                     # Authentication method (oauth2 or basic_auth)
+  username              = "your-username"                  # Basic auth username
+  password              = "your-password"                  # Basic auth password
+  jamfpro_load_balancer_lock = true                       # Recommended for Jamf Cloud instances
+}
+```
+
+**Key Provider Configuration Options:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `jamfpro_instance_fqdn` | Yes | Full URL of your JamfPro instance |
+| `auth_method` | Yes | `"oauth2"` or `"basic_auth"` |
+| `client_id` | OAuth2 only | OAuth2 client identifier |
+| `client_secret` | OAuth2 only | OAuth2 client secret |
+| `username` | Basic Auth only | Username for basic authentication |
+| `password` | Basic Auth only | Password for basic authentication |
+| `jamfpro_load_balancer_lock` | No | `true` (recommended for Jamf Cloud) |
+
+**🔧 Important Notes:**
+- **OAuth2 is recommended** for production environments
+- **`jamfpro_load_balancer_lock = true`** is recommended for Jamf Cloud instances
+- The provider supports both on-premises and cloud JamfPro instances
+- Set `parallelism = 1` in terraform commands for reliability (covered in advanced topics)
+
+**Practice**: Try both authentication methods and observe the validation behavior
 
 ---
 
