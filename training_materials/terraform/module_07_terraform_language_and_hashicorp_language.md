@@ -1822,14 +1822,134 @@ and found no differences, so no changes are needed.
 #### **Exercise 8: JSON Syntax Conversion**
 **Duration**: 8 minutes
 
-**Task**: Convert your category resource to JSON syntax
+**Task**: Convert your category resource to JSON syntax and compare with HCL
 
-**Step 1**: Create `category.tf.json`
+**Step 1**: Create JSON variables file (variables.tf.json)
+```json
+{
+  "variable": {
+    "json_category_name": {
+      "description": "Category name for JSON example",
+      "type": "string",
+      "default": "JSON Security Tools"
+    },
+    "json_priority": {
+      "description": "Priority for JSON category",
+      "type": "number",
+      "default": 15
+    }
+  }
+}
+```
+
+**Step 2**: Create JSON resource file (category.tf.json)
 ```json
 {
   "resource": {
     "jamfpro_category": {
-      "security": {
+      "json_example": {
+        "name": "${var.json_category_name}",
+        "priority": "${var.json_priority}"
+      }
+    }
+  },
+  "output": {
+    "json_category_id": {
+      "description": "ID of the JSON-defined category",
+      "value": "${jamfpro_category.json_example.id}"
+    },
+    "json_category_name": {
+      "description": "Name of the JSON-defined category", 
+      "value": "${jamfpro_category.json_example.name}"
+    }
+  }
+}
+```
+
+**Step 3**: Validate both HCL and JSON together
+```bash
+terraform validate
+```
+**Expected Output:**
+```
+Success! The configuration is valid.
+```
+
+**Step 4**: Plan to see both resources
+```bash
+terraform plan
+```
+**Expected Output:**
+```
+data.jamfpro_category.existing: Reading...
+jamfpro_category.security: Refreshing state... [id=36650]
+data.jamfpro_category.existing: Read complete after 0s [id=36650]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # jamfpro_category.json_example will be created
+  + resource "jamfpro_category" "json_example" {
+      + id       = (known after apply)
+      + name     = "JSON Security Tools"
+      + priority = 15
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + json_category_id         = (known after apply)
+  + json_category_name       = "JSON Security Tools"
+```
+
+**Step 5**: Apply to create JSON-defined resource
+```bash
+terraform apply -auto-approve
+```
+**Expected Output:**
+```
+jamfpro_category.json_example: Creating...
+jamfpro_category.json_example: Creation complete after 0s [id=36651]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+category_id = "36650"
+category_name = "production-Security Tools"
+category_priority = 10
+data_source_reference = "production-Security Tools"
+json_category_id = "36651"
+json_category_name = "JSON Security Tools"
+local_category_full_name = "platform-production-Security Tools"
+local_category_name = "production-Security Tools"
+local_common_tags = {
+  "Environment" = "production"
+  "ManagedBy" = "terraform"
+  "Team" = "platform"
+}
+local_environment = "production"
+```
+
+**Step 6**: Compare syntax styles
+
+**HCL Syntax (more readable):**
+```hcl
+resource "jamfpro_category" "example" {
+  name     = "Security Tools"
+  priority = 10
+}
+```
+
+**JSON Syntax (more verbose):**
+```json
+{
+  "resource": {
+    "jamfpro_category": {
+      "example": {
         "name": "Security Tools",
         "priority": 10
       }
@@ -1838,38 +1958,16 @@ and found no differences, so no changes are needed.
 }
 ```
 
-**Step 2**: Test both HCL and JSON versions
-```bash
-terraform validate
-terraform plan
-```
+**Key Differences:**
+- **HCL**: More readable, supports comments, less quotes
+- **JSON**: More verbose, no comments, strict formatting
+- **Both**: Functionally equivalent, same Terraform behavior
 
-**Practice**: Compare readability between HCL and JSON
-
----
-
-#### **Exercise 9: Version Constraints Testing**
-**Duration**: 5 minutes
-
-**Task**: Experiment with different version constraints
-
-**Test these in your `terraform.tf`:**
-```hcl
-# Test 1: Exact version
-version = "= 0.24.0"
-
-# Test 2: Pessimistic constraint  
-version = "~> 0.24"
-
-# Test 3: Range constraint
-version = ">= 0.20.0, < 0.30.0"
-```
-
-**Practice**: Run `terraform init` with each constraint
+**Practice**: Compare readability between HCL and JSON. Notice how both create identical infrastructure but HCL is more human-friendly.
 
 ---
 
-#### **Exercise 10: Error Debugging**
+#### **Exercise 9: Error Debugging**
 **Duration**: 5 minutes
 
 **Task**: Fix these intentional syntax errors
