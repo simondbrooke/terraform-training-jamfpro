@@ -310,7 +310,6 @@ terraform {
     }
   }
 }
-
 # Default provider (Production)
 provider "jamfpro" {
   jamfpro_instance_fqdn = "https://company-prod.jamfcloud.com"
@@ -344,16 +343,37 @@ resource "jamfpro_category" "production" {
   # Uses default provider (production)
 }
 
-resource "jamfpro_category" "staging_test" {
-  provider = jamfpro.staging
-  name     = "Staging Test Software"
-  priority = 5
-}
 
-resource "jamfpro_policy" "dev_testing" {
-  provider = jamfpro.dev
-  name     = "Development Testing Policy"
-  enabled  = true
+# Example resources using aliases - these would fail with fudged credentials
+# but demonstrate the correct syntax for multi-tenancy
+
+# Uncomment to test staging provider (will fail authentication)
+# resource "jamfpro_category" "staging_test" {
+#   provider = jamfpro.staging
+#   name     = "Staging Test Software"  
+#   priority = 5
+# }
+
+# Uncomment to test dev provider (will fail authentication)
+# resource "jamfpro_policy" "dev_testing" {
+#   provider = jamfpro.dev
+#   name     = "Development Testing Policy"
+#   enabled  = true
+# }
+
+# Working example that only uses the default provider
+resource "jamfpro_smart_computer_group" "production_servers" {
+  name = "Production Servers"
+  
+  criteria {
+    name          = "Computer Name"
+    priority      = 0
+    and_or        = "and"
+    search_type   = "like"
+    value         = "prod"
+    opening_paren = false
+    closing_paren = false
+  }
 }
 ```
 
@@ -700,24 +720,193 @@ output "provider_info" {
 ```
 
 **Step 7: Deploy and Test**
+
 ```bash
 # Initialize Terraform
 terraform init
+```
 
+Expected output:
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/random versions matching "~> 3.4"...
+- Finding hashicorp/time versions matching "~> 0.9"...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Installing hashicorp/random v3.7.2...
+- Installed hashicorp/random v3.7.2 (signed by HashiCorp)
+- Installing hashicorp/time v0.13.1...
+- Installed hashicorp/time v0.13.1 (signed by HashiCorp)
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+
+Terraform has been successfully initialized!
+```
+
+```bash
 # Validate configuration
 terraform validate
+```
 
+Expected output:
+```
+Success! The configuration is valid.
+```
+
+```bash
 # Plan the deployment
 terraform plan
+```
 
-# Apply (requires valid Jamf Pro credentials)
-# terraform apply
+Expected output:
+```
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
 
+Terraform will perform the following actions:
+
+  # jamfpro_category.terraform_managed will be created
+  + resource "jamfpro_category" "terraform_managed" {
+      + id       = (known after apply)
+      + name     = (known after apply)
+      + priority = 10
+    }
+
+  # jamfpro_policy.inventory_update will be created
+  + resource "jamfpro_policy" "inventory_update" {
+      + category_id                   = (known after apply)
+      + enabled                       = true
+      + frequency                     = "Once every day"
+      + id                            = (known after apply)
+      + name                          = (known after apply)
+      + trigger_checkin               = true
+      + trigger_enrollment_complete   = false
+      # ... additional attributes shown
+    }
+
+  # jamfpro_smart_computer_group.test_devices will be created
+  + resource "jamfpro_smart_computer_group" "test_devices" {
+      + id       = (known after apply)
+      + name     = (known after apply)
+      # ... additional attributes and criteria shown
+    }
+
+  # random_id.suffix will be created
+  + resource "random_id" "suffix" {
+      + byte_length = 3
+      + hex         = (known after apply)
+      + id          = (known after apply)
+    }
+
+  # random_pet.app_name will be created
+  + resource "random_pet" "app_name" {
+      + id        = (known after apply)
+      + length    = 2
+      + separator = "-"
+    }
+
+  # time_static.deployment_time will be created
+  + resource "time_static" "deployment_time" {
+      + rfc3339 = (known after apply)
+      # ... additional time attributes
+    }
+
+Plan: 6 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + generated_values  = {
+      + app_name      = (known after apply)
+      + created_at    = (known after apply)
+      + deployment_id = (known after apply)
+      + suffix        = (known after apply)
+    }
+  + jamfpro_resources = {
+      + category       = {
+          + id   = (known after apply)
+          + name = (known after apply)
+        }
+      + computer_group = {
+          + id   = (known after apply)
+          + name = (known after apply)
+        }
+      + policy         = {
+          + id   = (known after apply)
+          + name = (known after apply)
+        }
+    }
+  + provider_info     = {
+      + environment       = "dev"
+      + jamfpro_instance  = "https://lbgsandbox.jamfcloud.com"
+      + provider_versions = {
+          + jamfpro = "~> 0.24.0"
+          + random  = "~> 3.4"
+          + time    = "~> 0.9"
+        }
+      + terraform_version = ">= 1.0"
+    }
+```
+
+```bash
 # View provider information
 terraform providers
+```
 
-# Check lock file
+Expected output:
+```
+Providers required by configuration:
+.
+├── provider[registry.terraform.io/deploymenttheory/jamfpro] ~> 0.24.0
+├── provider[registry.terraform.io/hashicorp/random] ~> 3.4
+└── provider[registry.terraform.io/hashicorp/time] ~> 0.9
+```
+
+```bash
+# Check Terraform and provider versions
+terraform version
+```
+
+Expected output:
+```
+Terraform v1.13.1
+on darwin_arm64
++ provider registry.terraform.io/deploymenttheory/jamfpro v0.24.0
++ provider registry.terraform.io/hashicorp/random v3.7.2
++ provider registry.terraform.io/hashicorp/time v0.13.1
+```
+
+```bash
+# Check lock file for provider versions
 cat .terraform.lock.hcl
+```
+
+Expected output (truncated):
+```
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "registry.terraform.io/deploymenttheory/jamfpro" {
+  version     = "0.24.0"
+  constraints = "~> 0.24.0"
+  hashes = [
+    "h1:K/qgJG1kj+QTiLFkdyV0aZj8o17jYOul00lSxi94sJ8=",
+    "zh:004b72c3ccf7aea115f2ddb190e9d6ec6e7642e0a5790da4bea1017e86feeb6f",
+    # ... additional checksums
+  ]
+}
+
+provider "registry.terraform.io/hashicorp/random" {
+  version     = "3.7.2"
+  constraints = "~> 3.4"
+  hashes = [
+    "h1:KG4NuIBl1mRWU0KD/BGfCi1YN/j3F7H4YgeeM7iSdNs=",
+    # ... additional checksums
+  ]
+}
 ```
 
 💡 **Pro Tip**: Notice how each provider has its own authentication method and resource naming conventions!
@@ -1106,15 +1295,70 @@ EOF
 
 # Initialize and examine providers
 terraform init
+```
 
+Expected output:
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Finding hashicorp/random versions matching "~> 3.4"...
+- Installing deploymenttheory/jamfpro v0.24.0...
+- Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
+- Installing hashicorp/random v3.7.2...
+- Installed hashicorp/random v3.7.2 (signed by HashiCorp)
+
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+
+Terraform has been successfully initialized!
+```
+
+```bash
 # List installed providers
 terraform providers
+```
 
+Expected output:
+```
+Providers required by configuration:
+.
+├── provider[registry.terraform.io/deploymenttheory/jamfpro] ~> 0.24.0
+└── provider[registry.terraform.io/hashicorp/random] ~> 3.4
+```
+
+```bash
 # Show detailed provider information
 terraform version
+```
 
+Expected output:
+```
+Terraform v1.13.1
+on darwin_arm64
++ provider registry.terraform.io/deploymenttheory/jamfpro v0.24.0
++ provider registry.terraform.io/hashicorp/random v3.7.2
+```
+
+```bash
 # Examine provider lock file
 cat .terraform.lock.hcl | grep -A 10 "deploymenttheory/jamfpro"
+```
+
+Expected output:
+```
+provider "registry.terraform.io/deploymenttheory/jamfpro" {
+  version     = "0.24.0"
+  constraints = "~> 0.24.0"
+  hashes = [
+    "h1:K/qgJG1kj+QTiLFkdyV0aZj8o17jYOul00lSxi94sJ8=",
+    "zh:004b72c3ccf7aea115f2ddb190e9d6ec6e7642e0a5790da4bea1017e86feeb6f",
+    "zh:1dbe91954d22c0acb2e98313a4a826b05abfccc196550443f8c011e4f483f4b6",
+    "zh:28b9ddffc34e041ebc3dc02b58b3e8fccf328fa4fa561064550b16708fb11010",
+    "zh:2cccca2b4382b687da7d68cd724dcbec51d12ed9673494c987585de650067b5e",
+    "zh:6f39ab26162d16771689f53083b723df9802070618379209958a1638f13dea49",
+    "zh:8585c992a71a06a09f7d20a52bfd3b15ae30b1b956c3af6efd357adc57f7ca3a",
 ```
 
 **Step 2: Provider Debugging Commands**
@@ -1155,21 +1399,73 @@ unset TF_LOG_PROVIDER
 ```bash
 # Check current provider versions
 terraform providers
+```
 
+Expected output:
+```
+Providers required by configuration:
+.
+├── provider[registry.terraform.io/deploymenttheory/jamfpro] ~> 0.24.0
+└── provider[registry.terraform.io/hashicorp/random] ~> 3.4
+```
+
+```bash
 # Update providers to latest versions
 terraform init -upgrade
+```
 
+Expected output:
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.24.0"...
+- Finding hashicorp/random versions matching "~> 3.4"...
+- Using previously-installed deploymenttheory/jamfpro v0.24.0
+- Using previously-installed hashicorp/random v3.7.2
+
+Terraform has been successfully initialized!
+```
+
+```bash
 # Lock provider versions for consistency
 terraform providers lock -platform=darwin_amd64 -platform=linux_amd64
+```
 
-# Check what changed
-git diff .terraform.lock.hcl  # if using git
+Expected output:
+```
+- Fetching deploymenttheory/jamfpro 0.24.0 for darwin_amd64...
+- Retrieved deploymenttheory/jamfpro 0.24.0 for darwin_amd64 (self-signed, key ID DB95CA76A94A208C)
+- Fetching hashicorp/random 3.7.2 for darwin_amd64...
+- Retrieved hashicorp/random 3.7.2 for darwin_amd64 (signed by HashiCorp)
+- Fetching deploymenttheory/jamfpro 0.24.0 for linux_amd64...
+- Retrieved deploymenttheory/jamfpro 0.24.0 for linux_amd64 (self-signed, key ID DB95CA76A94A208C)
+- Fetching hashicorp/random 3.7.2 for linux_amd64...
+- Retrieved hashicorp/random 3.7.2 for linux_amd64 (signed by HashiCorp)
 
+Success! Terraform has updated the lock file.
+
+Review the changes in .terraform.lock.hcl and then commit to your
+version control system to retain the new checksums.
+```
+
+```bash
 # Show provider schema (helpful for development)
 terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/deploymenttheory/jamfpro"' > jamfpro-schema.json
+echo "Provider schema saved to jamfpro-schema.json"
 
 # View available resources and data sources
 terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/deploymenttheory/jamfpro".resource_schemas | keys[]'
+```
+
+Expected output (sample):
+```
+"jamfpro_category"
+"jamfpro_computer_group"
+"jamfpro_policy"
+"jamfpro_script"
+"jamfpro_smart_computer_group"
+"jamfpro_user_group"
+# ... and many more resources
 ```
 
 **Step 4: Troubleshooting Common Issues**
