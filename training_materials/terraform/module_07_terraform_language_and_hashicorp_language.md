@@ -301,7 +301,7 @@ output "category_id" {
 **🔍 Alternative Naming Patterns:**
 ```
 # Feature-based naming
-jamfpro-categories.tf
+jamfpro-app-installers.tf
 jamfpro-policies.tf
 jamfpro-groups.tf
 
@@ -314,9 +314,10 @@ development.tf
 networking.tf
 security.tf
 monitoring.tf
+cisv1-baseline.tf
 ```
 
-**💡 Tip for Larger Configurations:**
+**💡 Pro Tip for Larger Configurations:**
 
 In larger Terraform projects, consider additional organizational factors:
 
@@ -420,7 +421,7 @@ graph TB
     style PR fill:#1ABC9C,color:#fff
 ```
 
-Understanding version constraints is crucial for managing provider and Terraform versions effectively. These operators control which versions are acceptable.
+Understanding version constraints is crucial for managing Terraform provider and terraform moduleversions effectively. These operators control which versions are acceptable.
 
 **🔧 Version Constraint Operators:**
 
@@ -569,12 +570,6 @@ graph LR
 
 // Alternative single line comment
 
-/*
-  Multi-line comment
-  Can span multiple lines
-  Useful for documentation blocks
-*/
-
 resource "jamfpro_policy" "demo_policy" {
   name                        = "Demo Policy"  # Inline comment
   enabled                     = true           // Alternative inline comment
@@ -582,8 +577,10 @@ resource "jamfpro_policy" "demo_policy" {
   trigger_checkin             = true
   
   /*
-    Use this for multi line comments
-  */
+  Multi-line comment
+  Can span multiple lines
+  Useful for documentation blocks
+ */
   payloads {
     maintenance {
       recon                       = true
@@ -630,6 +627,9 @@ variable "jamfpro_environment" {
   default     = "production"
 }
 ```
+
+**💡 Pro Tip:**
+- **Formatting**: You can use the `terraform fmt` command to auto-format your code to ensure consistent formatting.
 
 #### 🔄 Alternate JSON Syntax
 
