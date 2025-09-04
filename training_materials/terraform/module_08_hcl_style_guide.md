@@ -1,4 +1,6 @@
 # Module 08: Terraform Style Guide
+*Duration: 1 hour | Labs: 1 | Difficulty: 🟢 Beginner*
+---
 
 ## 🎯 Learning Objectives
 By the end of this module, you will:
@@ -1633,7 +1635,7 @@ Use this checklist to ensure your Terraform code follows best practices:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 9: Meta Arguments](./module_09_meta_arguments.md)**
+**➡️ [Module 9: Variables and Data](./module_09_variables_and_data.md)**
 
 Master variable management, data sources, and configuration flexibility.
 

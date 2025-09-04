@@ -9,27 +9,28 @@
 05. [Configuration Management and Provisioners](./module_05_configuration_management_and_provisioners.md)
 06. [Terraform Providers](./module_06_terraform_providers.md)
 07. [Terraform Language and HashiCorp Language](./module_07_terraform_language_and_hashicorp_language.md)
-08. [Variables and Data](./module_08_variables_and_data.md)
+08. [HCL Style Guide](./module_08_hcl_style_guide.md)
 09. [Meta Arguments](./module_09_meta_arguments.md)
-10. [Expressions](./module_10_expressions.md)
-11. [Terraform State](./module_11_terraform_state.md)
-12. [TF Initialization](./module_12_tf_initialization.md)
-13. [Writing and Modifying HCL](./module_13_writting_and_modifying_hcl.md)
-14. [Plan and Apply](./module_14_plan_and_apply.md)
-15. [Resource Drift Management](./module_15_resource_drift_management.md)
-16. [State Import and Refresh Operations](./module_16_state_import_and_refresh_operations.md)
-17. [Terraform Troubleshooting and Debugging](./module_17_terraform_troubleshooting_and_debugging.md)
+10. [Variables and Data](./module_10_variables_and_data.md)
+11. [Expressions](./module_11_expressions.md)
+12. [Terraform State](./module_12_terraform_state.md)
+13. [TF Initialization](./module_13_tf_initialization.md)
+14. [Writing and Modifying HCL](./module_14_writting_and_modifying_hcl.md)
+15. [Plan and Apply](./module_15_plan_and_apply.md)
+16. [Resource Drift Management](./module_16_resource_drift_management.md)
+17. [State Import and Refresh Operations](./module_17_state_import_and_refresh_operations.md)
 18. [Finding and Using Terraform Modules](./module_18_finding_and_using_terraform_modules.md)
 19. [Standard Module Structure and Development](./module_19_standard_module_structure_and_development.md)
-20. [Publishing and Advanced Module Patterns](./module_20_publishing_and_advanced_module_patterns.md)
-21. [Terraform Workflows](./module_21_terraform_workflows.md)
-22. [Terraform Backends](./module_22_terraform_backends.md)
-23. [Resources and Complex Types](./module_23_resources_and_complex_types.md)
-24. [Built-In Functions](./module_24_built_in_functions.md)
-25. [Terraform Cloud](./module_25_terraform_cloud.md)
-26. [Terraform Workspaces](./module_26_terraform_workspaces.md)
-27. [Sentinel Policy as Code](./module_27_sentinel_policy_as_code.md)
-28. [HashiCorp Vault Integration](./module_28_hashicorp_vault_integration.md)
+20. [Terraform Troubleshooting and Debugging](./module_20_terraform_troubleshooting_and_debugging.md)
+21. [Publishing and Advanced Module Patterns](./module_21_publishing_and_advanced_module_patterns.md)
+22. [Terraform Workflows](./module_22_terraform_workflows.md)
+23. [Terraform Backends](./module_23_terraform_backends.md)
+24. [Resources and Complex Types](./module_24_resources_and_complex_types.md)
+25. [Built-in Functions](./module_25_built_in_functions.md)
+26. [Terraform Cloud](./module_26_terraform_cloud.md)
+27. [Terraform Cloud Workspaces](./module_27_terraform_cloud_workspaces.md)
+28. [Sentinel and Policy as Code](./module_28_sentinel_policy_as_code.md)
+29. [HashiCorp Vault Integration](./module_29_hashicorp_vault_integration.md)
 
 
 ## 📋 Course Prerequisites
@@ -184,33 +185,35 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 
 | Module | Topic | Duration | Difficulty | Hands-On Labs |
 |--------|-------|----------|------------|---------------|
-| 1 | 🏗️ Infrastructure as Code Concepts | 1.5 hours | 🟢 Beginner | 0 labs |
-| 2 | 🔧 Configuration as Code Concepts | 1.5 hours | 🟢 Beginner | 0 lab |
-| 2 | 🔷 HashiCorp Introduction | 1 hour | 🟢 Beginner | 1 lab |
-| 3 | ⚡ Terraform Basics | 3 hours | 🟢 Beginner | 4 labs |
-| 4 | 🛠️ Terraform Provisioners & Modern Infrastructure Configuration | 3 hours | 🟡 Intermediate | 5 labs |
-| 5 | 🔌 Terraform Providers | 2 hours | 🟡 Intermediate | 2 labs |
-| 6 | 📝 Terraform Language | 1.5 hours | 🟡 Intermediate | 2 labs |
-| 7 | 📊 Variables and Data | 2.5 hours | 🟡 Intermediate | 3 labs |
-| 8 | 🎯 Meta Arguments | 2 hours | 🟡 Intermediate | 3 labs |
-| 9 | 🔧 Expressions | 2 hours | 🟡 Intermediate | 3 labs |
-| 10 | 📁 Terraform State | 2.5 hours | 🟡 Intermediate | 3 labs |
-| 11 | 🚀 Initialization | 1.5 hours | 🟡 Intermediate | 2 labs |
-| 12 | ✍️ Writing and Modifying | 2 hours | 🟡 Intermediate | 3 labs |
-| 13 | 🚀 Plan and Apply | 2.5 hours | 🟡 Intermediate | 4 labs |
-| 14 | 🔄 Resource Drift Management | 1.5 hours | 🟡 Intermediate | 2 labs |
-| 15 | 📥 Import and Refresh Operations | 2 hours | 🔴 Advanced | 3 labs |
-| 16 | 🔧 Terraform Troubleshooting and Debugging | 1.5 hours | 🔴 Advanced | 2 labs |
-| 17 | 📦 Finding and Using Terraform Modules | 2 hours | 🟡 Intermediate | 3 labs |
-| 18 | 🏗️ Standard Module Structure and Development | 3 hours | 🔴 Advanced | 4 labs |
-| 19 | 📝 Publishing and Advanced Module Patterns | 2.5 hours | 🔴 Advanced | 3 labs |
-| 20 | 🚀 Terraform Workflows | 2 hours | 🟡 Intermediate | 4 labs |
-| 21 | 🚀 Terraform Backends | 3 hours | 🟡 Intermediate | 6 labs |
-| 22 | 📝 Resources and Complex Types | 2.5 hours | 🟡 Intermediate | 4 labs |
-| 23 | 🚀 Built-In Functions | 2 hours | 🔴 Advanced | 4 labs |
-| 24 | 🚀 Terraform Cloud | 3 hours | 🟡 Intermediate | 4 labs |
-| 25 | 📁 Terraform Workspaces | 2.5 hours | 🟡 Intermediate | 3 labs |
-| 26 | 📝 Sentinel and Policy as Code | 3 hours | 🔴 Advanced | 4 labs |
+| 01 | 🏗️ Infrastructure as Code Concepts | 1.5 hours | 🟢 Beginner | 0 labs |
+| 02 | 🔧 Configuration as Code Concepts | 1.5 hours | 🟢 Beginner | 0 lab |
+| 03 | 🔷 HashiCorp Introduction | 1 hour | 🟢 Beginner | 1 lab |
+| 04 | ⚡ Terraform Basics | 3 hours | 🟢 Beginner | 4 labs |
+| 05 | 🛠️ Terraform Provisioners & Modern Infrastructure Configuration | 3 hours | 🟢 Beginner | 5 labs |
+| 06 | 🔌 Terraform Providers | 2 hours | 🟢 Beginner| 2 labs |
+| 07 | 📝 Terraform Language and HashiCorp Configuration Language | 1.5 hours | 🟢 Beginner | 2 labs |
+| 08 | 🎨 HCL Style Guide | 1 hour | 🟢 Beginner | 1 lab |
+| 09 | 🎯 Meta Arguments | 2 hours | 🟡 Intermediate | 3 labs |
+| 10 | 📊 Variables and Data | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 11 | 🔧 Expressions | 2 hours | 🟡 Intermediate | 3 labs |
+| 12 | 📁 Terraform State | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 13 | 🚀 Initialization | 1.5 hours | 🟡 Intermediate | 2 labs |
+| 14 | ✍️ Writing and Modifying HCL | 2 hours | 🟡 Intermediate | 3 labs |
+| 15 | 🚀 Plan and Apply | 2.5 hours | 🟡 Intermediate | 4 labs |
+| 16 | 🔄 Resource Drift Management | 1.5 hours | 🟡 Intermediate | 2 labs |
+| 17 | 📥 State Import and Refresh Operations | 2 hours | 🔴 Advanced | 3 labs |
+| 18 | 🔧 Terraform Troubleshooting and Debugging | 1.5 hours | 🔴 Advanced | 2 labs |
+| 19 | 📦 Finding and Using Terraform Modules | 2 hours | 🟡 Intermediate | 3 labs |
+| 20 | 🏗️ Standard Module Structure and Development | 3 hours | 🔴 Advanced | 4 labs |
+| 21 | 📝 Publishing and Advanced Module Patterns | 2.5 hours | 🔴 Advanced | 3 labs |
+| 22 | 🚀 Terraform Workflows | 2 hours | 🟡 Intermediate | 4 labs |
+| 23 | 🚀 Terraform Backends | 3 hours | 🟡 Intermediate | 6 labs |
+| 24 | 📝 Resources and Complex Types | 2.5 hours | 🟡 Intermediate | 4 labs |
+| 25 | 🚀 Built-In Functions | 2 hours | 🔴 Advanced | 4 labs |
+| 26 | 🚀 Terraform Cloud | 3 hours | 🟡 Intermediate | 4 labs |
+| 27 | 📁 Terraform Cloud Workspaces | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 28 | 📝 Sentinel and Policy as Code | 3 hours | 🔴 Advanced | 4 labs |
+| 29 | 🔒 HashiCorp Vault Integration | 2 hours | 🔴 Advanced | 2 labs |
 
 
 

@@ -1,6 +1,7 @@
 # 🛠️ Module 05: Configuration Management and Provisioners
 
-*Duration: 3 hours | Labs: 5* | 🟡 Intermediate*
+*Duration: 3 hours | Labs: 5* | 🟢 Beginner*
+---
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:

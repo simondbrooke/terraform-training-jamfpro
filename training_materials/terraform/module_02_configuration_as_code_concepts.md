@@ -1,6 +1,7 @@
 # 🔧 Module 02: Configuration as Code Concepts
-*Duration: 1.5 hours | Labs: 0 | 🟢 Beginner*
 
+*Duration: 1.5 hours | Labs: 0 | 🟢 Beginner*
+---
 ## 🎯 Learning Objectives
 
 By the end of this module, you will be able to:

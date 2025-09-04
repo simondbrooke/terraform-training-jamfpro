@@ -1,7 +1,7 @@
 
 # 🔷 Module 03: HashiCorp Introduction
 *Duration: 1 hour | Labs: 1* | Difficulty: 🟢 Beginner*
-
+---
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:
 - ✅ Understand HashiCorp's role in the DevOps ecosystem

@@ -1,6 +1,7 @@
 
 # 📊 Module 10: Variables and Data
-*Duration: 2.5 hours | Labs: 3*
+*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
+---
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:

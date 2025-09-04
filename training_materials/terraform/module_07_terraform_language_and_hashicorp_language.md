@@ -1,8 +1,6 @@
-
+# 📝 Module 07: Terraform Language
+*Duration: 1.5 hours | Labs: 2* | Difficulty: 🟢 Beginner*
 ---
-
-## 📝 Module 07: Terraform Language
-*Duration: 1.5 hours | Labs: 2*
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:

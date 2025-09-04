@@ -1,10 +1,8 @@
 
 
 # 📁 Module 12: Terraform State
-
-**⏱️ Duration**: 45 minutes  
-**🎯 Difficulty**: Intermediate  
-**📋 Prerequisites**: Completed Modules 1-9
+*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
+---
 
 ## 🎯 Learning Objectives
 

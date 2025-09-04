@@ -1,6 +1,8 @@
 
 
 # 🧮 Module 11: Expressions
+*Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
+---
 
 **⏱️ Duration**: 70 minutes  
 **🎯 Difficulty**: Advanced  

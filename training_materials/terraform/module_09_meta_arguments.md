@@ -1,6 +1,7 @@
-
-
 # 🔧 Module 09: Meta Arguments
+*Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
+---
+
 
 **⏱️ Duration**: 60 minutes  
 **🎯 Difficulty**: Intermediate  

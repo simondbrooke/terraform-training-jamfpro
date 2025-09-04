@@ -2,7 +2,7 @@
 # ⚡ Module 04: Terraform Basics
 
 *Duration: 3 hours | Labs: 4* | Difficulty: 🟢 Beginner*
-
+---
 ## 🎯 Learning Objectives
 
 By the end of this module, you will be able to:
