@@ -1608,28 +1608,187 @@ output "development_resources" {
 ```
 
 **Step 7: Deploy and Test**
+
+First, set up the required environment variables for the Jamf Pro provider:
+
 ```bash
-# Initialize
+# Set Jamf Pro credentials via environment variables
+export JAMFPRO_INSTANCE_NAME=your-instance-name
+export JAMFPRO_CLIENT_ID=your-client-id
+export JAMFPRO_CLIENT_SECRET=your-client-secret
+```
+
+**Initialize Terraform:**
+```bash
 terraform init
+```
 
-# Plan with development testing disabled
+**Expected Output:**
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding deploymenttheory/jamfpro versions matching "~> 0.0.1"...
+- Finding hashicorp/random versions matching "~> 3.4"...
+- Installing hashicorp/random v3.7.2...
+- Installed hashicorp/random v3.7.2 (signed by HashiCorp)
+- Installing deploymenttheory/jamfpro v0.0.58...
+- Installed deploymenttheory/jamfpro v0.0.58 (self-signed, key ID DB95CA76A94A208C)
+
+Terraform has been successfully initialized!
+```
+
+**Plan with development testing disabled:**
+```bash
 terraform plan
+```
 
-# Apply
-terraform apply
+**Expected Output (showing key resources):**
+```
+Terraform will perform the following actions:
 
-# Test with development environment enabled
+  # jamfpro_building.organization_buildings["Innovation Center"] will be created
+  + resource "jamfpro_building" "organization_buildings" {
+      + city            = "Seattle"
+      + country         = "United States"
+      + id              = (known after apply)
+      + name            = "Innovation Center"
+      + state_province  = "Washington"
+      + street_address1 = "456 Tech Boulevard"
+      + zip_postal_code = "98101"
+    }
+
+  # jamfpro_building.organization_buildings["Main Campus"] will be created
+  + resource "jamfpro_building" "organization_buildings" {
+      + city            = "San Francisco"
+      + country         = "United States"
+      + id              = (known after apply)
+      + name            = "Main Campus"
+      + state_province  = "California"
+      + street_address1 = "123 Enterprise Way"
+      + zip_postal_code = "94105"
+    }
+
+  # jamfpro_department.organization_departments[0] will be created
+  + resource "jamfpro_department" "organization_departments" {
+      + id   = (known after apply)
+      + name = "Engineering"
+    }
+
+  # jamfpro_department.organization_departments[1] will be created
+  + resource "jamfpro_department" "organization_departments" {
+      + id   = (known after apply)
+      + name = "Marketing"
+    }
+
+  # jamfpro_policy.department_policies["Engineering"] will be created
+  + resource "jamfpro_policy" "department_policies" {
+      + enabled     = true
+      + frequency   = "Once every week"
+      + name        = "Engineering Department Policy"
+      + scope {
+          + all_computers      = false
+          + computer_group_ids = (known after apply)
+        }
+    }
+
+Plan: 28 to add, 0 to change, 0 to destroy.
+```
+
+**Test with development environment enabled:**
+```bash
 terraform plan -var="enable_development_testing=true"
-terraform apply -var="enable_development_testing=true"
+```
 
-# View outputs
+**Expected Output:**
+```
+Plan: 30 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
++ development_resources = {
+    + test_category = {
+        + id   = (known after apply)
+        + name = "Development Testing"
+      }
+    + test_policy = {
+        + id   = (known after apply)
+        + name = "Development Test Policy"
+      }
+  }
+```
+
+Notice how enabling development testing increases the resource count from 28 to 30, demonstrating conditional resource creation with `count`.
+
+**Apply the configuration:**
+```bash
+terraform apply
+```
+
+**View all outputs:**
+```bash
 terraform output
+```
 
-# Test specific outputs
-terraform output organizational_structure
-terraform output enterprise_applications
+**Expected Output:**
+```
+application_categories = {
+  "Communication" = {
+    "id" = 123
+    "name" = "Communication"
+    "priority" = 5
+  }
+  "Development" = {
+    "id" = 124
+    "name" = "Development"
+    "priority" = 5
+  }
+  # ... more categories
+}
 
-# Clean up
+computer_groups = {
+  "Engineering" = {
+    "id" = 456
+    "name" = "Engineering Computers"
+  }
+  "Finance" = {
+    "id" = 457
+    "name" = "Finance Computers"
+  }
+  # ... more groups
+}
+
+organizational_structure = {
+  "buildings" = {
+    "Innovation Center" = {
+      "id" = 789
+      "name" = "Innovation Center"
+    }
+    "Main Campus" = {
+      "id" = 790
+      "name" = "Main Campus"
+    }
+  }
+  "departments" = {
+    "Engineering" = {
+      "id" = 101
+      "name" = "Engineering"
+    }
+    # ... more departments
+  }
+  "sites" = {
+    "Corporate HQ" = {
+      "id" = 1
+      "name" = "Corporate HQ"
+    }
+    "West Coast Office" = {
+      "id" = 2
+      "name" = "West Coast Office"
+    }
+  }
+}
+```
+
+**Clean up resources when done:**
+```bash
 terraform destroy
 ```
 
