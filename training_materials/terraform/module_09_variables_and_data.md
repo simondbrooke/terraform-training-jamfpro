@@ -1716,10 +1716,91 @@ terraform plan -var-file="dev.tfvars" -var="team_size=99"
 
 ---
 
-## 🧪 **Lab 2**: Number and Boolean Variables - API Integration
+## 🧪 **Lab 5**: Validation - Making Variables Safer
 **Duration**: 15 minutes
 
-Practice with number and boolean variables for API configuration.
+Now let's learn how to add validation rules to make variables safer.
+
+**🎯 What You'll Learn:**
+- How to add validation rules
+- Common validation patterns
+- When validation helps prevent mistakes
+
+**Step 1: Add Simple Validation**
+
+Update your `variables.tf` with validation rules:
+```hcl
+variable "department_name" {
+  description = "Name of the department"
+  type        = string
+  default     = "Engineering"
+  
+  # Simple validation - must not be empty
+  validation {
+    condition     = length(var.department_name) > 0
+    error_message = "Department name cannot be empty."
+  }
+}
+
+variable "team_size" {
+  description = "Number of people in the team"
+  type        = number
+  default     = 5
+  
+  # Number range validation
+  validation {
+    condition     = var.team_size >= 1 && var.team_size <= 100
+    error_message = "Team size must be between 1 and 100 people."
+  }
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+  
+  # Must be one of specific values
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod."
+  }
+}
+
+variable "attribute_name" {
+  description = "Name for the extension attribute"
+  type        = string
+  default     = "Department"
+  
+  # Pattern validation with regex
+  validation {
+    condition     = can(regex("^[A-Za-z0-9 _-]+$", var.attribute_name))
+    error_message = "Attribute name can only contain letters, numbers, spaces, hyphens, and underscores."
+  }
+}
+```
+
+**Step 2: Test Validation Rules**
+
+```bash
+# These should work fine
+terraform plan -var='department_name=Sales'
+terraform plan -var='team_size=10'
+terraform plan -var='environment=staging'
+
+# These should fail with validation errors
+terraform plan -var='department_name='        # Empty string
+terraform plan -var='team_size=0'             # Too small
+terraform plan -var='team_size=200'           # Too large
+terraform plan -var='environment=test'        # Invalid environment
+terraform plan -var='attribute_name=Bad@Name' # Invalid characters
+```
+
+**🎉 You've learned:**
+- Basic validation with `validation { }` blocks
+- Length validation: `length(var.name) > 0`
+- Range validation: `var.num >= 1 && var.num <= 100`
+- Choice validation: `contains(["a", "b"], var.choice)`
+- Pattern validation: `can(regex("pattern", var.text))`
 
 **Step 1: Create Advanced Configuration**
 
