@@ -10,8 +10,8 @@
 06. [Terraform Providers](./module_06_terraform_providers.md)
 07. [Terraform Language and HashiCorp Language](./module_07_terraform_language_and_hashicorp_language.md)
 08. [HCL Style Guide](./module_08_hcl_style_guide.md)
-09. [Meta Arguments](./module_09_meta_arguments.md)
-10. [Variables and Data](./module_10_variables_and_data.md)
+09. [Variables and Data](./module_09_variables_and_data.md)
+10. [Meta Arguments](./module_10_meta_arguments.md)
 11. [Expressions](./module_11_expressions.md)
 12. [Terraform State](./module_12_terraform_state.md)
 13. [TF Initialization](./module_13_tf_initialization.md)
@@ -193,8 +193,8 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 06 | 🔌 Terraform Providers | 2 hours | 🟢 Beginner| 2 labs |
 | 07 | 📝 Terraform Language and HashiCorp Configuration Language | 1.5 hours | 🟢 Beginner | 2 labs |
 | 08 | 🎨 HCL Style Guide | 1 hour | 🟢 Beginner | 1 lab |
-| 09 | 🎯 Meta Arguments | 2 hours | 🟡 Intermediate | 3 labs |
-| 10 | 📊 Variables and Data | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 09 | 📊 Variables and Data | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 10 | 🎯 Meta Arguments | 2 hours | 🟡 Intermediate | 3 labs | 
 | 11 | 🔧 Expressions | 2 hours | 🟡 Intermediate | 3 labs |
 | 12 | 📁 Terraform State | 2.5 hours | 🟡 Intermediate | 3 labs |
 | 13 | 🚀 Initialization | 1.5 hours | 🟡 Intermediate | 2 labs |
