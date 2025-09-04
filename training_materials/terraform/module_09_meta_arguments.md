@@ -1493,7 +1493,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Expressions](./module_10_expressions.md)**
+**➡️ [Module 10: Variables and Data](./module_10_variables_and_data.md)**
 
 Understand Terraform expressions, functions, and dynamic configurations.
 

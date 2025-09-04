@@ -1,4 +1,4 @@
-# Module 29: Terraform Style Guide
+# Module 08: Terraform Style Guide
 
 ## 🎯 Learning Objectives
 By the end of this module, you will:
@@ -1627,12 +1627,14 @@ Use this checklist to ensure your Terraform code follows best practices:
 
 ---
 
-## 📝 Summary
+---
 
-Following consistent style guidelines ensures your JamfPro Terraform configurations are:
-- **Readable** - Easy for team members to understand
-- **Maintainable** - Simple to modify and extend
-- **Reliable** - Less prone to errors and issues
-- **Professional** - Meets industry standards
+## 🔗 **Next Steps**
 
-Apply these principles consistently across all your Terraform projects for maximum benefit.
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 9: Meta Arguments](./module_09_meta_arguments.md)**
+
+Master variable management, data sources, and configuration flexibility.
+
+---

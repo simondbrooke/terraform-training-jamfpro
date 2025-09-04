@@ -829,24 +829,6 @@ Initializing provider plugins...
 - Installing deploymenttheory/jamfpro v0.24.0...
 - Installed deploymenttheory/jamfpro v0.24.0 (self-signed, key ID DB95CA76A94A208C)
 
-Partner and community providers are signed by their developers.
-If you'd like to know more about provider signing, you can read about it here:
-https://developer.hashicorp.com/terraform/cli/plugins/signing
-
-Terraform has created a lock file .terraform.lock.hcl to record the provider
-selections it made above. Include this file in your version control repository
-so that Terraform can guarantee to make the same selections by default when
-you run "terraform init" in the future.
-
-Terraform has been successfully initialized!
-
-You may now begin working with Terraform. Try running "terraform plan" to see
-any changes that are required for your infrastructure. All Terraform commands
-should now work.
-
-If you ever set or change modules or backend configuration for Terraform,
-rerun this command to reinitialize your working directory. If you forget, other
-commands will detect it and remind you to do so if necessary.
 ```
 
 ```bash
@@ -1344,7 +1326,7 @@ provider "jamfpro" {
 # Create category.tf
 resource "jamfpro_category" "security" {
   name     = "Security Tools"  # Category display name
-  priority = 10               # Priority level (1-20)
+  priority = 10                # Priority level (1-20)
 }
 ```
 
@@ -1404,7 +1386,8 @@ jamfpro_category.security: Creation complete after 1s [id=36650]
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
-**Practice**: 
+**Practice**:
+
 - Add inline comments explaining each parameter
 - Try different category names and priority values
 - Observe the resource creation process and assigned ID
@@ -2623,8 +2606,8 @@ It supports complex data types and nested structures, making it more powerful th
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 8: Variables and Data](./module_08_variables_and_data.md)**
+**➡️ [Module 8: HCL Style Guide](./module_08_hcl_style_guide.md)**
 
-Master variable management, data sources, and configuration flexibility.
+Learn about how to style your HCL code to make it more readable and maintainable.
 
 ---

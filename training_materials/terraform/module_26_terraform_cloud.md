@@ -1,4 +1,4 @@
-## 🔷 Module 25: Terraform Cloud
+# 🔷 Module 26: Terraform Cloud
 *Duration: 3 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -3616,7 +3616,7 @@ resource "tfe_notification_configuration" "prod_alerts" {
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Terraform Workspaces](./module_25_terraform_workspaces.md)**
+**➡️ [Module 27: Terraform Cloud Workspaces](./module_27_terraform_cloud_workspaces.md)**
 
 Learn how to manage multiple environments and alternate state files using Terraform workspaces, both locally and in the cloud.
 

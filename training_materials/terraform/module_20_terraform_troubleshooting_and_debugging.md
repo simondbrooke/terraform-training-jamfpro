@@ -1,6 +1,6 @@
 
 
-# 🔧 Module 17: Terraform Troubleshooting and Debugging
+# 🔧 Module 20: Terraform Troubleshooting and Debugging
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  
@@ -721,7 +721,7 @@ chmod +x error-recovery.sh
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Finding and Using Terraform Modules](./module_17_finding_and_using_terraform_modules.md)**
+**➡️ [Module 21: Publishing and Advanced Module Patterns](./module_21_publishing_and_advanced_module_patterns.md)**
 
 Discover and consume modules from the Terraform Registry.
 

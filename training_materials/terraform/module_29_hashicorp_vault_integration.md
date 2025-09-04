@@ -1,4 +1,4 @@
-## 🔷 Module 28: HashiCorp Vault Integration
+# 🔷 Module 29: HashiCorp Vault Integration
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives

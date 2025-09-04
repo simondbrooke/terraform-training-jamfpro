@@ -1,6 +1,6 @@
 
 
-# 🔄 Module 15: Resource Drift Management
+# 🔄 Module 16: Resource Drift Management
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  
@@ -956,7 +956,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: State Import and Refresh Operations](./module_15_state_import_and_refresh_operations.md)**
+**➡️ [Module 17: State Import and Refresh Operations](./module_17_state_import_and_refresh_operations.md)**
 
 Import existing resources and manage state operations.
 

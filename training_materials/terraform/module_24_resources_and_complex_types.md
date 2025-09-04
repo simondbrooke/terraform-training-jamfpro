@@ -1,4 +1,4 @@
-## ⚡ Module 23: Resources and Complex Types
+# ⚡ Module 24: Resources and Complex Types
 *Duration: 2.5 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -2824,7 +2824,7 @@ The transcript's hands-on approach showed you: *"structural types require a sche
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Built-in Functions](./module_23_built_in_functions.md)**
+**➡️ [Module 25: Built-in Functions](./module_25_built_in_functions.md)**
 
 Master Terraform's built-in functions for data manipulation and logic.
 

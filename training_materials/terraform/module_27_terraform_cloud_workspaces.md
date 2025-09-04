@@ -1,4 +1,4 @@
-## 🔷 Module 26: Terraform Workspaces
+# 🔷 Module 27: Terraform Cloud Workspaces
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives
@@ -2320,6 +2320,6 @@ This module provides a solid foundation for understanding and implementing Terra
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Sentinel and Policy as Code](./module_26_sentinel_policy_as_code.md)**
+**➡️ [Module 28: Sentinel and Policy as Code](./module_28_sentinel_policy_as_code.md)**
 
 Learn how to implement automated governance, security, and compliance controls using HashiCorp Sentinel policies.

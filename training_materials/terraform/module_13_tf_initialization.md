@@ -1,6 +1,6 @@
 
 
-# 🚀 Module 12: Initialization
+# 🚀 Module 13: TF Initialization
 
 **⏱️ Duration**: 30 minutes  
 **🎯 Difficulty**: Beginner to Intermediate  
@@ -596,7 +596,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Writing and Modifying HCL](./module_12_writting_and_modifying_hcl.md)**
+**➡️ [Module 14: Writing and Modifying HCL](./module_14_writting_and_modifying_hcl.md)**
 
 Best practices for writing maintainable Terraform code.
 

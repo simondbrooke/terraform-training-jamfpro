@@ -1,4 +1,4 @@
-# 🚀 Module 20: Publishing and Advanced Module Patterns
+# 🚀 Module 21: Publishing and Advanced Module Patterns
 
 **⏱️ Duration**: 45 minutes  
 **🎯 Difficulty**: Advanced  
@@ -2695,7 +2695,7 @@ echo "✅ Enterprise development workflow validated!"
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Terraform Workflows](./module_20_terraform_workflows.md)**
+**➡️ [Module 22: Terraform Workflows](./module_22_terraform_workflows.md)**
 
 Implement efficient workflows for teams and organizations.
 

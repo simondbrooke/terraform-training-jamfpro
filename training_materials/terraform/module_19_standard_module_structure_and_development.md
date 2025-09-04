@@ -2105,7 +2105,7 @@ echo "📊 Module summary created in MODULE_SUMMARY.md"
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Publishing and Advanced Module Patterns](./module_19_publishing_and_advanced_module_patterns.md)**
+**➡️ [Module 20: Terraform Troubleshooting and Debugging](./module_20_terraform_troubleshooting_and_debugging.md)**
 
 Publish modules and implement advanced patterns.
 

@@ -1062,7 +1062,7 @@ echo "📋 Best practices review completed!"
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Standard Module Structure and Development](./module_18_standard_module_structure_and_development.md)**
+**➡️ [Module 19: Standard Module Structure and Development](./module_19_standard_module_structure_and_development.md)**
 
 Create well-structured, reusable Terraform modules.
 

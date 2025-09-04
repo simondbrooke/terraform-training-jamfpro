@@ -1,7 +1,5 @@
 
----
-
-## 📊 Module 08: Variables and Data
+# 📊 Module 10: Variables and Data
 *Duration: 2.5 hours | Labs: 3*
 
 ### 🎯 Learning Objectives
@@ -1349,7 +1347,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 9: Meta Arguments](./module_09_meta_arguments.md)**
+**➡️ [Module 11: Expressions](./module_11_expressions.md)**
 
 Learn powerful meta-arguments like count, for_each, and lifecycle rules.
 

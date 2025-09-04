@@ -1,6 +1,6 @@
 
 
-# 📥 Module 16: Import and Refresh Operations
+# 📥 Module 17: State Import and Refresh Operations
 
 **⏱️ Duration**: 40 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  
@@ -1238,7 +1238,7 @@ aws ec2 describe-vpcs --filters "Name=tag:Name,Values=import-demo-vpc" --query '
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Terraform Troubleshooting and Debugging](./module_16_terraform_troubleshooting_and_debugging.md)**
+**➡️ [Module 18: Finding and Using Terraform Modules](./module_18_finding_and_using_terraform_modules.md)**
 
 Debug and troubleshoot common Terraform issues.
 

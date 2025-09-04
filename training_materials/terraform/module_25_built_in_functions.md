@@ -1,4 +1,4 @@
-## 🔷 Module 24: Built in Functions
+# 🔷 Module 25: Built in Functions
 *Duration: 2 hours | Labs: 4*
 
 ### 🎯 Learning Objectives
@@ -2729,7 +2729,7 @@ terraform output infrastructure_analysis
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 28: Terraform Cloud](./module_24_terraform_cloud.md)**
+**➡️ [Module 26: Terraform Cloud](./module_26_terraform_cloud.md)**
 
 Learn about HashiCorp's managed service for team collaboration, governance, and automation.
 
