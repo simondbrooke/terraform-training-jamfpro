@@ -2,8 +2,8 @@
 
 In this lesson, we are going to look at the basics of creating an API Role and Client. This is useful when working on automation and wanting to create scripts that use the Jamf Pro API endpoints. This lesson will cover the following topics:
 
-- [API Roles](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%201/Lesson%202%20-%20API%20Roles%20%26%20Clients/Lesson%202%20-%20API%20Roles%20%26%20Clients.md#api-roles)
-- [API Clients](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%201/Lesson%202%20-%20API%20Roles%20%26%20Clients/Lesson%202%20-%20API%20Roles%20%26%20Clients.md#api-clients)
+- [API Roles](#api-roles)
+- [API Clients](#api-clients)
 
 For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 

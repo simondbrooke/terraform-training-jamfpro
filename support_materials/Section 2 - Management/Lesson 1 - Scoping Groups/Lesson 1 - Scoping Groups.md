@@ -4,8 +4,8 @@ This lesson will describe how to create Smart Group resources. Using similar tec
 
 In this lesson, we will cover the following topics:
 
-- [Static Computer & Mobile Device Groups](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%202/Lesson%201%20-%20Scoping%20Groups/Lesson%201%20-%20Scoping%20Groups.md#static-computer--mobile-groups)
-- [Smart Computer & Mobile Device Groups](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%202/Lesson%201%20-%20Scoping%20Groups/Lesson%201%20-%20Scoping%20Groups.md#smart-computer--mobile-groups)
+- [Static Computer & Mobile Device Groups](#static-computer--mobile-groups)
+- [Smart Computer & Mobile Device Groups](#smart-computer--mobile-groups)
 
 For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 

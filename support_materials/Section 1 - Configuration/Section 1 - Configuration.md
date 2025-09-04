@@ -6,7 +6,7 @@ How you set up your environment and utilise the Terraform provider will not be c
 
 In this section, you will complete the following lessons:
 
-1. [Lesson 1 - Infrastructure](https://github.com/macdeacon99/terraform-training-jamfpro/blob/main/support_materials/Section%201%20-%20Configuration/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md)
-2. [Lesson 2 - API Roles & Clients](https://github.com/macdeacon99/terraform-training-jamfpro/blob/main/support_materials/Section%201%20-%20Configuration/Lesson%202%20-%20API%20Roles%20%26%20Clients/Lesson%202%20-%20API%20Roles%20%26%20Clients.md)
-3. [Lesson 3 - Enrolment](https://github.com/macdeacon99/terraform-training-jamfpro/blob/main/support_materials/Section%201%20-%20Configuration/Lesson%203%20-%20Enrolment/Lesson%203%20-%20Enrolment.md)
-4. [Section Review](https://github.com/macdeacon99/terraform-training-jamfpro/blob/main/support_materials/Section%201%20-%20Configuration/Section%201%20Review/Section%201%20Review.md)
+1. [Lesson 1 - Infrastructure](/support_materials/Section%201%20-%20Configuration/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md)
+2. [Lesson 2 - API Roles & Clients](/support_materials/Section%201%20-%20Configuration/Lesson%202%20-%20API%20Roles%20&%20Clients/Lesson%202%20-%20API%20Roles%20&%20Clients.md)
+3. [Lesson 3 - Enrolment](/support_materials/Section%201%20-%20Configuration/Lesson%203%20-%20Enrolment/Lesson%203%20-%20Enrolment.md)
+4. [Section Review](/support_materials/Section%201%20-%20Configuration/Section%201%20Review/Section%201%20Review.md)

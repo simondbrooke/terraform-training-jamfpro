@@ -2,11 +2,11 @@
 
 There are multiple ways to create Extension Attributes in Jamf, and in the same way, there are multiple ways to configure the Extension Attribute resource in Terraform. The following topics will be covered in this lesson:
 
-- [Computer Extension Attributes]()
-  - [Pop-up Menu Example]()
-  - [Text Field Example]()
-  - [Script Example]()
-- [Mobile Device Extension Attribute]()
+- [Computer Extension Attributes](#computer-extension-attributes)
+  - [Pop-up Menu Example](#pop-up-menu-example)
+  - [Text Field Example](#text-field-example)
+  - [Script Example](#script-example)
+- [Mobile Device Extension Attribute](#mobile-device-extension-attributes)
 
 For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 
