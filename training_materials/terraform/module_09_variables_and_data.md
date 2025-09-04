@@ -1802,6 +1802,436 @@ terraform plan -var='attribute_name=Bad@Name' # Invalid characters
 - Choice validation: `contains(["a", "b"], var.choice)`
 - Pattern validation: `can(regex("pattern", var.text))`
 
+---
+
+## 🧪 **Lab 6**: Lists - Working with Collections
+**Duration**: 15 minutes
+
+Learn how to work with lists (ordered collections of the same type).
+
+**🎯 What You'll Learn:**
+- How to create list variables
+- Using lists in resources
+- Basic list operations
+
+**Step 1: Create Simple List Variables**
+
+Add to your `variables.tf`:
+```hcl
+# List of strings - department names
+variable "department_list" {
+  description = "List of all departments"
+  type        = list(string)
+  default     = ["Engineering", "Sales", "Marketing"]
+  
+  validation {
+    condition     = length(var.department_list) >= 1
+    error_message = "Must have at least one department."
+  }
+}
+
+# List of numbers - office floors
+variable "office_floors" {
+  description = "Floor numbers where teams work"
+  type        = list(number)
+  default     = [1, 2, 3, 4]
+}
+
+# List of locations for popup menus
+variable "office_locations" {
+  description = "Available office locations"
+  type        = list(string)
+  default     = ["New York", "San Francisco", "London", "Remote"]
+}
+```
+
+**Step 2: Use Lists in Resources**
+
+Update `main.tf`:
+```hcl
+# Create one extension attribute for each department
+resource "jamfpro_computer_extension_attribute" "department_attributes" {
+  count = length(var.department_list)
+  
+  name        = "${var.department_list[count.index]}-Dept-${var.environment}-${random_string.suffix.result}"
+  enabled     = true
+  description = "Extension attribute for ${var.department_list[count.index]} department"
+  input_type  = "TEXT"
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
+
+# Create a location picker using the office locations list
+resource "jamfpro_computer_extension_attribute" "office_location" {
+  name        = "Office-Location-${var.environment}-${random_string.suffix.result}"
+  enabled     = true
+  description = "Employee office location"
+  input_type  = "POPUP"
+  popup_menu_choices = var.office_locations
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
+```
+
+**Step 3: Output List Information**
+
+Add to `outputs.tf`:
+```hcl
+# Show the original list
+output "all_departments" {
+  description = "All departments from our list"
+  value       = var.department_list
+}
+
+# Show list length
+output "department_count" {
+  description = "Total number of departments"
+  value       = length(var.department_list)
+}
+
+# Show specific list items
+output "first_department" {
+  description = "First department in the list"
+  value       = var.department_list[0]
+}
+
+output "last_department" {
+  description = "Last department in the list"
+  value       = var.department_list[length(var.department_list) - 1]
+}
+
+# Show all created attribute IDs
+output "department_attribute_ids" {
+  description = "IDs of all department attributes"
+  value       = jamfpro_computer_extension_attribute.department_attributes[*].id
+}
+
+# Show office locations
+output "available_locations" {
+  description = "Available office locations"
+  value       = var.office_locations
+}
+```
+
+**Step 4: Test Lists**
+
+```bash
+# Apply with default list
+terraform apply
+
+# View list outputs
+terraform output all_departments
+terraform output department_count
+terraform output department_attribute_ids
+
+# Test with a custom list
+terraform plan -var='department_list=["Finance", "Legal", "HR"]'
+terraform apply -var='department_list=["Finance", "Legal", "HR"]'
+
+# Test with different locations
+terraform plan -var='office_locations=["Boston", "Austin", "Seattle"]'
+
+# Test validation - this should fail (empty list)
+terraform plan -var='department_list=[]'
+```
+
+**🎉 You've learned:**
+- List variables: `type = list(string)`
+- Accessing list items: `var.list[0]`, `var.list[1]`
+- List length: `length(var.list)`
+- Using lists with `count`: `count = length(var.list)`
+- List splat operator: `resource[*].attribute`
+- Lists in popup menus: `popup_menu_choices = var.list`
+
+---
+
+## 🧪 **Lab 7**: Maps - Key-Value Pairs
+**Duration**: 15 minutes
+
+Learn how to work with maps (key-value collections).
+
+**🎯 What You'll Learn:**
+- How to create map variables
+- Using maps for lookups
+- Maps vs lists - when to use each
+
+**Step 1: Create Simple Map Variables**
+
+Add to your `variables.tf`:
+```hcl
+# Map of department codes
+variable "department_codes" {
+  description = "Department name to code mapping"
+  type        = map(string)
+  default = {
+    engineering = "ENG"
+    sales       = "SAL"
+    marketing   = "MKT"
+    support     = "SUP"
+  }
+}
+
+# Map of team sizes
+variable "team_sizes" {
+  description = "Team size by department"
+  type        = map(number)
+  default = {
+    engineering = 15
+    sales       = 8
+    marketing   = 5
+    support     = 6
+  }
+}
+
+# Map of manager names
+variable "department_managers" {
+  description = "Manager for each department"
+  type        = map(string)
+  default = {
+    engineering = "Alice Johnson"
+    sales       = "Bob Smith"
+    marketing   = "Carol Davis"
+    support     = "David Wilson"
+  }
+}
+```
+
+**Step 2: Use Maps in Resources**
+
+Update `main.tf`:
+```hcl
+# Create extension attributes using for_each with maps
+resource "jamfpro_computer_extension_attribute" "department_codes" {
+  for_each = var.department_codes
+  
+  name        = "${each.key}-Code-${each.value}-${var.environment}-${random_string.suffix.result}"
+  enabled     = true
+  description = "Department code for ${each.key}: ${each.value}"
+  input_type  = "TEXT"
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
+
+# Create manager attributes using map lookups
+resource "jamfpro_computer_extension_attribute" "department_info" {
+  for_each = var.department_codes
+  
+  name        = "${each.key}-Info-${var.environment}-${random_string.suffix.result}"
+  enabled     = true
+  description = "Department: ${each.key} | Code: ${each.value} | Manager: ${var.department_managers[each.key]} | Team Size: ${var.team_sizes[each.key]}"
+  input_type  = "TEXT"
+  inventory_display_type = "GENERAL"
+  data_type   = "STRING"
+}
+```
+
+**Step 3: Output Map Information**
+
+Add to `outputs.tf`:
+```hcl
+# Show the original maps
+output "department_codes" {
+  description = "All department codes"
+  value       = var.department_codes
+}
+
+output "team_sizes" {
+  description = "Team sizes by department"
+  value       = var.team_sizes
+}
+
+# Show specific map values
+output "engineering_code" {
+  description = "Engineering department code"
+  value       = var.department_codes["engineering"]
+}
+
+output "sales_team_size" {
+  description = "Sales team size"
+  value       = var.team_sizes["sales"]
+}
+
+# Show all map keys
+output "all_departments_from_map" {
+  description = "All department names from the map"
+  value       = keys(var.department_codes)
+}
+
+# Show all map values
+output "all_codes" {
+  description = "All department codes"
+  value       = values(var.department_codes)
+}
+
+# Show created resources from maps
+output "department_code_attributes" {
+  description = "Department code attributes created"
+  value = {
+    for key, attr in jamfpro_computer_extension_attribute.department_codes :
+    key => {
+      id   = attr.id
+      name = attr.name
+      code = var.department_codes[key]
+    }
+  }
+}
+```
+
+**Step 4: Test Maps**
+
+```bash
+# Apply with default maps
+terraform apply
+
+# View map outputs
+terraform output department_codes
+terraform output team_sizes
+terraform output all_departments_from_map
+terraform output department_code_attributes
+
+# Test with custom maps
+terraform plan -var='department_codes={finance="FIN", legal="LEG", hr="HRD"}'
+
+# Test with different team sizes
+terraform plan -var='team_sizes={engineering=20, sales=12, marketing=8}'
+
+# Apply with custom values
+terraform apply -var='department_codes={finance="FIN", legal="LEG"}' \
+                -var='team_sizes={finance=5, legal=3}' \
+                -var='department_managers={finance="Eve Brown", legal="Frank Green"}'
+```
+
+**🎉 You've learned:**
+- Map variables: `type = map(string)` or `type = map(number)`
+- Accessing map values: `var.map["key"]` or `var.map[each.key]`
+- Using maps with `for_each`: `for_each = var.map`
+- Map functions: `keys(var.map)`, `values(var.map)`
+- Map iteration: `each.key` and `each.value`
+- When to use maps vs lists: Maps for lookups, lists for ordered data
+
+---
+
+## 🧪 **Lab 8**: Locals - Computed Values
+**Duration**: 15 minutes
+
+Learn how to use locals for computed values and avoiding repetition.
+
+**🎯 What You'll Learn:**
+- What locals are and when to use them
+- Computing values from variables
+- Avoiding repetition with locals
+
+**Step 1: Create Simple Locals**
+
+Add to `main.tf`:
+```hcl
+# Local values for computed expressions
+locals {
+  # Simple computed values
+  resource_prefix = "${var.environment}-${random_string.suffix.result}"
+  is_production   = var.environment == "prod"
+  
+  # Computed from our lists and maps
+  total_departments = length(var.department_list)
+  total_employees   = sum(values(var.team_sizes))
+  
+  # String computations
+  organization_name = "ACME Corp"
+  full_prefix      = "${local.organization_name}-${local.resource_prefix}"
+  
+  # Conditional values
+  backup_enabled = local.is_production ? true : false
+  retention_days = local.is_production ? 90 : 30
+}
+```
+
+**Step 2: Use Locals in Resources**
+
+Update your resources to use locals:
+```hcl
+# Use locals to avoid repetition
+resource "jamfpro_computer_extension_attribute" "organization_info" {
+  name        = "Org-Info-${local.resource_prefix}"
+  enabled     = true
+  description = "${local.organization_name} | Environment: ${var.environment} | Production: ${local.is_production} | Total Employees: ${local.total_employees}"
+  input_type  = "TEXT"
+  inventory_display_type = "GENERAL"
+  data_type   = "STRING"
+}
+
+resource "jamfpro_computer_extension_attribute" "backup_info" {
+  name        = "Backup-Settings-${local.resource_prefix}"
+  enabled     = true
+  description = "Backup Enabled: ${local.backup_enabled} | Retention: ${local.retention_days} days"
+  input_type  = "TEXT"
+  inventory_display_type = "GENERAL"
+  data_type   = "STRING"
+}
+```
+
+**Step 3: Output Local Values**
+
+Add to `outputs.tf`:
+```hcl
+# Show computed local values
+output "computed_values" {
+  description = "Values computed by locals"
+  value = {
+    resource_prefix     = local.resource_prefix
+    is_production      = local.is_production
+    total_departments  = local.total_departments
+    total_employees    = local.total_employees
+    organization_name  = local.organization_name
+    full_prefix       = local.full_prefix
+    backup_enabled    = local.backup_enabled
+    retention_days    = local.retention_days
+  }
+}
+
+# Show how locals help avoid repetition
+output "organization_summary" {
+  description = "Organization summary using locals"
+  value = {
+    name              = local.organization_name
+    environment       = var.environment
+    is_production     = local.is_production
+    total_departments = local.total_departments
+    total_employees   = local.total_employees
+    backup_settings = {
+      enabled        = local.backup_enabled
+      retention_days = local.retention_days
+    }
+  }
+}
+```
+
+**Step 4: Test Locals**
+
+```bash
+# Apply to see computed values
+terraform apply
+
+# View computed values
+terraform output computed_values
+terraform output organization_summary
+
+# Test with different environment
+terraform apply -var='environment=prod'
+terraform output computed_values  # Notice how is_production and backup settings change
+
+# Test with different team sizes
+terraform apply -var='team_sizes={engineering=25, sales=15, marketing=10}'
+terraform output organization_summary  # Notice total_employees changes
+```
+
+**🎉 You've learned:**
+- Locals compute values once: `locals { name = expression }`
+- Reference locals with `local.name` (not `var.name`)
+- Locals can use variables, other locals, and functions
+- Use locals to avoid repeating complex expressions
+- Locals for conditional logic: `condition ? true_value : false_value`
+- Locals for calculations: `sum()`, `length()`, string manipulation
+
 **Step 1: Create Advanced Configuration**
 
 Create `advanced.tf`:
