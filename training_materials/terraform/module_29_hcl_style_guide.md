@@ -839,30 +839,749 @@ repos:
 
 **Task**: Fix the formatting in this poorly formatted configuration
 
+**Step 1**: Create a poorly formatted file
+```hcl
+# Poorly formatted Terraform code - Exercise 1
+resource "jamfpro_category"     "security_tools"{
+name="Security Tools"
+     priority=10
+}
+
+resource "jamfpro_computer_group" "workstations" {
+name = "Workstations"
+is_smart=true
+site_id=-1
+criteria_set="AND"
+
+criteria {
+name="Operating System"
+priority=0
+and_or="and"
+search_type="is"
+value="Mac"
+}
+
+criteria{
+name         =     "Computer Group"
+priority     =   1
+and_or="and"
+search_type="is not"
+value="Servers"
+}
+}
+
+resource "jamfpro_policy" "security_policy"{
+depends_on = [jamfpro_category.security_tools]
+count=var.enable_policy ? 1:0
+
+name="Security Policy"
+enabled=true
+trigger_checkin=true
+
+frequency="Ongoing"
+retry_event="none"
+retry_attempts=-1
+
+category_id=jamfpro_category.security_tools.id
+}
+```
+
+**Step 2**: Run terraform fmt
+```bash
+terraform fmt
+```
+**Expected Output:**
+```
+poorly_formatted.tf
+```
+
+**Step 3**: View the formatted result
+```hcl
+# Poorly formatted Terraform code - Exercise 1
+resource "jamfpro_category" "security_tools" {
+  name     = "Security Tools"
+  priority = 10
+}
+
+resource "jamfpro_computer_group" "workstations" {
+  name         = "Workstations"
+  is_smart     = true
+  site_id      = -1
+  criteria_set = "AND"
+
+  criteria {
+    name        = "Operating System"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = "Mac"
+  }
+
+  criteria {
+    name        = "Computer Group"
+    priority    = 1
+    and_or      = "and"
+    search_type = "is not"
+    value       = "Servers"
+  }
+}
+
+resource "jamfpro_policy" "security_policy" {
+  depends_on = [jamfpro_category.security_tools]
+  count      = var.enable_policy ? 1 : 0
+
+  name            = "Security Policy"
+  enabled         = true
+  trigger_checkin = true
+
+  frequency      = "Ongoing"
+  retry_event    = "none"
+  retry_attempts = -1
+
+  category_id = jamfpro_category.security_tools.id
+}
+```
+
+**Key improvements:**
+- ✅ Proper 2-space indentation
+- ✅ Aligned equals signs for consecutive arguments
+- ✅ Meta-arguments (depends_on, count) appear first
+- ✅ Blank lines separate logical argument groups
+- ✅ Consistent spacing around operators
+
+---
+
 ### Exercise 2: Improve Naming Conventions
 **Duration**: 10 minutes  
 
 **Task**: Refactor resource names to follow best practices
+
+**Step 1**: Review bad naming examples
+```hcl
+# ❌ Bad naming conventions
+resource "jamfpro_category" "SecurityCategory" {  # CamelCase
+  name     = "Security Tools"
+  priority = 10
+}
+
+resource "jamfpro_computer_group" "computer_group_workstations" {  # Includes resource type
+  name         = "Workstations"
+  is_smart     = true
+}
+
+resource "jamfpro_policy" "security-policy" {  # Hyphens instead of underscores
+  name        = "Security Policy"
+  category_id = jamfpro_category.SecurityCategory.id
+}
+
+resource "jamfpro_building" "hq" {  # Unclear abbreviation
+  name = "Main Office"
+  city = "San Francisco"
+}
+
+resource "jamfpro_department" "dept1" {  # Too generic
+  name = "IT Department"
+}
+```
+
+**Step 2**: Apply good naming conventions
+```hcl
+# ✅ Good naming conventions
+resource "jamfpro_category" "security_tools" {  # Descriptive noun, underscores
+  name     = "Security Tools"
+  priority = 10
+}
+
+resource "jamfpro_computer_group" "workstations" {  # Descriptive without resource type
+  name         = "Workstations"
+  is_smart     = true
+}
+
+resource "jamfpro_policy" "security_baseline" {  # Underscores, descriptive
+  name        = "Security Policy"
+  category_id = jamfpro_category.security_tools.id
+}
+
+resource "jamfpro_building" "headquarters" {  # Clear, descriptive name
+  name = "Main Office"
+  city = "San Francisco"
+}
+
+resource "jamfpro_department" "information_technology" {  # Specific and clear
+  name = "IT Department"
+}
+```
+
+**Naming Rules Applied:**
+- ✅ Use descriptive nouns for resource names
+- ✅ Avoid including resource type in the name
+- ✅ Use underscores to separate multiple words
+- ✅ Avoid abbreviations unless universally understood
+- ✅ Maintain consistent naming patterns
+
+---
 
 ### Exercise 3: Organize File Structure
 **Duration**: 15 minutes
 
 **Task**: Split a monolithic configuration into properly organized files
 
+**Step 1**: Start with monolithic configuration
+```hcl
+# monolithic_config.tf - Everything in one file
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+  }
+  backend "s3" {
+    bucket = "jamfpro-terraform-state"
+    key    = "infrastructure/terraform.tfstate"
+    region = "us-west-2"
+  }
+}
+
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_url
+  auth_method          = var.jamfpro_auth_method
+}
+
+variable "jamfpro_instance_url" {
+  description = "The FQDN of the JamfPro instance"
+  type        = string
+}
+
+locals {
+  name_prefix = "${var.organization_name}-${var.environment}"
+  common_tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+data "jamfpro_site" "default" {
+  name = "None"
+}
+
+resource "jamfpro_building" "headquarters" {
+  name = "${local.name_prefix}-Headquarters"
+  city = "San Francisco"
+}
+
+output "building_details" {
+  description = "Details of created buildings"
+  value = {
+    id   = jamfpro_building.headquarters.id
+    name = jamfpro_building.headquarters.name
+  }
+}
+```
+
+**Step 2**: Create organized file structure
+```bash
+mkdir organized_config
+cd organized_config
+```
+
+**terraform.tf**
+```hcl
+# Terraform and provider version requirements
+terraform {
+  required_version = ">= 1.5"
+  
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+  }
+}
+```
+
+**backend.tf**
+```hcl
+# Backend configuration for state management
+terraform {
+  backend "s3" {
+    bucket = "jamfpro-terraform-state"
+    key    = "infrastructure/terraform.tfstate"
+    region = "us-west-2"
+  }
+}
+```
+
+**providers.tf**
+```hcl
+# Provider configurations
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_url
+  auth_method          = var.jamfpro_auth_method
+}
+```
+
+**variables.tf**
+```hcl
+# Input variable declarations
+variable "jamfpro_instance_url" {
+  description = "The FQDN of the JamfPro instance"
+  type        = string
+}
+
+variable "organization_name" {
+  description = "Organization name"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
+```
+
+**locals.tf**
+```hcl
+# Local value definitions
+locals {
+  name_prefix = "${var.organization_name}-${var.environment}"
+  
+  common_tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+```
+
+**data.tf**
+```hcl
+# Data source declarations
+data "jamfpro_site" "default" {
+  name = "None"
+}
+```
+
+**main.tf**
+```hcl
+# Primary resource definitions
+resource "jamfpro_building" "headquarters" {
+  name = "${local.name_prefix}-Headquarters"
+  city = "San Francisco"
+}
+```
+
+**outputs.tf**
+```hcl
+# Output value declarations
+output "building_details" {
+  description = "Details of created buildings"
+  value = {
+    id   = jamfpro_building.headquarters.id
+    name = jamfpro_building.headquarters.name
+  }
+}
+```
+
+**Benefits of organized structure:**
+- ✅ Clear separation of concerns
+- ✅ Easy to navigate and maintain
+- ✅ Consistent with HashiCorp recommendations
+- ✅ Better collaboration in teams
+- ✅ Easier to find specific configurations
+
+---
+
 ### Exercise 4: Implement Local Values
 **Duration**: 10 minutes
 
 **Task**: Replace repeated expressions with local values
+
+**Step 1**: Identify repeated expressions
+```hcl
+# ❌ Bad - Repeated expressions throughout
+variable "organization" {
+  default = "ACME Corp"
+}
+
+variable "environment" {
+  default = "production"
+}
+
+resource "jamfpro_building" "headquarters" {
+  name = "${var.organization}-${var.environment}-Headquarters"
+}
+
+resource "jamfpro_building" "branch_office" {
+  name = "${var.organization}-${var.environment}-Branch Office"
+}
+
+resource "jamfpro_category" "security" {
+  name     = "${var.organization}-${var.environment}-Security Tools"
+  priority = 10
+}
+
+resource "jamfpro_category" "productivity" {
+  name     = "${var.organization}-${var.environment}-Productivity Software"
+  priority = 20
+}
+
+resource "jamfpro_policy" "security_updates" {
+  name            = "${var.organization}-${var.environment}-Security Updates"
+  enabled         = true
+  trigger_checkin = true
+  frequency       = "Ongoing"
+  retry_event     = "none"
+  retry_attempts  = -1
+}
+
+resource "jamfpro_policy" "software_installation" {
+  name            = "${var.organization}-${var.environment}-Software Installation"
+  enabled         = true
+  trigger_checkin = true
+  frequency       = "Ongoing"
+  retry_event     = "none"
+  retry_attempts  = -1
+}
+```
+
+**Step 2**: Implement local values
+```hcl
+# ✅ Good - Using local values to eliminate repetition
+variable "organization" {
+  default = "ACME Corp"
+}
+
+variable "environment" {
+  default = "production"
+}
+
+locals {
+  name_prefix = "${var.organization}-${var.environment}"
+  
+  default_policy_settings = {
+    frequency       = "Ongoing"
+    retry_event     = "none"
+    retry_attempts  = -1
+    enabled         = true
+    trigger_checkin = true
+  }
+  
+  standard_categories = {
+    security = {
+      name     = "Security Tools"
+      priority = 10
+    }
+    productivity = {
+      name     = "Productivity Software"
+      priority = 20
+    }
+  }
+}
+
+resource "jamfpro_building" "headquarters" {
+  name = "${local.name_prefix}-Headquarters"
+}
+
+resource "jamfpro_building" "branch_office" {
+  name = "${local.name_prefix}-Branch Office"
+}
+
+resource "jamfpro_category" "standard" {
+  for_each = local.standard_categories
+  
+  name     = "${local.name_prefix}-${each.value.name}"
+  priority = each.value.priority
+}
+
+resource "jamfpro_policy" "security_updates" {
+  name            = "${local.name_prefix}-Security Updates"
+  enabled         = local.default_policy_settings.enabled
+  trigger_checkin = local.default_policy_settings.trigger_checkin
+  frequency       = local.default_policy_settings.frequency
+  retry_event     = local.default_policy_settings.retry_event
+  retry_attempts  = local.default_policy_settings.retry_attempts
+}
+
+resource "jamfpro_policy" "software_installation" {
+  name            = "${local.name_prefix}-Software Installation"
+  enabled         = local.default_policy_settings.enabled
+  trigger_checkin = local.default_policy_settings.trigger_checkin
+  frequency       = local.default_policy_settings.frequency
+  retry_event     = local.default_policy_settings.retry_event
+  retry_attempts  = local.default_policy_settings.retry_attempts
+}
+```
+
+**Benefits of using locals:**
+- ✅ Eliminates code duplication
+- ✅ Single source of truth for computed values
+- ✅ Easier maintenance and updates
+- ✅ Improved consistency across resources
+- ✅ More readable configuration
+
+---
 
 ### Exercise 5: Add Variable Validation
 **Duration**: 8 minutes
 
 **Task**: Add proper validation rules to variables
 
+**Step 1**: Variables without validation
+```hcl
+# ❌ Bad - No validation
+variable "jamfpro_instance_url" {
+  description = "JamfPro instance URL"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
+
+variable "category_priority" {
+  description = "Category priority"
+  type        = number
+}
+
+variable "admin_email" {
+  description = "Administrator email"
+  type        = string
+}
+```
+
+**Step 2**: Add comprehensive validation
+```hcl
+# ✅ Good - Proper validation rules
+variable "jamfpro_instance_url" {
+  description = "JamfPro instance URL (must be HTTPS)"
+  type        = string
+  
+  validation {
+    condition     = can(regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.jamfpro_instance_url))
+    error_message = "JamfPro instance URL must be a valid HTTPS URL (e.g., https://company.jamfcloud.com)."
+  }
+}
+
+variable "environment" {
+  description = "Environment name (development, staging, or production)"
+  type        = string
+  
+  validation {
+    condition     = contains(["development", "staging", "production"], var.environment)
+    error_message = "Environment must be one of: development, staging, production."
+  }
+}
+
+variable "category_priority" {
+  description = "Category priority (1-20, where 1 is highest priority)"
+  type        = number
+  
+  validation {
+    condition     = var.category_priority >= 1 && var.category_priority <= 20
+    error_message = "Category priority must be between 1 and 20 (inclusive)."
+  }
+}
+
+variable "admin_email" {
+  description = "Administrator email address"
+  type        = string
+  
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.admin_email))
+    error_message = "Admin email must be a valid email address format."
+  }
+}
+
+variable "department_names" {
+  description = "List of department names (minimum 1, maximum 50)"
+  type        = list(string)
+  
+  validation {
+    condition     = length(var.department_names) >= 1 && length(var.department_names) <= 50
+    error_message = "Department names list must contain between 1 and 50 departments."
+  }
+  
+  validation {
+    condition = alltrue([
+      for dept in var.department_names : can(regex("^[a-zA-Z0-9 .-]+$", dept))
+    ])
+    error_message = "Department names must contain only letters, numbers, spaces, periods, and hyphens."
+  }
+}
+```
+
+**Step 3**: Test validation
+```bash
+terraform plan -var="environment=invalid"
+```
+**Expected Output:**
+```
+╷
+│ Error: Invalid value for variable
+│ 
+│   on variables.tf line 15:
+│   15: variable "environment" {
+│      ├────────────────
+│      │ var.environment is "invalid"
+│ 
+│ Environment must be one of: development, staging, production.
+╵
+```
+
+**Validation benefits:**
+- ✅ Prevents invalid configurations
+- ✅ Provides clear error messages
+- ✅ Catches errors early in the workflow
+- ✅ Documents acceptable values
+- ✅ Improves user experience
+
+---
+
 ### Exercise 6: Create Comprehensive Outputs
 **Duration**: 7 minutes
 
 **Task**: Add meaningful outputs with descriptions
+
+**Step 1**: Poor output examples
+```hcl
+# ❌ Bad outputs - No descriptions, unclear names
+output "id" {
+  value = jamfpro_category.security.id
+}
+
+output "cat_name" {
+  value = jamfpro_category.security.name
+}
+
+output "building" {
+  value = jamfpro_building.headquarters
+}
+```
+
+**Step 2**: Create comprehensive outputs
+```hcl
+# ✅ Good outputs - Clear descriptions and meaningful names
+
+# Individual resource outputs
+output "security_category_id" {
+  description = "ID of the security tools category for use in policy assignments"
+  value       = jamfpro_category.security.id
+}
+
+output "security_category_details" {
+  description = "Complete details of the security tools category"
+  value = {
+    id       = jamfpro_category.security.id
+    name     = jamfpro_category.security.name
+    priority = jamfpro_category.security.priority
+  }
+}
+
+# Structured outputs for external systems
+output "headquarters_info" {
+  description = "Complete headquarters building information for reference"
+  value = {
+    id      = jamfpro_building.headquarters.id
+    name    = jamfpro_building.headquarters.name
+    address = {
+      city    = jamfpro_building.headquarters.city
+      state   = jamfpro_building.headquarters.state
+      country = jamfpro_building.headquarters.country
+    }
+  }
+}
+
+# Aggregated outputs for dashboards
+output "infrastructure_summary" {
+  description = "High-level summary of JamfPro infrastructure for external integrations"
+  value = {
+    categories_created = length(jamfpro_category.standard)
+    buildings_created  = 1
+    policies_created   = 2
+    
+    active_policies = [
+      for policy in [
+        jamfpro_policy.security_updates,
+        jamfpro_policy.software_installation
+      ] : {
+        id   = policy.id
+        name = policy.name
+      } if policy.enabled
+    ]
+  }
+}
+
+# Reference outputs for other Terraform configurations
+output "resource_references" {
+  description = "Resource references for use in other Terraform configurations"
+  value = {
+    security_category_id     = jamfpro_category.security.id
+    headquarters_building_id = jamfpro_building.headquarters.id
+    workstations_group_id   = jamfpro_computer_group.workstations.id
+  }
+}
+
+# JSON formatted output for external APIs
+output "policy_summary_json" {
+  description = "Policy summary in JSON format for external APIs"
+  value = jsonencode({
+    policies = [
+      {
+        id      = jamfpro_policy.security_updates.id
+        name    = jamfpro_policy.security_updates.name
+        enabled = jamfpro_policy.security_updates.enabled
+      }
+    ]
+    summary = {
+      total_policies   = 1
+      enabled_policies = 1
+      created_at      = timestamp()
+    }
+  })
+}
+```
+
+**Step 3**: View outputs
+```bash
+terraform output
+```
+**Expected Output:**
+```
+headquarters_info = {
+  "address" = {
+    "city" = "San Francisco"
+    "country" = "United States"
+    "state" = "CA"
+  }
+  "id" = "12345"
+  "name" = "ACME Corp-production-Headquarters"
+}
+infrastructure_summary = {
+  "active_policies" = [
+    {
+      "id" = "67890"
+      "name" = "ACME Corp-production-Security Updates"
+    },
+  ]
+  "buildings_created" = 1
+  "categories_created" = 2
+  "policies_created" = 2
+}
+resource_references = {
+  "headquarters_building_id" = "12345"
+  "security_category_id" = "54321"
+  "workstations_group_id" = "98765"
+}
+```
+
+**Output best practices:**
+- ✅ Always include meaningful descriptions
+- ✅ Use descriptive output names
+- ✅ Structure complex outputs as objects
+- ✅ Provide both detailed and summary outputs
+- ✅ Format outputs for external consumption when needed
 
 ---
 

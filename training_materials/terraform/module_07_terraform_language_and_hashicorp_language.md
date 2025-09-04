@@ -18,7 +18,7 @@ By the end of this module, you will be able to:
 
 #### 📖 HashiCorp Configuration Language (HCL)
 
-**HCL** is the underlying language that powers Terraform configurations. It's designed to be both **human-readable** and **machine-friendly**.
+**HCL** is the underlying language that powers Terraform configurations and all HashiCorp products. It's designed to be both **human-readable** and **machine-friendly**.
 
 **🎯 Key Characteristics:**
 - **👥 Human-friendly**: Easy to read and write
@@ -41,15 +41,16 @@ graph LR
     style TF fill:#FF6B35,color:#fff
 ```
 
-**📚 Throughout this module, we'll explore each HCL foundation layer in detail with focused diagrams.**
+**📚 Throughout this module, we'll explore each HCL foundation layer in detail with supporting diagrams.**
 
 **📋 HCL is used in:**
-- **Terraform**: Infrastructure as Code
-- **Vault**: Secrets management policies
-- **Consul**: Service configuration
-- **Nomad**: Job specifications
-- **Packer**: Template definitions
-- **Waypoint**: Application configuration
+
+- **Terraform**: Infrastructure as Code / Configuration as Code
+- **Vault**: Secure, store, and tightly control access to tokens, passwords, certificates, encryption keys for protecting secrets, and other sensitive data using a UI, CLI, or HTTP API.
+- **Consul**: service networking solution that enables teams to manage secure network connectivity between services, across on-prem, hybrid cloud, and multi-cloud environments and runtimes. Consul offers service discovery, service mesh, identity-based authorization, L7 traffic management, and secure service-to-service encryption.
+- **Nomad**: A simple and flexible scheduler and orchestrator to deploy and manage containers and non-containerized applications across on-prem and clouds at scale
+- **Packer**: a tool that lets you create identical machine OS images for multiple platforms from a single source template. Packer can create golden images to use in image pipelines.
+- **Waypoint**: lets platform teams define golden patterns and workflows for developers to manage applications at scale.
 
 #### 🔍 Understanding Terraform Language vs HCL
 
@@ -58,14 +59,14 @@ The **Terraform Language** is built on top of **HCL (HashiCorp Configuration Lan
 
 **🧩 Terraform Language Elements:**
 
-According to the official documentation, the Terraform language consists of only a few basic elements:
+The Terraform language consists of only a few basic elements:
 
 1. **📦 Blocks**: Containers for other content that represent an object
-   - Have a **block type** (like `resource`, `variable`, `terraform`)
+   - Each block has a **block type** (like `resource`, `variable`, `terraform`)
    - Can have **zero or more labels** (like `"aws_instance"` and `"web"`)
    - Contain a **body** with arguments and nested blocks
 
-2. **🏷️ Block Labels**: Names that identify specific instances of blocks
+2. **🏷️ Block Labels**: Names that identify specific instances of blocks (like `"policy_example_1"` and `"policy_example_2"`)
 
 3. **⚙️ Arguments**: Assign values to names within blocks
    - Appear as `name = value` assignments
@@ -77,6 +78,9 @@ According to the official documentation, the Terraform language consists of only
    - Enable dynamic configuration
 
 **📊 Practical Example of Language Elements:**
+
+In this example, we have a `resource` block with the type `jamfpro_policy` and the label `demo_policy`. The block has a body with arguments and nested blocks. The arguments are `name`, `enabled`, `frequency`, `trigger_checkin`, and `category_id`. The nested block is `scope` with the arguments `all_computers` and `computer_ids`.
+
 ```hcl
 # BLOCK TYPE: "resource"
 # BLOCK LABELS: "jamfpro_policy" and "demo_policy"  
@@ -91,7 +95,7 @@ resource "jamfpro_policy" "demo_policy" {
   # NESTED BLOCK
   scope {
     all_computers = false
-    computer_ids  = var.target_computer_ids  # Reference to list variable
+    computer_ids  = var.target_computer_ids  # References to a list variable
   }
   
   # NESTED BLOCK
@@ -103,7 +107,7 @@ resource "jamfpro_policy" "demo_policy" {
 }
 ```
 
-**🎯 Key Takeaway**: If you encounter **HCL** in documentation or discussions, think "Terraform Language" - they're essentially the same in the context of Terraform configurations!
+**🎯 Key Takeaway**: If you encounter **HCL** in documentation or discussions, think "Terraform Language" - they're essentially the same in the context of Terraform configurations! HCL is also used across all other hashicorp products.
 
 #### 🧱 HCL Syntax Fundamentals
 
@@ -158,7 +162,9 @@ terraform {
   }
 }
 ```
-The `terraform` block configures Terraform's behavior and requirements. It specifies the minimum Terraform version needed and declares which providers the configuration uses. This block must be present in every Terraform configuration to ensure compatibility and proper provider installation.
+The `terraform` block configures Terraform's behavior and defines the provider requirements for the configuration. It specifies the Terraform version needed and declares which providers versions are required too. LAter we shall look at how to define these using version constraints. 
+
+This block must be present in every Terraform configuration created, it won't work without it. This is also known as the root module.
 
 **2. Provider Block**
 ```hcl
@@ -169,7 +175,7 @@ provider "jamfpro" {
   client_secret         = var.jamfpro_client_secret
 }
 ```
-The `provider` block configures connection details for external APIs or services. Here it establishes authentication with a JamfPro server using OAuth2 credentials. Provider blocks tell Terraform how to communicate with the target infrastructure platform.
+The `provider` block configures connection details for external APIs or services. Here it establishes authentication with a JamfPro server using OAuth2 credentials. Provider blocks tell Terraform how to communicate with the target infrastructure platform. This block must also be present in every Terraform configuration created, it won't work without it. For each provider defined in the `terraform` block, a correlating `provider` block must be present. The specifics of each provider block will vary based on the provider. You should always check the provider documentation in the terraform [registry](https://registry.terraform.io/) for the correct syntax.
 
 **3. Resource Block**
 ```hcl
@@ -178,7 +184,7 @@ resource "jamfpro_category" "demo" {
   priority = 10
 }
 ```
-Resource blocks define infrastructure objects that Terraform should create, update, or delete. This example creates a new category in JamfPro with specific properties. Resources are the core building blocks of Terraform configurations.
+Resource blocks define infrastructure objects or saas resources that Terraform should create, update, or delete. This example creates a new category in JamfPro with specific properties. Resources are the core building blocks of Terraform configurations.
 
 **4. Data Source Block**
 ```hcl
@@ -186,7 +192,7 @@ data "jamfpro_category" "existing" {
   name = "Production"
 }
 ```
-Data sources allow Terraform to read information from external systems without managing those resources. This block retrieves details about an existing JamfPro category named "Production". Data sources provide read-only access to infrastructure information for use in other resources.
+Data sources allow Terraform to read information from external systems without managing those resources directly. This block retrieves details about an existing JamfPro category named "Production". Data sources provide read-only access to infrastructure / saas resource information for use in other resources. A common use case for data sources are for referencing pre-existing resources that was implemented outside of Terraform.
 
 **5. Variable Block**
 ```hcl
@@ -196,7 +202,7 @@ variable "jamfpro_url" {
   default     = "https://company.jamfcloud.com"
 }
 ```
-Variable blocks define input parameters that make configurations flexible and reusable. This variable allows users to specify different JamfPro server URLs without modifying the main configuration. Variables enable parameterization of Terraform configurations.
+Variable blocks define input parameters that make configurations flexible and reusable. This variable allows users to specify different JamfPro server URLs without modifying the main configuration. Variables enable parameterization of Terraform configurations and can support validation logic to ensure the correct values are passed in. A common use case for variables are for passing in environment variables or other configuration values that are different for each environment. Another common use case is for passing in sensitive values that should not be stored in the configuration file.
 
 **6. Local Values Block**
 ```hcl
@@ -208,7 +214,7 @@ locals {
   }
 }
 ```
-Local values compute and store expressions for reuse throughout the configuration. This example defines common tags that can be applied to multiple resources. Locals help reduce duplication and improve maintainability by centralizing computed values.
+Local values compute and store expressions for reuse throughout the configuration. This example defines common tags that can be applied to multiple resources. Locals help reduce duplication (DRY principle) and improve maintainability by centralizing computed values.
 
 **7. Output Block**
 ```hcl
@@ -218,6 +224,96 @@ output "category_id" {
 }
 ```
 Output blocks expose values from your configuration for use by other Terraform configurations or external systems. This output provides the ID of a created category for reference elsewhere. Outputs are essential for sharing data between Terraform modules and configurations.
+
+#### ⚙️ Compilation Process
+
+**🔄 HCL Runtime Compilation:**
+
+Terraform compiles all HCL files at runtime, meaning **file names don't affect functionality**. All `.tf` files in a directory are parsed and merged into a single configuration.
+
+**📁 File Naming Conventions:**
+
+While file names are arbitrary, the Terraform community follows these conventional patterns:
+
+**🏗️ Core Configuration Files:**
+```hcl
+# terraform.tf - Terraform settings and requirements
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24"
+    }
+  }
+}
+
+# providers.tf - Provider configurations
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.client_id
+  client_secret        = var.client_secret
+}
+
+# variables.tf - Input variable declarations  
+variable "jamfpro_instance_fqdn" {
+  description = "FQDN of the Jamf Pro instance"
+  type        = string
+  sensitive   = true
+}
+
+# locals.tf - Local value definitions
+locals {
+  environment_prefix = "${var.environment}-${var.organization}"
+  common_tags = {
+    Environment   = var.environment
+    ManagedBy    = "terraform"
+    Project      = "jamfpro-infrastructure"
+  }
+}
+
+# data.tf - Data source declarations
+data "jamfpro_site" "default" {
+  name = "Default Site"
+}
+
+# main.tf - Primary resource definitions
+resource "jamfpro_category" "security" {
+  name     = "${local.environment_prefix}-Security"
+  priority = 10
+}
+
+# outputs.tf - Output value definitions
+output "category_id" {
+  description = "ID of the security category"
+  value       = jamfpro_category.security.id
+}
+```
+
+**💡 Key Points:**
+- **Runtime Parsing**: All `.tf` files are loaded simultaneously
+- **Order Independence**: Files are processed in alphabetical order, but dependencies determine execution
+- **Naming Freedom**: You could name files `apple.tf`, `banana.tf` - functionality remains identical
+- **Convention Benefits**: Standard naming improves team collaboration and code maintainability
+
+**🔍 Alternative Naming Patterns:**
+```
+# Feature-based naming
+jamfpro-categories.tf
+jamfpro-policies.tf
+jamfpro-groups.tf
+
+# Environment-based naming  
+production.tf
+staging.tf
+development.tf
+
+# Component-based naming
+networking.tf
+security.tf
+monitoring.tf
+```
 
 #### ⚙️ Terraform Settings Block
 
