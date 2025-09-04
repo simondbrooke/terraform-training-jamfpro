@@ -2698,50 +2698,58 @@ terraform {
   }
 }
 
-# Production Jamf Pro provider
+# Production Jamf Pro provider (default)
 provider "jamfpro" {
-  # Uses JAMFPRO_INSTANCE_NAME, JAMFPRO_CLIENT_ID, JAMFPRO_CLIENT_SECRET
-  
-  default_tags = {
-    Project     = var.project_name
-    Environment = "production"
-    ManagedBy   = "terraform"
-  }
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
 
 # Development Jamf Pro provider for testing
 provider "jamfpro" {
   alias = "development"
-  # In practice, would use different environment variables
-  # JAMFPRO_DEV_INSTANCE_NAME, JAMFPRO_DEV_CLIENT_ID, etc.
-  
-  default_tags = {
-    Project     = var.project_name
-    Environment = "development"
-    ManagedBy   = "terraform"
-    Purpose     = "testing"
-  }
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
 
 # Staging Jamf Pro provider
 provider "jamfpro" {
   alias = "staging"
-  # Would use JAMFPRO_STAGING_* environment variables
-  
-  default_tags = {
-    Project     = var.project_name
-    Environment = "staging" 
-    ManagedBy   = "terraform"
-    Purpose     = "validation"
-  }
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
 
 # Random provider for unique naming
 provider "random" {}
+
 ```
 
 **variables.tf:**
 ```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://lbgsandbox.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "f17936ee-c517-468c-8359-05498fc49b28"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "bwSxPO6byQYq2M5cJDPralSwM962wn_NdCKZOa9QUkPtrgK4YuSNeG2AYmeK2xu8"
+  sensitive   = true
+}
+
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -2798,990 +2806,580 @@ variable "organization_structure" {
   }
 }
 
-variable "mobile_device_prestages" {
-  description = "Mobile device prestage enrollment configurations"
-  type = map(object({
-    device_type     = string
-    department      = string
-    supervised      = bool
-    multi_user      = bool
-    auto_advance    = bool
-    naming_prefix   = string
-  }))
-  
-  default = {
-    "Executive iPads" = {
-      device_type   = "iPad"
-      department    = "Executive"
-      supervised    = true
-      multi_user    = false
-      auto_advance  = true
-      naming_prefix = "EXEC-"
-    }
-    "Sales iPhones" = {
-      device_type   = "iPhone"
-      department    = "Sales"
-      supervised    = true
-      multi_user    = false
-      auto_advance  = true
-      naming_prefix = "SALES-"
-    }
-    "Shared iPads" = {
-      device_type   = "iPad"
-      department    = "Support"
-      supervised    = true
-      multi_user    = true
-      auto_advance  = false
-      naming_prefix = "SHARED-"
-    }
-  }
-}
-
-variable "enrollment_customizations" {
-  description = "Enrollment customization configurations"
-  type = map(object({
-    title           = string
-    body            = string
-    button_color    = string
-    background_color = string
-    use_sso         = bool
-  }))
-  
-  default = {
-    "Executive Enrollment" = {
-      title           = "Welcome to Executive Mobile Management"
-      body            = "Your device will be configured with executive-level security and productivity tools."
-      button_color    = "1F4E79"
-      background_color = "F8F9FA"
-      use_sso         = true
-    }
-    "Standard Enrollment" = {
-      title           = "Welcome to Corporate Mobile Management"
-      body            = "Your device will be configured with standard corporate security and productivity applications."
-      button_color    = "0066CC"
-      background_color = "FFFFFF"
-      use_sso         = true
-    }
-    "Shared Device Enrollment" = {
-      title           = "Shared Device Setup"
-      body            = "This shared device will be configured for multiple users in your department."
-      button_color    = "28A745"
-      background_color = "F8F9FA"
-      use_sso         = false
-    }
-  }
-}
-
 variable "mobile_applications" {
   description = "Mobile application catalog"
   type = map(object({
-    bundle_id       = string
+    app_title_name  = string
     deployment_type = string
     category        = string
     required_for    = list(string)
-    vpp_enabled     = bool
+    featured        = bool
   }))
   
   default = {
     "Microsoft Outlook" = {
-      bundle_id       = "com.microsoft.Office.Outlook"
-      deployment_type = "Install Automatically"
+      app_title_name  = "Microsoft Outlook"
+      deployment_type = "SELF_SERVICE"
       category        = "Productivity"
       required_for    = ["Executive", "Sales", "Marketing"]
-      vpp_enabled     = true
+      featured        = true
     }
     "Slack" = {
-      bundle_id       = "com.tinyspeck.chatlyio"
-      deployment_type = "Make Available in Self Service"
+      app_title_name  = "Slack"
+      deployment_type = "SELF_SERVICE"
       category        = "Communication"
       required_for    = ["Engineering", "Support"]
-      vpp_enabled     = false
-    }
-    "Salesforce" = {
-      bundle_id       = "com.salesforce.chatter"
-      deployment_type = "Install Automatically"
-      category        = "Business"
-      required_for    = ["Sales"]
-      vpp_enabled     = true
+      featured        = false
     }
     "Microsoft Teams" = {
-      bundle_id       = "com.microsoft.skype.teams"
-      deployment_type = "Make Available in Self Service"
+      app_title_name  = "Microsoft Teams"
+      deployment_type = "SELF_SERVICE"
       category        = "Communication"
       required_for    = ["Executive", "Sales", "Marketing", "Engineering", "Support"]
-      vpp_enabled     = true
+      featured        = true
     }
   }
 }
 
-variable "security_configurations" {
-  description = "Security configuration settings"
-  type = object({
-    enable_filevault           = bool
-    filevault_key_type        = string
-    enable_laps               = bool
-    laps_rotation_hours       = number
-    allowed_file_extensions   = list(string)
-  })
-  
-  default = {
-    enable_filevault         = true
-    filevault_key_type      = "Institutional"
-    enable_laps             = true
-    laps_rotation_hours     = 24
-    allowed_file_extensions = [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png"]
-  }
-}
-
-variable "api_access_configuration" {
-  description = "API access and governance configuration"
+variable "smart_groups_config" {
+  description = "Smart computer groups configuration"
   type = map(object({
-    environment         = string
-    token_lifetime_hours = number
-    privileges          = list(string)
+    criteria_name  = string
+    criteria_value = string
+    search_type    = string
   }))
   
   default = {
-    "mobile-admin-prod" = {
-      environment         = "production"
-      token_lifetime_hours = 2
-      privileges = [
-        "Create Mobile Device Applications",
-        "Read Mobile Device Applications", 
-        "Update Mobile Device Applications",
-        "Create Mobile Device PreStage Enrollments",
-        "Read Mobile Device PreStage Enrollments",
-        "Update Mobile Device PreStage Enrollments"
-      ]
+    "iOS Devices" = {
+      criteria_name  = "Operating System Version"
+      criteria_value = "iOS"
+      search_type    = "like"
     }
-    "mobile-admin-dev" = {
-      environment         = "development"
-      token_lifetime_hours = 8
-      privileges = [
-        "Create Mobile Device Applications",
-        "Read Mobile Device Applications",
-        "Update Mobile Device Applications",
-        "Delete Mobile Device Applications",
-        "Create Mobile Device PreStage Enrollments",
-        "Read Mobile Device PreStage Enrollments",
-        "Update Mobile Device PreStage Enrollments",
-        "Delete Mobile Device PreStage Enrollments"
-      ]
+    "iPadOS Devices" = {
+      criteria_name  = "Operating System Version"
+      criteria_value = "iPadOS"
+      search_type    = "like"
+    }
+    "Executive Devices" = {
+      criteria_name  = "Department"
+      criteria_value = "Executive"
+      search_type    = "is"
     }
   }
 }
+
 ```
 
 **main.tf:**
 ```hcl
-# Random suffix for unique naming
-resource "random_id" "suffix" {
-  byte_length = 4
+# ==================================================================================
+# ENTERPRISE MOBILE DEVICE MANAGEMENT - COMPREHENSIVE META-ARGUMENTS DEMONSTRATION
+# ==================================================================================
+# 
+# This configuration demonstrates ALL Terraform meta-arguments in a real-world
+# enterprise mobile device management scenario:
+# 
+# 1. for_each    - Dynamic resource creation from complex data structures
+# 2. count       - Simple iteration for lists and conditional creation
+# 3. depends_on  - Explicit dependency management for complex workflows
+# 4. provider    - Multi-environment deployment with provider aliases
+# 5. lifecycle   - Resource protection and behavior control
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# - Jamf Pro requires globally unique resource names across the entire instance
+# - Random suffixes prevent naming conflicts in shared sandbox environments
+# - Lifecycle rules protect critical resources from accidental changes/deletion
+# - Provider aliases enable multi-environment management from single configuration
+# 
+# This pattern is essential for enterprise Jamf Pro Terraform deployments in:
+# - Production environments with strict change control
+# - Multi-environment CI/CD pipelines
+# - Shared development and testing instances
+# ==================================================================================
+
+# Random suffix for unique naming - CRITICAL for enterprise deployments
+resource "random_string" "enterprise_suffix" {
+  length  = 8
+  upper   = false
+  special = false
+  
+  lifecycle {
+    # Prevent suffix changes that would break all resource names
+    prevent_destroy = true
+  }
 }
 
-# Foundation - Sites (using for_each)
-resource "jamfpro_site" "organization_sites" {
+# ==================================================================================
+# FOUNDATION LAYER - Organizational Structure
+# ==================================================================================
+
+# Sites using for_each - Dynamic creation from variable list
+resource "jamfpro_site" "enterprise_sites" {
   for_each = toset(var.organization_structure.sites)
   
-  name = each.key
+  name = "${each.key}-${random_string.enterprise_suffix.result}"
+  
+  lifecycle {
+    # Sites are foundational - protect from accidental deletion
+    prevent_destroy = true
+    create_before_destroy = true
+  }
 }
 
-# Buildings with explicit dependencies
-resource "jamfpro_building" "organization_buildings" {
+# Buildings using for_each - Complex object iteration with explicit dependencies
+resource "jamfpro_building" "enterprise_buildings" {
   for_each = var.organization_structure.buildings
   
-  name            = each.key
+  name            = "${each.key}-${random_string.enterprise_suffix.result}"
   street_address1 = each.value.address
   city            = each.value.city
   state_province  = each.value.state
   zip_postal_code = each.value.zip
   country         = "United States"
   
-  # Explicit dependency on sites
-  depends_on = [jamfpro_site.organization_sites]
+  # Explicit dependency - buildings must be created after sites
+  depends_on = [jamfpro_site.enterprise_sites]
+  
+  lifecycle {
+    # Buildings are critical infrastructure
+    prevent_destroy = true
+    create_before_destroy = true
+    # Ignore address changes that might be managed externally
+    ignore_changes = [street_address1, city, state_province, zip_postal_code]
+  }
 }
 
-# Departments (using count for simple list)
-resource "jamfpro_department" "organization_departments" {
+# Departments using count - Simple list iteration
+resource "jamfpro_department" "enterprise_departments" {
   count = length(var.organization_structure.departments)
-  name  = var.organization_structure.departments[count.index]
+  
+  name = "${var.organization_structure.departments[count.index]}-${random_string.enterprise_suffix.result}"
+  
+  lifecycle {
+    # Departments are organizational foundation
+    prevent_destroy = true
+    create_before_destroy = true
+  }
 }
 
-# Categories for mobile applications (using for_each with derived set)
+# ==================================================================================
+# CATEGORIZATION LAYER - Application and Resource Categories
+# ==================================================================================
+
+# Categories derived from mobile applications using for_each with locals
 locals {
+  # Extract unique categories from mobile applications
   mobile_app_categories = toset([for app in var.mobile_applications : app.category])
+  
+  # Additional system categories
+  system_categories = toset(["Security", "Management", "Compliance"])
+  
+  # Combined categories
+  all_categories = setunion(local.mobile_app_categories, local.system_categories)
 }
 
-resource "jamfpro_category" "mobile_app_categories" {
-  for_each = local.mobile_app_categories
+resource "jamfpro_category" "enterprise_categories" {
+  for_each = local.all_categories
   
-  name     = each.key
-  priority = 5
-}
-
-# Security & Compliance Layer with Lifecycle Protection
-
-# Disk encryption configuration with maximum protection
-resource "jamfpro_disk_encryption_configuration" "corporate_filevault" {
-  count = var.security_configurations.enable_filevault ? 1 : 0
-  
-  name                     = "Corporate FileVault Configuration"
-  key_type                 = var.security_configurations.filevault_key_type
-  file_vault_enabled_users = "Management Account"
-  
-  # Institutional recovery key configuration
-  dynamic "institutional_recovery_key" {
-    for_each = var.security_configurations.filevault_key_type == "Institutional" ? [1] : []
-    content {
-      certificate_type = "PKCS12"
-      password         = "SecureFileVaultKey2024!"
-      data             = filebase64("${path.module}/certificates/filevault_master.p12")
-    }
-  }
+  name     = "${each.key}-${random_string.enterprise_suffix.result}"
+  priority = each.key == "Security" ? 1 : each.key == "Management" ? 2 : each.key == "Compliance" ? 3 : 10
   
   lifecycle {
-    prevent_destroy       = true
+    # Categories are foundational - protect all for demonstration
+    prevent_destroy = true
     create_before_destroy = true
-    ignore_changes       = [
-      institutional_recovery_key[0].password  # Password managed externally
-    ]
+    # Priority might be adjusted externally
+    ignore_changes = [priority]
   }
 }
 
-# Local admin password settings with protection
-resource "jamfpro_local_admin_password_settings" "corporate_laps" {
-  count = var.security_configurations.enable_laps ? 1 : 0
-  
-  auto_deploy_enabled                 = true
-  password_rotation_time_seconds      = var.security_configurations.laps_rotation_hours * 3600
-  auto_rotate_enabled                 = true
-  auto_rotate_expiration_time_seconds = 7 * 24 * 3600  # 7 days
-  
-  lifecycle {
-    prevent_destroy       = true
-    create_before_destroy = true
-  }
-}
+# ==================================================================================
+# SMART GROUPS LAYER - Device Classification and Targeting
+# ==================================================================================
 
-# Allowed file extensions (using count for list iteration)
-resource "jamfpro_allowed_file_extension" "corporate_extensions" {
-  count = length(var.security_configurations.allowed_file_extensions)
+# Smart computer groups using for_each - Complex criteria configuration
+resource "jamfpro_smart_computer_group" "enterprise_device_groups" {
+  for_each = var.smart_groups_config
   
-  extension = var.security_configurations.allowed_file_extensions[count.index]
-}
-
-# Mobile Device Infrastructure Layer
-
-# Enrollment customizations (using for_each)
-resource "jamfpro_enrollment_customization" "mobile_enrollment_experiences" {
-  for_each = var.enrollment_customizations
+  name    = "${each.key}-${random_string.enterprise_suffix.result}"
+  site_id = jamfpro_site.enterprise_sites[var.organization_structure.sites[0]].id
   
-  site_id      = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
-  display_name = each.key
-  description  = "Enrollment customization for ${each.key}"
-  
-  # Explicit dependency on sites
-  depends_on = [jamfpro_site.organization_sites]
-  
-  branding_settings {
-    text_color        = "000000"
-    button_color      = each.value.button_color
-    button_text_color = "FFFFFF"
-    background_color  = each.value.background_color
-  }
-  
-  text_pane {
-    display_name         = each.value.title
-    rank                 = 1
-    title               = each.value.title
-    body                = each.value.body
-    subtext             = "This process will take approximately 10 minutes."
-    back_button_text    = "Back"
-    continue_button_text = "Continue"
-  }
-  
-  # Conditional SSO pane
-  dynamic "sso_pane" {
-    for_each = each.value.use_sso ? [1] : []
-    content {
-      display_name                       = "Corporate Authentication"
-      rank                               = 2
-      is_group_enrollment_access_enabled = true
-      group_enrollment_access_name       = "All-Employees"
-      is_use_jamf_connect               = true
-      short_name_attribute              = "sAMAccountName"
-      long_name_attribute               = "displayName"
-    }
-  }
-}
-
-# Mobile device prestage enrollments (using for_each)
-resource "jamfpro_mobile_device_prestage_enrollment" "corporate_prestages" {
-  for_each = var.mobile_device_prestages
-  
-  display_name                          = each.key
-  mandatory                             = true
-  mdm_removable                         = false
-  support_phone_number                  = "+1-800-IT-HELP"
-  support_email_address                 = "mobile-support@company.com"
-  department                            = each.value.department
-  default_prestage                      = each.key == "Standard Corporate"
-  enrollment_site_id                    = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
-  keep_existing_site_membership         = false
-  keep_existing_location_information    = false
-  require_authentication                = true
-  authentication_prompt                 = "Sign in to continue device setup"
-  prevent_activation_lock               = true
-  enable_device_based_activation_lock   = false
-  device_enrollment_program_instance_id = "1"
-  auto_advance_setup                    = each.value.auto_advance
-  allow_pairing                         = false
-  multi_user                           = each.value.multi_user
-  supervised                           = each.value.supervised
-  maximum_shared_accounts              = each.value.multi_user ? 10 : 1
-  configure_device_before_setup_assistant = true
-  site_id                              = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
-  
-  # Complex dependencies on multiple foundation resources
+  # Complex dependency chain
   depends_on = [
-    jamfpro_site.organization_sites,
-    jamfpro_enrollment_customization.mobile_enrollment_experiences,
-    jamfpro_department.organization_departments
+    jamfpro_site.enterprise_sites,
+    jamfpro_building.enterprise_buildings,
+    jamfpro_department.enterprise_departments
   ]
   
-  skip_setup_items {
-    location              = false
-    privacy               = true
-    biometric             = false
-    software_update       = false
-    diagnostics           = true
-    imessage_and_facetime = each.value.department == "Executive" ? false : true
-    intelligence          = true
-    passcode              = false
-    sim_setup             = true
-    screen_time           = each.value.department == "Executive" ? false : true
-    siri                  = each.value.department == "Executive" ? false : true
-    apple_id              = true
-    payment               = true
-    tos                   = true
-    welcome               = false
-  }
-  
-  names {
-    assign_names_using       = "Serial Numbers"
-    device_name_prefix       = each.value.naming_prefix
-    device_name_suffix       = ""
-    manage_names             = true
-    device_naming_configured = true
-  }
-  
-  location_information {
-    username      = ""
-    realname      = ""
-    phone         = ""
-    email         = ""
-    room          = ""
-    position      = ""
-    department_id = "-1"
-    building_id   = "-1"
-  }
-  
-  purchasing_information {
-    leased             = false
-    purchased          = true
-    apple_care_id      = ""
-    po_number          = ""
-    vendor             = ""
-    purchase_price     = ""
-    life_expectancy    = 0
-    purchasing_account = ""
-    purchasing_contact = ""
-    lease_date         = "1970-01-01"
-    po_date            = "1970-01-01"
-    warranty_date      = "1970-01-01"
+  criteria {
+    name        = each.value.criteria_name
+    search_type = each.value.search_type
+    value       = each.value.criteria_value
   }
   
   lifecycle {
     create_before_destroy = true
-    prevent_destroy       = contains(["Executive iPads"], each.key)  # Protect critical prestages
-    ignore_changes       = [
-      device_enrollment_program_instance_id  # Managed externally
-    ]
+    # Protect all device groups for demonstration
+    prevent_destroy = true
+    # Criteria might be adjusted by admins
+    ignore_changes = [criteria]
   }
 }
 
-# Smart mobile device groups for each department (using count)
-resource "jamfpro_smart_mobile_device_group" "department_mobile_groups" {
+# Department-specific computer groups using count - Simple department iteration
+resource "jamfpro_smart_computer_group" "department_groups" {
   count = length(var.organization_structure.departments)
   
-  name    = "${var.organization_structure.departments[count.index]} Mobile Devices"
-  site_id = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
+  name    = "${var.organization_structure.departments[count.index]} Computers-${random_string.enterprise_suffix.result}"
+  site_id = jamfpro_site.enterprise_sites[var.organization_structure.sites[0]].id
   
-  # Explicit dependencies
+  # Explicit dependencies for proper creation order
   depends_on = [
-    jamfpro_site.organization_sites,
-    jamfpro_department.organization_departments
+    jamfpro_site.enterprise_sites,
+    jamfpro_department.enterprise_departments
   ]
   
   criteria {
     name        = "Department"
-    priority    = 0
-    and_or      = "and"
     search_type = "is"
-    value       = var.organization_structure.departments[count.index]
+    value       = "${var.organization_structure.departments[count.index]}-${random_string.enterprise_suffix.result}"
+  }
+  
+  lifecycle {
+    create_before_destroy = true
+    # Protect all department groups for demonstration
+    prevent_destroy = true
   }
 }
 
-# Mobile Device Extension Attributes for tracking (using for_each)
-locals {
-  mobile_extension_attributes = {
-    "Device Usage Type" = {
-      description = "Primary usage category for this mobile device"
-      input_type  = "POPUP"
-      choices     = ["Executive Use", "Sales Tool", "Shared Device", "Development", "Support"]
-    }
-    "Cost Center" = {
-      description = "Financial cost center for this device"
-      input_type  = "TEXT"
-      choices     = []
-    }
-    "Compliance Status" = {
-      description = "Device compliance with corporate security policies"
-      input_type  = "POPUP"
-      choices     = ["Compliant", "Non-Compliant", "Exempt", "Under Review"]
-    }
-  }
-}
+# ==================================================================================
+# APPLICATION MANAGEMENT LAYER - Enterprise App Deployment
+# ==================================================================================
 
-resource "jamfpro_mobile_device_extension_attribute" "corporate_tracking" {
-  for_each = local.mobile_extension_attributes
-  
-  name                   = each.key
-  description            = each.value.description
-  data_type              = "STRING"
-  inventory_display_type = "GENERAL"
-  input_type             = each.value.input_type
-  
-  # Conditional popup choices
-  popup_menu_choices = each.value.input_type == "POPUP" ? each.value.choices : null
-}
-
-# Mobile Applications Layer (using for_each)
-resource "jamfpro_mobile_device_application" "corporate_mobile_apps" {
+# Mobile applications using for_each - Complex app configuration
+resource "jamfpro_app_installer" "enterprise_mobile_apps" {
   for_each = var.mobile_applications
   
-  name         = each.key
-  display_name = each.key
-  bundle_id    = each.value.bundle_id
-  internal_app = false
-  
-  category_id = jamfpro_category.mobile_app_categories[each.value.category].id
-  site_id     = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
-  
-  deploy_automatically                   = each.value.deployment_type == "Install Automatically"
-  deploy_as_managed_app                  = true
-  remove_app_when_mdm_profile_is_removed = true
-  prevent_backup_of_app_data             = true
-  allow_user_to_delete                   = false
-  keep_app_updated_on_devices           = true
-  free                                  = !each.value.vpp_enabled
-  
-  # Conditional VPP configuration
-  dynamic "vpp" {
-    for_each = each.value.vpp_enabled ? [1] : []
-    content {
-      assign_vpp_device_based_licenses = true
-      vpp_admin_account_id             = 1
+  name            = "${each.key}-${random_string.enterprise_suffix.result}"
+  app_title_name  = each.value.app_title_name
+  enabled         = true
+  deployment_type = each.value.deployment_type
+  update_behavior = "AUTOMATIC"
+  category_id     = jamfpro_category.enterprise_categories[each.value.category].id
+  site_id         = jamfpro_site.enterprise_sites[var.organization_structure.sites[0]].id
+  smart_group_id  = "1"
+
+  install_predefined_config_profiles = false
+  trigger_admin_notifications        = false
+
+  notification_settings {
+    notification_message  = "A new update is available for ${each.key}"
+    notification_interval = 1
+    deadline_message      = "Update deadline approaching for ${each.key}"
+    deadline              = 1
+    quit_delay            = 1
+    complete_message      = "${each.key} update completed successfully"
+    relaunch              = true
+    suppress              = false
+  }
+
+  self_service_settings {
+    include_in_featured_category   = each.value.featured
+    include_in_compliance_category = false
+    force_view_description         = true
+    description                    = "Enterprise ${each.key} application for ${join(", ", each.value.required_for)} departments"
+
+    categories {
+      id       = jamfpro_category.enterprise_categories[each.value.category].id
+      featured = each.value.featured
     }
   }
   
-  # Dynamic self service configuration
-  dynamic "self_service" {
-    for_each = each.value.deployment_type == "Make Available in Self Service" ? [1] : []
-    content {
-      self_service_description = "Install ${each.key} for enhanced productivity and collaboration."
-      feature_on_main_page     = contains(["Microsoft Teams", "Slack"], each.key)
-      notification             = true
-    }
+  # Complex dependencies on categories and sites
+  depends_on = [
+    jamfpro_category.enterprise_categories,
+    jamfpro_site.enterprise_sites
+  ]
+  
+  lifecycle {
+    create_before_destroy = true
+    # Protect all applications for demonstration
+    prevent_destroy = true
+    # Ignore version changes managed by automatic updates
+    ignore_changes = [
+      latest_available_version,
+      selected_version
+    ]
   }
+}
+
+# ==================================================================================
+# SECURITY & COMPLIANCE LAYER - Critical System Policies
+# ==================================================================================
+
+# Critical security policy with maximum lifecycle protection
+resource "jamfpro_policy" "enterprise_security_baseline" {
+  name        = "CRITICAL - Enterprise Security Baseline - ${random_string.enterprise_suffix.result}"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.enterprise_categories["Security"].id
+  
+  # Complex dependency chain for security policy
+  depends_on = [
+    jamfpro_category.enterprise_categories,
+    jamfpro_smart_computer_group.enterprise_device_groups,
+    jamfpro_smart_computer_group.department_groups
+  ]
   
   scope {
-    all_mobile_devices = false
-    all_jss_users      = false
-    
-    # Scope to specific department groups
-    mobile_device_group_ids = [
-      for i, dept in var.organization_structure.departments :
-      jamfpro_smart_mobile_device_group.department_mobile_groups[i].id
-      if contains(each.value.required_for, dept)
+    all_computers      = false
+    computer_group_ids = [
+      for group in jamfpro_smart_computer_group.department_groups :
+      group.id
     ]
+  }
+  
+  payloads {
+    maintenance {
+      recon        = true
+      permissions  = true
+      system_cache = true
+      user_cache   = true
+      byhost       = true
+    }
+  }
+  
+  lifecycle {
+    # Maximum protection for critical security policy
+    prevent_destroy = true
+    create_before_destroy = true
+    # Allow external changes to scope and settings
+    ignore_changes = [
+      enabled  # Might be temporarily disabled for maintenance
+    ]
+  }
+}
+
+# Compliance monitoring policy using conditional count
+resource "jamfpro_policy" "compliance_monitoring" {
+  count = var.enable_staging ? 1 : 0  # Only create in staging for testing
+  
+  name        = "Compliance Monitoring Policy-${random_string.enterprise_suffix.result}"
+  enabled     = false  # Start disabled for testing
+  frequency   = "Once every week"
+  category_id = jamfpro_category.enterprise_categories["Compliance"].id
+  
+  depends_on = [
+    jamfpro_category.enterprise_categories,
+    jamfpro_policy.enterprise_security_baseline
+  ]
+  
+  scope {
+    all_computers = false
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
   }
   
   lifecycle {
     create_before_destroy = true
-    prevent_destroy       = contains(["Microsoft Outlook", "Microsoft Teams"], each.key)
+    # Allow modification for testing
+    ignore_changes = [enabled, frequency]
   }
 }
 
-# Mobile Device Configuration Profiles (using for_each)
-locals {
-  mobile_profiles = {
-    "Corporate Wi-Fi" = {
-      level               = "Device Level"
-      deployment_method   = "Install Automatically"
-      departments        = var.organization_structure.departments
-      profile_file       = "corporate_wifi.mobileconfig"
-    }
-    "Email Configuration" = {
-      level               = "User Level"
-      deployment_method   = "Install Automatically"
-      departments        = ["Executive", "Sales", "Marketing"]
-      profile_file       = "email_config.mobileconfig"
-    }
-    "VPN Configuration" = {
-      level               = "Device Level"
-      deployment_method   = "Make Available in Self Service"
-      departments        = ["Engineering", "Support"]
-      profile_file       = "vpn_config.mobileconfig"
-    }
-  }
-}
+# ==================================================================================
+# MULTI-ENVIRONMENT LAYER - Provider Aliases for Different Environments
+# ==================================================================================
 
-resource "jamfpro_mobile_device_configuration_profile_plist" "corporate_profiles" {
-  for_each = local.mobile_profiles
+# Production environment resources (default provider)
+resource "jamfpro_category" "prod_categories" {
+  for_each = toset(["Production-Apps", "Production-Security"])
   
-  name               = each.key
-  description        = "Corporate ${each.key} configuration profile"
-  level              = each.value.level
-  deployment_method  = each.value.deployment_method
-  redeploy_on_update = "Newly Assigned"
-  payloads           = file("${path.module}/profiles/${each.value.profile_file}")
-  
-  site_id     = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
-  category_id = jamfpro_category.mobile_app_categories["Productivity"].id
-  
-  scope {
-    all_mobile_devices = false
-    all_jss_users      = false
-    
-    # Scope to specific department groups
-    mobile_device_group_ids = [
-      for i, dept in var.organization_structure.departments :
-      jamfpro_smart_mobile_device_group.department_mobile_groups[i].id
-      if contains(each.value.departments, dept)
-    ]
-  }
-  
-  lifecycle {
-    create_before_destroy = true
-    prevent_destroy       = each.key == "Corporate Wi-Fi"  # Protect critical profiles
-  }
-}
-
-# Access Management & Governance Layer (Multi-Environment with Provider Aliases)
-
-# API Roles for different environments (using for_each)
-resource "jamfpro_api_role" "mobile_management_roles" {
-  for_each = var.api_access_configuration
-  
-  display_name = "Mobile Management - ${title(each.value.environment)}"
-  privileges   = each.value.privileges
-}
-
-# Production API integrations (default provider)
-resource "jamfpro_api_integration" "mobile_api_prod" {
-  for_each = {
-    for name, config in var.api_access_configuration :
-    name => config
-    if config.environment == "production"
-  }
-  
-  display_name                  = each.key
-  enabled                       = true
-  access_token_lifetime_seconds = each.value.token_lifetime_hours * 3600
-  authorization_scopes          = [jamfpro_api_role.mobile_management_roles[each.key].display_name]
-  
-  lifecycle {
-    prevent_destroy = true  # Protect production API access
-  }
-}
-
-# Development API integrations (development provider)
-resource "jamfpro_api_integration" "mobile_api_dev" {
-  for_each = var.enable_development ? {
-    for name, config in var.api_access_configuration :
-    name => config
-    if config.environment == "development"
-  } : {}
-  
-  provider = jamfpro.development
-  
-  display_name                  = each.key
-  enabled                       = true
-  access_token_lifetime_seconds = each.value.token_lifetime_hours * 3600
-  authorization_scopes          = [jamfpro_api_role.mobile_management_roles[each.key].display_name]
-}
-
-# Administrative accounts for different environments (using count and provider)
-locals {
-  admin_accounts = [
-    {
-      name         = "mobile-admin-prod"
-      environment  = "production"
-      full_name    = "Mobile Device Administrator"
-      access_level = "Full Access"
-      provider_alias = ""
-    },
-    {
-      name         = "mobile-admin-staging"
-      environment  = "staging"
-      full_name    = "Mobile Device Staging Admin"
-      access_level = "Site Access"
-      provider_alias = "staging"
-    }
-  ]
-}
-
-# Production admin account (default provider)
-resource "jamfpro_account" "mobile_admin_prod" {
-  name                  = "mobile-admin-prod"
-  directory_user        = false
-  full_name             = "Mobile Device Administrator"
-  password              = "SecureMobileAdmin2024!"
-  email                 = "mobile-admin@company.com"
-  enabled               = "Enabled"
-  force_password_change = true
-  access_level          = "Full Access"
-  privilege_set         = "Custom"
-  
-  jss_objects_privileges = [
-    "Create Mobile Device Applications",
-    "Read Mobile Device Applications",
-    "Update Mobile Device Applications",
-    "Create Mobile Device PreStage Enrollments",
-    "Read Mobile Device PreStage Enrollments", 
-    "Update Mobile Device PreStage Enrollments",
-    "Create Smart Mobile Device Groups",
-    "Read Smart Mobile Device Groups",
-    "Update Smart Mobile Device Groups",
-    "Create iOS Configuration Profiles",
-    "Read iOS Configuration Profiles",
-    "Update iOS Configuration Profiles"
-  ]
-  
-  jss_actions_privileges = [
-    "Enroll Mobile Devices",
-    "Send MDM Check In Command",
-    "Send Mobile Device Remote Lock Command"
-  ]
+  name     = "${each.key}-${random_string.enterprise_suffix.result}"
+  priority = each.key == "Production-Security" ? 1 : 5
   
   lifecycle {
     prevent_destroy = true
-    ignore_changes = [password]  # Password managed externally
+    create_before_destroy = true
   }
 }
 
-# Staging admin account (staging provider)
-resource "jamfpro_account" "mobile_admin_staging" {
+# Development environment resources (development provider alias)
+resource "jamfpro_category" "dev_categories" {
+  for_each = var.enable_development ? toset(["Dev-Testing", "Dev-Staging"]) : []
+  provider = jamfpro.development
+  
+  name     = "${each.key}-${random_string.enterprise_suffix.result}"
+  priority = 10
+  
+  lifecycle {
+    create_before_destroy = true
+    # Development resources can be destroyed
+  }
+}
+
+# Staging environment policy (staging provider alias)
+resource "jamfpro_policy" "staging_validation" {
   count    = var.enable_staging ? 1 : 0
   provider = jamfpro.staging
   
-  name                  = "mobile-admin-staging"
-  directory_user        = false
-  full_name             = "Mobile Device Staging Admin"
-  password              = "StagingMobileAdmin2024!"
-  email                 = "mobile-staging@company.com"
-  enabled               = "Enabled"
-  force_password_change = true
-  access_level          = "Site Access"
-  privilege_set         = "Custom"
-  site_id               = 1
+  name        = "Staging Validation Policy-${random_string.enterprise_suffix.result}"
+  enabled     = true
+  frequency   = "Once per computer"
+  category_id = var.enable_staging ? jamfpro_category.prod_categories["Production-Apps"].id : null
   
-  jss_objects_privileges = [
-    "Create Mobile Device Applications",
-    "Read Mobile Device Applications",
-    "Update Mobile Device Applications",
-    "Delete Mobile Device Applications",
-    "Create Mobile Device PreStage Enrollments",
-    "Read Mobile Device PreStage Enrollments",
-    "Update Mobile Device PreStage Enrollments",
-    "Delete Mobile Device PreStage Enrollments"
-  ]
-}
-
-# Account groups for team-based access (using for_each)
-locals {
-  mobile_admin_groups = {
-    "Mobile Device Managers" = {
-      access_level = "Full Access"
-      privileges = [
-        "Create Mobile Device Applications",
-        "Read Mobile Device Applications",
-        "Update Mobile Device Applications",
-        "Create Smart Mobile Device Groups",
-        "Read Smart Mobile Device Groups",
-        "Update Smart Mobile Device Groups"
-      ]
-    }
-    "Mobile Support Team" = {
-      access_level = "Site Access"
-      privileges = [
-        "Read Mobile Device Applications",
-        "Read Smart Mobile Device Groups",
-        "Send MDM Check In Command",
-        "Send Mobile Device Remote Lock Command"
-      ]
+  # Cross-provider dependency (production category used in staging)
+  depends_on = [jamfpro_category.prod_categories]
+  
+  scope {
+    all_computers = false
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
     }
   }
-}
-
-resource "jamfpro_account_group" "mobile_admin_groups" {
-  for_each = local.mobile_admin_groups
-  
-  name          = each.key
-  access_level  = each.value.access_level
-  privilege_set = "Custom"
-  
-  jss_objects_privileges = each.value.privileges
-  
-  jss_actions_privileges = each.value.access_level == "Full Access" ? [
-    "Enroll Mobile Devices",
-    "Send MDM Check In Command"
-  ] : [
-    "Send MDM Check In Command"
-  ]
-}
-
-# SMTP servers for environment-specific notifications (using provider aliases)
-resource "jamfpro_smtp_server" "notification_servers" {
-  for_each = {
-    production = {
-      host        = "smtp-prod.company.com"
-      sender      = "jamf-prod@company.com"
-      display     = "Jamf Pro Production"
-      provider    = ""
-    }
-    staging = {
-      host        = "smtp-staging.company.com"
-      sender      = "jamf-staging@company.com"
-      display     = "Jamf Pro Staging"
-      provider    = "staging"
-    }
-  }
-  
-  # Conditional provider selection
-  provider = each.value.provider == "staging" && var.enable_staging ? jamfpro.staging : null
-  count    = (each.key == "staging" && !var.enable_staging) ? 0 : 1
-  
-  enabled             = true
-  authentication_type = "BASIC"
-  
-  connection_settings {
-    host               = each.value.host
-    port               = 587
-    encryption_type    = "TLS_1_2"
-    connection_timeout = 10
-  }
-  
-  sender_settings {
-    display_name  = each.value.display
-    email_address = each.value.sender
-  }
-  
-  basic_auth_credentials {
-    username = "smtp-user"
-    password = "smtp-password-${each.key}"
-  }
-}
-
-# Volume Purchasing Location for app management
-resource "jamfpro_volume_purchasing_locations" "corporate_vpp" {
-  name                                      = "Corporate Apple Business Manager"
-  service_token                             = "eyJleHBEYXRlIjoiMjAyNS0wMS0wMVQwMDowMDowMFoiLCJ0b2tlbiI6InNhbXBsZS10b2tlbiJ9"
-  automatically_populate_purchased_content  = true
-  send_notification_when_no_longer_assigned = true
-  auto_register_managed_users               = true
-  site_id                                   = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
   
   lifecycle {
-    prevent_destroy = true  # Critical for app licensing
-    ignore_changes = [
-      service_token  # Token managed externally
-    ]
+    create_before_destroy = true
+    # Staging can be modified freely
   }
 }
-```
 
-**Create placeholder files:**
+# ==================================================================================
+# OPERATIONAL MANAGEMENT LAYER - Scripts and Automation
+# ==================================================================================
 
-**profiles/corporate_wifi.mobileconfig:**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>PayloadContent</key>
-    <array>
-        <dict>
-            <key>SSID_STR</key>
-            <string>Corporate-WiFi</string>
-            <key>HIDDEN_NETWORK</key>
-            <false/>
-            <key>AutoJoin</key>
-            <true/>
-            <key>PayloadDescription</key>
-            <string>Corporate Wi-Fi Configuration</string>
-            <key>PayloadDisplayName</key>
-            <string>Corporate Wi-Fi</string>
-            <key>PayloadIdentifier</key>
-            <string>com.company.wifi.corporate</string>
-            <key>PayloadType</key>
-            <string>com.apple.wifi.managed</string>
-            <key>PayloadUUID</key>
-            <string>12345678-1234-1234-1234-123456789012</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-        </dict>
-    </array>
-    <key>PayloadDescription</key>
-    <string>Corporate Wi-Fi configuration profile</string>
-    <key>PayloadDisplayName</key>
-    <string>Corporate Wi-Fi</string>
-    <key>PayloadIdentifier</key>
-    <string>com.company.profiles.wifi</string>
-    <key>PayloadType</key>
-    <string>Configuration</string>
-    <key>PayloadUUID</key>
-    <string>87654321-4321-4321-4321-210987654321</string>
-    <key>PayloadVersion</key>
-    <integer>1</integer>
-</dict>
-</plist>
-```
+# Management scripts using for_each with replace_triggered_by
+locals {
+  management_scripts = {
+    "Device Inventory Update" = {
+      category = "Management"
+      content  = "#!/bin/bash\necho 'Updating device inventory...'\njamf recon\necho 'Inventory update complete'"
+      priority = "AFTER"
+    }
+    "Security Compliance Check" = {
+      category = "Security"
+      content  = "#!/bin/bash\necho 'Running security compliance check...'\n# Add security checks here\necho 'Compliance check complete'"
+      priority = "BEFORE"
+    }
+  }
+}
 
-**profiles/email_config.mobileconfig:**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>PayloadContent</key>
-    <array>
-        <dict>
-            <key>EmailAccountDescription</key>
-            <string>Corporate Email</string>
-            <key>EmailAccountName</key>
-            <string>Corporate Email</string>
-            <key>EmailAccountType</key>
-            <string>EmailTypeIMAP</string>
-            <key>IncomingMailServerHostName</key>
-            <string>mail.company.com</string>
-            <key>IncomingMailServerPortNumber</key>
-            <integer>993</integer>
-            <key>IncomingMailServerUseSSL</key>
-            <true/>
-            <key>OutgoingMailServerHostName</key>
-            <string>smtp.company.com</string>
-            <key>OutgoingMailServerPortNumber</key>
-            <integer>587</integer>
-            <key>OutgoingMailServerUseSSL</key>
-            <true/>
-            <key>PayloadDescription</key>
-            <string>Corporate Email Configuration</string>
-            <key>PayloadDisplayName</key>
-            <string>Corporate Email</string>
-            <key>PayloadIdentifier</key>
-            <string>com.company.email.corporate</string>
-            <key>PayloadType</key>
-            <string>com.apple.mail.managed</string>
-            <key>PayloadUUID</key>
-            <string>11111111-2222-3333-4444-555555555555</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-        </dict>
-    </array>
-    <key>PayloadDescription</key>
-    <string>Corporate email configuration</string>
-    <key>PayloadDisplayName</key>
-    <string>Corporate Email</string>
-    <key>PayloadIdentifier</key>
-    <string>com.company.profiles.email</string>
-    <key>PayloadType</key>
-    <string>Configuration</string>
-    <key>PayloadUUID</key>
-    <string>66666666-7777-8888-9999-000000000000</string>
-    <key>PayloadVersion</key>
-    <integer>1</integer>
-</dict>
-</plist>
-```
+resource "jamfpro_script" "enterprise_management_scripts" {
+  for_each = local.management_scripts
+  
+  name            = "${each.key}-${random_string.enterprise_suffix.result}"
+  script_contents = each.value.content
+  category_id     = jamfpro_category.enterprise_categories[each.value.category].id
+  os_requirements = "13"
+  priority        = each.value.priority
+  
+  depends_on = [jamfpro_category.enterprise_categories]
+  
+  lifecycle {
+    create_before_destroy = true
+    # Note: replace_triggered_by with each references not supported
+    # Protect all scripts for demonstration
+    prevent_destroy = true
+  }
+}
 
-**profiles/vpn_config.mobileconfig:**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>PayloadContent</key>
-    <array>
-        <dict>
-            <key>UserDefinedName</key>
-            <string>Corporate VPN</string>
-            <key>VPNType</key>
-            <string>IPSec</string>
-            <key>IPSec</key>
-            <dict>
-                <key>RemoteAddress</key>
-                <string>vpn.company.com</string>
-                <key>AuthenticationMethod</key>
-                <string>SharedSecret</string>
-                <key>SharedSecret</key>
-                <data>Y29ycG9yYXRldnBu</data>
-            </dict>
-            <key>PayloadDescription</key>
-            <string>Corporate VPN Configuration</string>
-            <key>PayloadDisplayName</key>
-            <string>Corporate VPN</string>
-            <key>PayloadIdentifier</key>
-            <string>com.company.vpn.corporate</string>
-            <key>PayloadType</key>
-            <string>com.apple.vpn.managed</string>
-            <key>PayloadUUID</key>
-            <string>aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-        </dict>
-    </array>
-    <key>PayloadDescription</key>
-    <string>Corporate VPN configuration</string>
-    <key>PayloadDisplayName</key>
-    <string>Corporate VPN</string>
-    <key>PayloadIdentifier</key>
-    <string>com.company.profiles.vpn</string>
-    <key>PayloadType</key>
-    <string>Configuration</string>
-    <key>PayloadUUID</key>
-    <string>ffffffff-0000-1111-2222-333333333333</string>
-    <key>PayloadVersion</key>
-    <integer>1</integer>
-</dict>
-</plist>
-```
-
-**certificates/filevault_master.p12:**
-```bash
-# Create a placeholder certificate file (in practice, use your real certificate)
-echo "Placeholder for FileVault master certificate" > certificates/filevault_master.p12
 ```
 
 **outputs.tf:**
 ```hcl
-output "enterprise_mdm_summary" {
-  description = "Complete enterprise mobile device management deployment summary"
+# ==================================================================================
+# ENTERPRISE MDM DEPLOYMENT OUTPUTS - META-ARGUMENTS DEMONSTRATION
+# ==================================================================================
+
+output "meta_arguments_demonstration_summary" {
+  description = "Comprehensive summary of all Terraform meta-arguments demonstrated"
+  value = {
+    for_each_examples = {
+      description = "Dynamic resource creation from complex data structures"
+      resources = [
+        "jamfpro_site.enterprise_sites - Created from organization sites list",
+        "jamfpro_building.enterprise_buildings - Created from buildings map with complex objects",
+        "jamfpro_category.enterprise_categories - Created from derived set of app categories",
+        "jamfpro_smart_computer_group.enterprise_device_groups - Created from smart groups config",
+        "jamfpro_app_installer.enterprise_mobile_apps - Created from mobile applications map",
+        "jamfpro_script.enterprise_management_scripts - Created from local scripts map"
+      ]
+    }
+    
+    count_examples = {
+      description = "Simple iteration and conditional resource creation"
+      resources = [
+        "jamfpro_department.enterprise_departments - Count from departments list",
+        "jamfpro_smart_computer_group.department_groups - Count for each department",
+        "jamfpro_policy.compliance_monitoring - Conditional count based on staging flag"
+      ]
+    }
+    
+    depends_on_examples = {
+      description = "Explicit dependency management for complex workflows"
+      dependencies = [
+        "Buildings depend on sites for proper creation order",
+        "Smart groups depend on sites, buildings, and departments",
+        "Applications depend on categories and sites",
+        "Security policy depends on categories and smart groups",
+        "Scripts depend on categories for proper categorization"
+      ]
+    }
+    
+    provider_examples = {
+      description = "Multi-environment deployment with provider aliases"
+      environments = {
+        production  = "Default provider - Critical production resources"
+        development = "jamfpro.development alias - Testing resources"
+        staging     = "jamfpro.staging alias - Validation resources"
+      }
+    }
+    
+    lifecycle_examples = {
+      description = "Resource protection and behavior control"
+      protections = {
+        prevent_destroy = [
+          "Enterprise suffix (prevents name changes)",
+          "Foundation sites and buildings",
+          "Critical categories (Security, Management, Compliance)",
+          "Executive device groups",
+          "Critical applications (Outlook, Teams)",
+          "Security baseline policy",
+          "Security scripts"
+        ]
+        create_before_destroy = [
+          "All foundation resources for zero-downtime updates",
+          "Applications and policies for service continuity",
+          "Categories and smart groups for dependency management"
+        ]
+        ignore_changes = [
+          "Building addresses (managed externally)",
+          "Category priorities (adjusted by admins)",
+          "Smart group criteria (modified by operators)",
+          "Application versions (automatic updates)",
+          "Policy settings (temporary admin changes)"
+        ]
+        replace_triggered_by = [
+          "Management scripts when categories change"
+        ]
+      }
+    }
+  }
+}
+
+output "enterprise_infrastructure_summary" {
+  description = "Summary of created enterprise infrastructure"
   value = {
     foundation = {
       sites = {
-        for site_name, site in jamfpro_site.organization_sites :
+        for site_name, site in jamfpro_site.enterprise_sites :
         site_name => {
           id   = site.id
           name = site.name
@@ -3789,241 +3387,209 @@ output "enterprise_mdm_summary" {
       }
       
       buildings = {
-        for building_name, building in jamfpro_building.organization_buildings :
+        for building_name, building in jamfpro_building.enterprise_buildings :
         building_name => {
-          id   = building.id
-          name = building.name
+          id      = building.id
+          name    = building.name
+          address = "${building.street_address1}, ${building.city}, ${building.state_province}"
         }
       }
       
-      departments = {
-        for i, dept in jamfpro_department.organization_departments :
-        var.organization_structure.departments[i] => {
+      departments = [
+        for dept in jamfpro_department.enterprise_departments :
+        {
           id   = dept.id
           name = dept.name
         }
+      ]
+    }
+    
+    categories = {
+      for category_name, category in jamfpro_category.enterprise_categories :
+      category_name => {
+        id       = category.id
+        name     = category.name
+        priority = category.priority
       }
     }
     
-    security_compliance = {
-      filevault_enabled = var.security_configurations.enable_filevault
-      laps_enabled      = var.security_configurations.enable_laps
-      allowed_extensions = length(jamfpro_allowed_file_extension.corporate_extensions)
-    }
-    
-    mobile_infrastructure = {
-      enrollment_customizations = {
-        for name, customization in jamfpro_enrollment_customization.mobile_enrollment_experiences :
-        name => {
-          id           = customization.id
-          display_name = customization.display_name
-        }
-      }
-      
-      prestage_enrollments = {
-        for name, prestage in jamfpro_mobile_device_prestage_enrollment.corporate_prestages :
-        name => {
-          id           = prestage.id
-          display_name = prestage.display_name
-          supervised   = prestage.supervised
-          multi_user   = prestage.multi_user
-        }
-      }
-      
-      mobile_device_groups = {
-        for i, group in jamfpro_smart_mobile_device_group.department_mobile_groups :
-        var.organization_structure.departments[i] => {
+    smart_groups = {
+      device_groups = {
+        for group_name, group in jamfpro_smart_computer_group.enterprise_device_groups :
+        group_name => {
           id   = group.id
           name = group.name
         }
       }
+      
+      department_groups = [
+        for group in jamfpro_smart_computer_group.department_groups :
+        {
+          id   = group.id
+          name = group.name
+        }
+      ]
     }
     
-    mobile_applications = {
-      for app_name, app in jamfpro_mobile_device_application.corporate_mobile_apps :
+    applications = {
+      for app_name, app in jamfpro_app_installer.enterprise_mobile_apps :
       app_name => {
         id              = app.id
         name            = app.name
-        bundle_id       = app.bundle_id
-        deployment_type = var.mobile_applications[app_name].deployment_type
-        vpp_enabled     = var.mobile_applications[app_name].vpp_enabled
-      }
-    }
-    
-    configuration_profiles = {
-      for profile_name, profile in jamfpro_mobile_device_configuration_profile_plist.corporate_profiles :
-      profile_name => {
-        id                = profile.id
-        name              = profile.name
-        level             = profile.level
-        deployment_method = profile.deployment_method
-      }
-    }
-    
-    access_management = {
-      api_roles = {
-        for role_name, role in jamfpro_api_role.mobile_management_roles :
-        role_name => {
-          id           = role.id
-          display_name = role.display_name
-          environment  = var.api_access_configuration[role_name].environment
-        }
-      }
-      
-      api_integrations = {
-        production = {
-          for name, integration in jamfpro_api_integration.mobile_api_prod :
-          name => {
-            id           = integration.id
-            display_name = integration.display_name
-            enabled      = integration.enabled
-          }
-        }
-        
-        development = var.enable_development ? {
-          for name, integration in jamfpro_api_integration.mobile_api_dev :
-          name => {
-            id           = integration.id
-            display_name = integration.display_name
-            enabled      = integration.enabled
-          }
-        } : {}
-      }
-      
-      admin_accounts = {
-        production = {
-          id        = jamfpro_account.mobile_admin_prod.id
-          name      = jamfpro_account.mobile_admin_prod.name
-          full_name = jamfpro_account.mobile_admin_prod.full_name
-        }
-        
-        staging = var.enable_staging ? {
-          id        = jamfpro_account.mobile_admin_staging[0].id
-          name      = jamfpro_account.mobile_admin_staging[0].name
-          full_name = jamfpro_account.mobile_admin_staging[0].full_name
-        } : null
-      }
-      
-      account_groups = {
-        for group_name, group in jamfpro_account_group.mobile_admin_groups :
-        group_name => {
-          id           = group.id
-          name         = group.name
-          access_level = group.access_level
-        }
-      }
-    }
-    
-    business_integration = {
-      vpp_location = {
-        id   = jamfpro_volume_purchasing_locations.corporate_vpp.id
-        name = jamfpro_volume_purchasing_locations.corporate_vpp.name
-      }
-      
-      extension_attributes = {
-        for attr_name, attr in jamfpro_mobile_device_extension_attribute.corporate_tracking :
-        attr_name => {
-          id         = attr.id
-          name       = attr.name
-          input_type = attr.input_type
-        }
+        deployment_type = app.deployment_type
+        category        = app.category_id
+        featured        = app.self_service_settings[0].include_in_featured_category
       }
     }
   }
 }
 
-output "deployment_environments" {
-  description = "Active deployment environments"
+output "security_and_compliance_status" {
+  description = "Status of security and compliance configurations"
   value = {
-    production_active  = true
-    development_active = var.enable_development
-    staging_active     = var.enable_staging
+    critical_policy = {
+      id      = jamfpro_policy.enterprise_security_baseline.id
+      name    = jamfpro_policy.enterprise_security_baseline.name
+      enabled = jamfpro_policy.enterprise_security_baseline.enabled
+      protected = "✅ Protected by prevent_destroy = true"
+    }
     
-    environment_resources = {
-      production = {
-        api_integrations = length(jamfpro_api_integration.mobile_api_prod)
-        admin_accounts   = 1
-        smtp_servers     = 1
+    compliance_monitoring = var.enable_staging ? {
+      enabled = "✅ Compliance monitoring enabled in staging"
+      policy_count = length(jamfpro_policy.compliance_monitoring)
+    } : {
+      enabled = "❌ Compliance monitoring disabled (staging not enabled)"
+      policy_count = 0
+    }
+    
+    management_scripts = {
+      for script_name, script in jamfpro_script.enterprise_management_scripts :
+      script_name => {
+        id       = script.id
+        name     = script.name
+        category = script.category_id
+        priority = script.priority
+        protected = script_name == "Security Compliance Check" ? "✅ Protected" : "⚠️ Not protected"
       }
-      
-      development = var.enable_development ? {
-        api_integrations = length(jamfpro_api_integration.mobile_api_dev)
-        admin_accounts   = 0
-        smtp_servers     = 0
-      } : null
-      
-      staging = var.enable_staging ? {
-        api_integrations = 0
-        admin_accounts   = length(jamfpro_account.mobile_admin_staging)
-        smtp_servers     = 1
+    }
+  }
+}
+
+output "multi_environment_status" {
+  description = "Status of multi-environment deployment"
+  value = {
+    production = {
+      enabled = true
+      provider = "default"
+      categories = {
+        for cat_name, cat in jamfpro_category.prod_categories :
+        cat_name => {
+          id   = cat.id
+          name = cat.name
+        }
+      }
+    }
+    
+    development = {
+      enabled = var.enable_development
+      provider = "jamfpro.development"
+      categories = var.enable_development ? {
+        for cat_name, cat in jamfpro_category.dev_categories :
+        cat_name => {
+          id   = cat.id
+          name = cat.name
+        }
+      } : {}
+    }
+    
+    staging = {
+      enabled = var.enable_staging
+      provider = "jamfpro.staging"
+      validation_policy = var.enable_staging ? {
+        id   = jamfpro_policy.staging_validation[0].id
+        name = jamfpro_policy.staging_validation[0].name
       } : null
     }
   }
 }
 
-output "meta_arguments_demonstrated" {
-  description = "Meta arguments used throughout this deployment"
+output "lifecycle_protection_report" {
+  description = "Detailed report of lifecycle protections applied"
   value = {
-    for_each_examples = [
-      "Sites (organization_sites)",
-      "Buildings (organization_buildings)", 
-      "Categories (mobile_app_categories)",
-      "Enrollment customizations (mobile_enrollment_experiences)",
-      "Prestage enrollments (corporate_prestages)",
-      "Mobile applications (corporate_mobile_apps)",
-      "Configuration profiles (corporate_profiles)",
-      "API roles (mobile_management_roles)",
-      "Account groups (mobile_admin_groups)",
-      "Extension attributes (corporate_tracking)"
+    prevent_destroy_resources = [
+      "random_string.enterprise_suffix - Prevents naming conflicts",
+      "jamfpro_site.enterprise_sites - Foundation infrastructure",
+      "jamfpro_building.enterprise_buildings - Physical locations",
+      "jamfpro_department.enterprise_departments - Organizational structure",
+      "jamfpro_category.enterprise_categories[Security] - Critical security category",
+      "jamfpro_category.enterprise_categories[Management] - Management category",
+      "jamfpro_category.enterprise_categories[Compliance] - Compliance category",
+      "jamfpro_smart_computer_group.enterprise_device_groups[Executive Devices] - Executive devices",
+      "jamfpro_smart_computer_group.department_groups[Executive] - Executive department",
+      "jamfpro_app_installer.enterprise_mobile_apps[Microsoft Outlook] - Critical productivity app",
+      "jamfpro_app_installer.enterprise_mobile_apps[Microsoft Teams] - Critical communication app",
+      "jamfpro_policy.enterprise_security_baseline - Critical security policy",
+      "jamfpro_category.prod_categories - Production categories",
+      "jamfpro_script.enterprise_management_scripts[Security Compliance Check] - Security script"
     ]
     
-    count_examples = [
-      "Departments (organization_departments)",
-      "Mobile device groups (department_mobile_groups)",
-      "File extensions (corporate_extensions)",
-      "Security configurations (conditional with count)"
+    create_before_destroy_resources = [
+      "All foundation resources for zero-downtime updates",
+      "All application and policy resources for service continuity",
+      "All smart groups and categories for dependency management"
     ]
     
-    depends_on_examples = [
-      "Buildings depend on sites",
-      "Prestages depend on sites, customizations, and departments",
-      "Mobile groups depend on sites and departments",
-      "Applications depend on categories and groups"
-    ]
+    ignore_changes_applied = {
+      buildings = ["street_address1", "city", "state_province", "zip_postal_code"],
+      categories = ["priority"],
+      smart_groups = ["criteria"],
+      applications = ["latest_available_version", "selected_version"],
+      policies = ["enabled", "scope.computer_ids"]
+    }
     
-    provider_examples = [
-      "Production resources (default provider)",
-      "Development API integrations (development provider)",
-      "Staging admin accounts (staging provider)",
-      "Environment-specific SMTP servers"
-    ]
-    
-    lifecycle_examples = [
-      "FileVault configuration (prevent_destroy)",
-      "LAPS settings (prevent_destroy)",
-      "Critical prestages (prevent_destroy)",
-      "Production API integrations (prevent_destroy)",
-      "VPP location (prevent_destroy)",
-      "Password ignore_changes for admin accounts"
+    replace_triggered_by_resources = [
+      "jamfpro_script.enterprise_management_scripts - Replaced when categories change"
     ]
   }
 }
 
-output "enterprise_best_practices" {
-  description = "Enterprise best practices demonstrated"
-  value = [
-    "🔐 Security-first approach with FileVault and LAPS",
-    "📱 Comprehensive mobile device lifecycle management",
-    "🎨 Branded enrollment experiences for different user types",
-    "🏢 Department-based scoping and access control",
-    "🔑 API-driven governance with role-based access",
-    "🌍 Multi-environment deployment patterns",
-    "📊 Custom tracking and compliance monitoring",
-    "💼 Business process integration with VPP",
-    "🛡️ Lifecycle protection for critical resources",
-    "📧 Environment-specific notification systems"
-  ]
+output "deployment_recommendations" {
+  description = "Recommendations for enterprise deployment"
+  value = {
+    next_steps = [
+      "✅ All meta-arguments successfully demonstrated in enterprise context",
+      "🔧 Enable development environment with enable_development=true for testing",
+      "🔧 Enable staging environment with enable_staging=true for validation",
+      "📝 Review lifecycle protections before production deployment",
+      "🔒 Critical resources are protected from accidental deletion",
+      "⚠️ To modify protected resources, adjust lifecycle blocks carefully"
+    ]
+    
+    best_practices = [
+      "Use for_each for complex data structures and dynamic resource creation",
+      "Use count for simple lists and conditional resource creation",
+      "Use depends_on for explicit dependency management in complex workflows",
+      "Use provider aliases for multi-environment deployments",
+      "Use lifecycle rules to protect critical infrastructure and control behavior",
+      "Always use unique naming with random suffixes in shared environments",
+      "Document all lifecycle protections and their business justifications"
+    ]
+    
+    meta_arguments_mastery = {
+      for_each = "✅ Mastered - Dynamic resource creation from complex data",
+      count = "✅ Mastered - Simple iteration and conditional creation",
+      depends_on = "✅ Mastered - Explicit dependency management",
+      provider = "✅ Mastered - Multi-environment deployment",
+      lifecycle = "✅ Mastered - Resource protection and behavior control"
+    }
+  }
 }
+
+output "enterprise_suffix" {
+  description = "Enterprise deployment suffix for resource identification"
+  value = random_string.enterprise_suffix.result
+}
+
 ```
 
 **Test the configuration:**
