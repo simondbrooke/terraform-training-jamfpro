@@ -1,24 +1,23 @@
-
 # 📊 Module 09: Variables and Data
 *Duration: 2.5 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
 ---
 
 ### 🎯 Learning Objectives
 By the end of this module, you will be able to:
-- ✅ Master input variables with advanced types and validation
-- ✅ Use variable definition files and environment variables
+- ✅ Master input variables with advanced types and validation for Jamf Pro resources
+- ✅ Use variable definition files and environment variables in Jamf Pro configurations
 - ✅ Understand variable precedence and loading order
-- ✅ Create and use output values effectively
-- ✅ Work with local values for computed expressions
-- ✅ Use data sources to query existing infrastructure
-- ✅ Implement variable validation and sensitive handling
-- ✅ Reference named values across configurations
+- ✅ Create and use output values effectively for Jamf Pro resource integration
+- ✅ Work with local values for computed expressions in device management
+- ✅ Use data sources to query existing Jamf Pro infrastructure
+- ✅ Implement variable validation and sensitive handling for API credentials
+- ✅ Reference named values across Jamf Pro configurations
 
 ### 📚 Topics Covered
 
 #### 📥 Input Variables
 
-Input variables serve as **parameters** for Terraform configurations, making them flexible and reusable across different environments.
+Input variables serve as **parameters** for Terraform configurations, making them flexible and reusable across different Jamf Pro environments.
 
 **🎯 Variable Declaration Syntax:**
 ```hcl
@@ -36,190 +35,535 @@ variable "name" {
 }
 ```
 
-**📋 Variable Types:**
+**📋 Variable Types for Jamf Pro:**
 
 **🔤 String Variables:**
+
+String variables are the most common type, used for text-based configuration values like names, descriptions, and identifiers. In Jamf Pro contexts, strings are essential for resource naming, process identification, and user-facing text.
+
 ```hcl
-variable "environment" {
-  description = "Environment name"
+variable "extension_attribute_name" {
+  description = "Name for the computer extension attribute"
   type        = string
-  default     = "dev"
+  default     = "Department Code"
   
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be dev, staging, or prod."
+    condition     = can(regex("^[A-Za-z0-9 _-]+$", var.extension_attribute_name))
+    error_message = "Extension attribute name must contain only alphanumeric characters, spaces, hyphens, and underscores."
   }
 }
 
-variable "project_name" {
-  description = "Name of the project"
+variable "jamf_environment" {
+  description = "Jamf Pro environment"
   type        = string
   
   validation {
-    condition     = can(regex("^[a-zA-Z0-9-_]+$", var.project_name))
-    error_message = "Project name must contain only alphanumeric characters, hyphens, and underscores."
+    condition     = contains(["dev", "staging", "prod"], var.jamf_environment)
+    error_message = "Jamf environment must be dev, staging, or prod."
+  }
+}
+
+variable "restricted_software_process" {
+  description = "Process name to restrict"
+  type        = string
+  
+  validation {
+    condition     = length(var.restricted_software_process) > 0 && can(regex("\\.(app|exe)$", var.restricted_software_process))
+    error_message = "Process name must end with .app or .exe extension."
   }
 }
 ```
 
+**💡 String Variable Best Practices:**
+- **Use descriptive names**: `extension_attribute_name` instead of just `name`
+- **Include validation**: Regex patterns ensure proper formatting for Jamf Pro requirements
+- **Provide defaults**: Sensible defaults reduce configuration overhead
+- **Environment-specific**: Use string variables for environment differentiation (dev/staging/prod)
+- **Resource naming**: Strings are perfect for creating consistent naming conventions across Jamf Pro resources
+
 **🔢 Number Variables:**
+
+Number variables handle numeric values including integers and floating-point numbers. In Jamf Pro, numbers are crucial for timeouts, intervals, priorities, counts, and IDs. They're essential for configuring security policies, API settings, and operational parameters.
+
 ```hcl
-variable "instance_count" {
-  description = "Number of instances to create"
+variable "api_token_lifetime_hours" {
+  description = "API token lifetime in hours"
+  type        = number
+  default     = 2
+  
+  validation {
+    condition     = var.api_token_lifetime_hours >= 1 && var.api_token_lifetime_hours <= 24
+    error_message = "API token lifetime must be between 1 and 24 hours."
+  }
+}
+
+variable "password_rotation_hours" {
+  description = "LAPS password rotation interval in hours"
+  type        = number
+  default     = 24
+  
+  validation {
+    condition     = var.password_rotation_hours >= 1 && var.password_rotation_hours <= 168
+    error_message = "Password rotation must be between 1 and 168 hours (1 week)."
+  }
+}
+
+variable "enrollment_rank" {
+  description = "Rank order for enrollment panes"
   type        = number
   default     = 1
   
   validation {
-    condition     = var.instance_count >= 1 && var.instance_count <= 10
-    error_message = "Instance count must be between 1 and 10."
+    condition     = var.enrollment_rank >= 1 && var.enrollment_rank <= 10
+    error_message = "Enrollment rank must be between 1 and 10."
   }
 }
 
-variable "disk_size" {
-  description = "Disk size in GB"
+variable "max_popup_choices" {
+  description = "Maximum number of choices in popup menus"
   type        = number
-  default     = 20
+  default     = 15
   
   validation {
-    condition     = var.disk_size >= 20 && var.disk_size <= 1000
-    error_message = "Disk size must be between 20 and 1000 GB."
+    condition     = var.max_popup_choices >= 2 && var.max_popup_choices <= 50
+    error_message = "Popup menu choices must be between 2 and 50 options."
   }
 }
 ```
 
+**💡 Number Variable Best Practices:**
+- **Range validation**: Always validate numeric ranges for Jamf Pro API limits
+- **Business logic**: Use validation to enforce business rules (e.g., token lifetime policies)
+- **Unit clarity**: Include units in variable names (hours, seconds, days, count)
+- **Reasonable defaults**: Set defaults that work for most environments
+- **Security considerations**: Lower numbers for production security settings (shorter token lifetimes)
+- **Operational limits**: Consider Jamf Pro's operational constraints when setting ranges
+
 **✅ Boolean Variables:**
+
+Boolean variables represent true/false values and are perfect for feature flags, enable/disable toggles, and conditional logic. In Jamf Pro, booleans control feature activation, security settings, and operational behaviors. They're essential for creating flexible configurations that can be easily toggled.
+
 ```hcl
-variable "enable_monitoring" {
-  description = "Enable monitoring for resources"
+variable "enable_extension_attribute" {
+  description = "Enable the extension attribute for inventory collection"
   type        = bool
   default     = true
 }
 
-variable "public_access" {
-  description = "Allow public access"
+variable "auto_deploy_laps" {
+  description = "Enable automatic deployment of LAPS"
+  type        = bool
+  default     = false
+}
+
+variable "kill_restricted_process" {
+  description = "Kill process when restricted software is detected"
+  type        = bool
+  default     = true
+}
+
+variable "api_integration_enabled" {
+  description = "Enable API integration"
+  type        = bool
+  default     = true
+}
+
+variable "send_notifications" {
+  description = "Send notifications for policy violations"
+  type        = bool
+  default     = true
+}
+
+variable "enforce_security_baseline" {
+  description = "Enforce security baseline configurations"
   type        = bool
   default     = false
 }
 ```
 
+**💡 Boolean Variable Best Practices:**
+- **Clear naming**: Use verbs like `enable_`, `auto_`, `send_`, `enforce_` to indicate action
+- **Security defaults**: Default to secure/conservative settings (false for auto-deploy, true for notifications)
+- **Environment awareness**: Use booleans for environment-specific feature toggles
+- **Feature flags**: Perfect for gradual rollouts and A/B testing scenarios
+- **Conditional resources**: Use with `count` or `for_each` to conditionally create resources
+- **Documentation**: Clearly document the impact of true/false values in descriptions
+
 **📋 List Variables:**
+
+List variables store ordered collections of values of the same type. In Jamf Pro contexts, lists are perfect for popup menu choices, API scopes, device locations, and any scenario where you need multiple similar values. Lists maintain order and allow duplicates, making them ideal for sequential operations.
+
 ```hcl
-variable "availability_zones" {
-  description = "List of availability zones"
+variable "popup_menu_choices" {
+  description = "Choices for extension attribute popup menu"
   type        = list(string)
-  default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  default     = ["Engineering", "Sales", "Marketing", "Support", "Executive"]
   
   validation {
-    condition     = length(var.availability_zones) >= 2
-    error_message = "At least 2 availability zones must be specified."
+    condition     = length(var.popup_menu_choices) >= 2 && length(var.popup_menu_choices) <= 20
+    error_message = "Popup menu must have between 2 and 20 choices."
   }
 }
 
-variable "allowed_ports" {
-  description = "List of allowed ports"
-  type        = list(number)
-  default     = [80, 443, 22]
+variable "mobile_device_locations" {
+  description = "Available device locations"
+  type        = list(string)
+  default     = ["Head Office", "Branch Office", "Home Office", "Client Site"]
+}
+
+variable "api_scopes" {
+  description = "API authorization scopes"
+  type        = list(string)
+  default     = ["Read Computer Extension Attributes", "Create Computer Extension Attributes"]
+  
+  validation {
+    condition     = length(var.api_scopes) > 0
+    error_message = "At least one API scope must be specified."
+  }
+}
+
+variable "restricted_process_names" {
+  description = "List of process names to restrict"
+  type        = list(string)
+  default     = ["Install macOS Big Sur.app", "Steam.app", "BitTorrent.app"]
   
   validation {
     condition = alltrue([
-      for port in var.allowed_ports : port >= 1 && port <= 65535
+      for process in var.restricted_process_names : 
+      can(regex("\\.app$", process))
     ])
-    error_message = "All ports must be between 1 and 65535."
-  }
-}
-```
-
-**🗺️ Map Variables:**
-```hcl
-variable "tags" {
-  description = "Tags to apply to resources"
-  type        = map(string)
-  default = {
-    Environment = "dev"
-    Project     = "terraform-demo"
-    ManagedBy   = "terraform"
+    error_message = "All process names must end with .app extension (macOS application bundles)."
   }
 }
 
-variable "instance_types" {
-  description = "Instance types per environment"
-  type        = map(string)
-  default = {
-    dev     = "t2.micro"
-    staging = "t2.small"
-    prod    = "t2.medium"
-  }
-}
-```
-
-**🏗️ Object Variables:**
-```hcl
-variable "vpc_config" {
-  description = "VPC configuration"
-  type = object({
-    cidr_block           = string
-    enable_dns_hostnames = bool
-    enable_dns_support   = bool
-    tags                 = map(string)
-  })
-  
-  default = {
-    cidr_block           = "10.0.0.0/16"
-    enable_dns_hostnames = true
-    enable_dns_support   = true
-    tags = {
-      Name = "main-vpc"
-    }
-  }
-}
-
-variable "database_config" {
-  description = "Database configuration"
-  type = object({
-    engine         = string
-    engine_version = string
-    instance_class = string
-    allocated_storage = number
-    backup_retention_period = number
-    multi_az = bool
-  })
+variable "enrollment_pane_ranks" {
+  description = "Ordered list of enrollment pane ranks"
+  type        = list(number)
+  default     = [1, 2, 3, 4, 5]
   
   validation {
-    condition     = contains(["mysql", "postgres"], var.database_config.engine)
-    error_message = "Database engine must be mysql or postgres."
+    condition = alltrue([
+      for rank in var.enrollment_pane_ranks :
+      rank >= 1 && rank <= 10
+    ])
+    error_message = "All enrollment pane ranks must be between 1 and 10."
   }
 }
 ```
 
-**📋 Complex Nested Types:**
+**💡 List Variable Best Practices:**
+- **Ordered data**: Use lists when order matters (enrollment pane sequences, priority lists)
+- **Homogeneous types**: All items in a list must be the same type
+- **Validation with `alltrue`**: Validate each item in the list using functions like `alltrue`
+- **Length constraints**: Always validate list length for UI and API limitations
+- **Default ordering**: Provide sensible default ordering that works for most use cases
+- **Iteration**: Perfect for use with `for_each` and `count` meta-arguments
+- **Dynamic content**: Lists work well with dynamic blocks for conditional resource creation
+
+**🗺️ Map Variables:**
+
+Map variables store key-value pairs where keys are always strings and values are of a specified type. Maps are excellent for configuration lookups, environment-specific settings, and associating names with values. In Jamf Pro, maps are perfect for branding configurations, environment settings, and attribute type mappings.
+
 ```hcl
-variable "subnets" {
-  description = "Subnet configurations"
+variable "extension_attribute_types" {
+  description = "Extension attribute configurations by type"
+  type        = map(string)
+  default = {
+    department = "POPUP"
+    location   = "POPUP"
+    asset_tag  = "TEXT"
+    notes      = "TEXT"
+  }
+}
+
+variable "enrollment_branding" {
+  description = "Branding colors for enrollment customization"
+  type        = map(string)
+  default = {
+    text_color        = "000000"
+    button_color      = "0066CC"
+    button_text_color = "FFFFFF"
+    background_color  = "F5F5F5"
+  }
+  
+  validation {
+    condition = alltrue([
+      for color in values(var.enrollment_branding) : can(regex("^[0-9A-Fa-f]{6}$", color))
+    ])
+    error_message = "All colors must be valid 6-digit hex codes."
+  }
+}
+
+variable "laps_settings_by_environment" {
+  description = "LAPS settings per environment"
+  type        = map(number)
+  default = {
+    dev     = 1
+    staging = 12
+    prod    = 24
+  }
+}
+
+variable "api_token_lifetimes" {
+  description = "API token lifetimes by integration type"
+  type        = map(number)
+  default = {
+    development    = 8
+    testing       = 4
+    production    = 2
+    emergency     = 1
+  }
+  
+  validation {
+    condition = alltrue([
+      for lifetime in values(var.api_token_lifetimes) :
+      lifetime >= 1 && lifetime <= 24
+    ])
+    error_message = "All API token lifetimes must be between 1 and 24 hours."
+  }
+}
+
+variable "restriction_severity_levels" {
+  description = "Restriction severity levels by software category"
+  type        = map(string)
+  default = {
+    gaming        = "WARN"
+    development   = "BLOCK"
+    unauthorized  = "TERMINATE"
+    suspicious    = "QUARANTINE"
+  }
+  
+  validation {
+    condition = alltrue([
+      for level in values(var.restriction_severity_levels) :
+      contains(["WARN", "BLOCK", "TERMINATE", "QUARANTINE"], level)
+    ])
+    error_message = "Severity levels must be WARN, BLOCK, TERMINATE, or QUARANTINE."
+  }
+}
+```
+
+**💡 Map Variable Best Practices:**
+- **Key-value relationships**: Perfect for lookups and associations (environment → settings)
+- **Configuration tables**: Use for storing related configuration values by category
+- **Environment mapping**: Excellent for environment-specific configurations
+- **Validation with `values()`**: Validate all map values using the `values()` function
+- **Consistent keys**: Use consistent, descriptive key names across your configurations
+- **Type consistency**: All values in a map must be the same type
+- **Default completeness**: Ensure default maps cover all expected use cases
+
+**🏗️ Complex Object Variables:**
+
+Complex object variables are the most powerful variable type, allowing you to define structured data with multiple attributes of different types. They're perfect for representing complete resource configurations, complex settings with relationships, and multi-faceted data structures. In Jamf Pro, objects excel at representing extension attributes, enrollment customizations, and comprehensive policy configurations.
+
+```hcl
+variable "computer_extension_attributes" {
+  description = "Computer extension attribute configurations"
   type = map(object({
-    cidr_block        = string
-    availability_zone = string
-    public           = bool
-    tags             = map(string)
+    enabled                = bool
+    description            = string
+    input_type             = string
+    inventory_display_type = string
+    data_type              = string
+    popup_choices          = optional(list(string))
+    script_contents        = optional(string)
   }))
   
   default = {
-    public_1 = {
-      cidr_block        = "10.0.1.0/24"
-      availability_zone = "us-west-2a"
-      public           = true
-      tags = {
-        Name = "public-subnet-1"
-        Type = "public"
-      }
+    "Department" = {
+      enabled                = true
+      description            = "Employee department for device assignment"
+      input_type             = "POPUP"
+      inventory_display_type = "USER_AND_LOCATION"
+      data_type              = "STRING"
+      popup_choices          = ["Engineering", "Sales", "Marketing", "Support"]
+      script_contents        = null
     }
-    private_1 = {
-      cidr_block        = "10.0.10.0/24"
-      availability_zone = "us-west-2a"
-      public           = false
-      tags = {
-        Name = "private-subnet-1"
-        Type = "private"
+    "Asset Tag" = {
+      enabled                = true
+      description            = "Physical asset tag number"
+      input_type             = "TEXT"
+      inventory_display_type = "HARDWARE"
+      data_type              = "STRING"
+      popup_choices          = null
+      script_contents        = null
+    }
+    "OS Build" = {
+      enabled                = true
+      description            = "Operating system build version"
+      input_type             = "SCRIPT"
+      inventory_display_type = "GENERAL"
+      data_type              = "STRING"
+      popup_choices          = null
+      script_contents        = "#!/bin/bash\nsw_vers -buildVersion"
+    }
+  }
+  
+  validation {
+    condition = alltrue([
+      for name, config in var.computer_extension_attributes :
+      contains(["POPUP", "TEXT", "SCRIPT"], config.input_type)
+    ])
+    error_message = "Input type must be POPUP, TEXT, or SCRIPT."
+  }
+  
+  validation {
+    condition = alltrue([
+      for name, config in var.computer_extension_attributes :
+      config.input_type != "POPUP" || config.popup_choices != null
+    ])
+    error_message = "POPUP input type requires popup_choices to be specified."
+  }
+  
+  validation {
+    condition = alltrue([
+      for name, config in var.computer_extension_attributes :
+      config.input_type != "SCRIPT" || config.script_contents != null
+    ])
+    error_message = "SCRIPT input type requires script_contents to be specified."
+  }
+}
+```
+
+**💡 Complex Object Variable Best Practices:**
+- **Logical grouping**: Group related attributes together in meaningful object structures
+- **Optional fields**: Use `optional()` for fields that aren't always required
+- **Multiple validation rules**: Create separate validation blocks for different business rules
+- **Conditional validation**: Use logical operators to validate field dependencies
+- **Nested structures**: Objects can contain other complex types (lists, maps, nested objects)
+- **Documentation**: Clearly document object structure and field relationships
+- **Default completeness**: Provide complete default objects that demonstrate proper usage
+- **Type safety**: Object types enforce structure and catch configuration errors early
+- **Resource mapping**: Perfect for one-to-one mapping with complex Jamf Pro resources
+- **Environment variations**: Use objects to represent environment-specific configurations with the same structure
+
+**🔗 Variable Type Summary:**
+
+| Variable Type | Use Case | Jamf Pro Examples | Key Features |
+|---------------|----------|-------------------|--------------|
+| **String** | Text values, names, identifiers | Extension attribute names, process names, environment labels | Simple, validation-friendly, human-readable |
+| **Number** | Numeric values, counts, timeouts | API token lifetimes, rotation hours, rank orders | Range validation, mathematical operations |
+| **Boolean** | Feature flags, enable/disable | Auto-deploy settings, kill processes, send notifications | Simple true/false logic, conditional resources |
+| **List** | Ordered collections, sequences | Popup choices, API scopes, process names | Ordered, homogeneous, iteration-friendly |
+| **Map** | Key-value associations, lookups | Environment settings, branding colors, type mappings | Fast lookups, configuration tables |
+| **Object** | Complex structured data | Extension attributes, enrollment customizations | Most flexible, type-safe, validation-rich |
+
+variable "mobile_extension_attributes" {
+  description = "Mobile device extension attribute configurations"
+  type = map(object({
+    description            = string
+    data_type              = string
+    inventory_display_type = string
+    input_type             = string
+    popup_choices          = optional(list(string))
+  }))
+  
+  default = {
+    "Device Location" = {
+      description            = "Primary location where device is used"
+      data_type              = "STRING"
+      inventory_display_type = "USER_AND_LOCATION"
+      input_type             = "POPUP"
+      popup_choices          = ["Head Office", "Branch Office", "Home Office", "Client Site"]
+    }
+    "User Department" = {
+      description            = "Department of device user"
+      data_type              = "STRING"
+      inventory_display_type = "GENERAL"
+      input_type             = "TEXT"
+      popup_choices          = null
+    }
+  }
+}
+
+variable "restricted_software_configs" {
+  description = "Restricted software configurations"
+  type = map(object({
+    process_name             = string
+    match_exact_process_name = bool
+    send_notification        = bool
+    kill_process             = bool
+    delete_executable        = bool
+    display_message          = string
+  }))
+  
+  default = {
+    "high_sierra_installer" = {
+      process_name             = "Install macOS High Sierra.app"
+      match_exact_process_name = true
+      send_notification        = true
+      kill_process             = true
+      delete_executable        = true
+      display_message          = "macOS High Sierra installation is not permitted on this device."
+    }
+    "unauthorized_game" = {
+      process_name             = "Game.app"
+      match_exact_process_name = false
+      send_notification        = true
+      kill_process             = true
+      delete_executable        = false
+      display_message          = "Gaming applications are restricted during business hours."
+    }
+  }
+}
+
+variable "enrollment_customizations" {
+  description = "Enrollment customization configurations"
+  type = map(object({
+    display_name = string
+    description  = string
+    branding = object({
+      text_color        = string
+      button_color      = string
+      button_text_color = string
+      background_color  = string
+    })
+    text_pane = optional(object({
+      title                = string
+      body                 = string
+      subtext              = string
+      back_button_text     = string
+      continue_button_text = string
+    }))
+    sso_enabled = bool
+  }))
+  
+  default = {
+    "Corporate Standard" = {
+      display_name = "Corporate Device Enrollment"
+      description  = "Standard corporate device enrollment process"
+      branding = {
+        text_color        = "000000"
+        button_color      = "0066CC"
+        button_text_color = "FFFFFF"
+        background_color  = "F5F5F5"
       }
+      text_pane = {
+        title                = "Welcome to Corporate IT"
+        body                 = "We're setting up your device with the tools you need to be productive."
+        subtext              = "This process takes about 10 minutes."
+        back_button_text     = "Back"
+        continue_button_text = "Continue"
+      }
+      sso_enabled = true
+    }
+    "Executive Enrollment" = {
+      display_name = "Executive Device Setup"
+      description  = "Enhanced enrollment for executive devices"
+      branding = {
+        text_color        = "000000"
+        button_color      = "1F4E79"
+        button_text_color = "FFFFFF"
+        background_color  = "F8F9FA"
+      }
+      text_pane = {
+        title                = "Executive Device Configuration"
+        body                 = "Your device will be configured with executive-level access and security."
+        subtext              = "Please contact IT if you need assistance."
+        back_button_text     = "Previous"
+        continue_button_text = "Proceed"
+      }
+      sso_enabled = true
     }
   }
 }
@@ -227,45 +571,50 @@ variable "subnets" {
 
 #### 🔒 Sensitive Variables
 
-**🛡️ Sensitive Variable Handling:**
+**🛡️ Sensitive Variable Handling for Jamf Pro:**
 ```hcl
-variable "database_password" {
-  description = "Database password"
+variable "jamf_api_credentials" {
+  description = "Jamf Pro API credentials"
+  type = object({
+    client_id     = string
+    client_secret = string
+  })
+  sensitive = true
+  
+  validation {
+    condition     = length(var.jamf_api_credentials.client_id) > 0 && length(var.jamf_api_credentials.client_secret) > 0
+    error_message = "Both client_id and client_secret must be provided."
+  }
+}
+
+variable "vpp_service_token" {
+  description = "Apple Business Manager VPP service token"
   type        = string
   sensitive   = true
   
   validation {
-    condition     = length(var.database_password) >= 8
-    error_message = "Password must be at least 8 characters long."
+    condition     = can(base64decode(var.vpp_service_token))
+    error_message = "VPP service token must be a valid base64 encoded string."
   }
 }
 
-variable "api_keys" {
-  description = "API keys for external services"
-  type        = map(string)
+variable "enrollment_image_path" {
+  description = "Path to enrollment customization image"
+  type        = string
   sensitive   = true
-  default     = {}
+  default     = "/path/to/secure/logo.png"
 }
 
-# Using sensitive variables
-resource "aws_db_instance" "main" {
-  identifier = "main-database"
-  
-  engine         = "mysql"
-  engine_version = "8.0"
-  instance_class = "db.t3.micro"
-  
-  allocated_storage = 20
-  storage_encrypted = true
-  
-  db_name  = "maindb"
-  username = "admin"
-  password = var.database_password  # Marked as sensitive
-  
-  skip_final_snapshot = true
-  
-  tags = {
-    Name = "main-database"
+variable "ldap_credentials" {
+  description = "LDAP server credentials for enrollment"
+  type = object({
+    bind_username = string
+    bind_password = string
+  })
+  sensitive = true
+  default = {
+    bind_username = ""
+    bind_password = ""
   }
 }
 ```
@@ -275,60 +624,104 @@ resource "aws_db_instance" "main" {
 **📁 terraform.tfvars (Auto-loaded):**
 ```hcl
 # terraform.tfvars
-environment    = "production"
-instance_count = 3
-project_name   = "web-application"
+jamf_environment = "production"
 
-availability_zones = [
-  "us-west-2a",
-  "us-west-2b",
-  "us-west-2c"
+extension_attribute_name = "Corporate Department"
+api_token_lifetime_hours = 2
+password_rotation_hours  = 24
+
+enable_extension_attribute = true
+auto_deploy_laps          = true
+kill_restricted_process   = true
+
+popup_menu_choices = [
+  "Engineering",
+  "Sales", 
+  "Marketing",
+  "Support",
+  "Executive",
+  "Finance"
 ]
 
-tags = {
-  Environment = "production"
-  Project     = "web-application"
-  Owner       = "platform-team"
-  CostCenter  = "engineering"
+mobile_device_locations = [
+  "Corporate Headquarters",
+  "Regional Office - East",
+  "Regional Office - West", 
+  "Remote Work",
+  "Client Site"
+]
+
+enrollment_branding = {
+  text_color        = "2C3E50"
+  button_color      = "3498DB"
+  button_text_color = "FFFFFF"
+  background_color  = "ECF0F1"
 }
 
-vpc_config = {
-  cidr_block           = "10.1.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  tags = {
-    Name = "production-vpc"
-  }
+laps_settings_by_environment = {
+  dev     = 1
+  staging = 12
+  prod    = 24
 }
 ```
 
 **🌍 Environment-Specific Files:**
 ```hcl
 # dev.tfvars
-environment    = "dev"
-instance_count = 1
-instance_types = {
-  dev = "t2.micro"
+jamf_environment = "dev"
+api_token_lifetime_hours = 8
+password_rotation_hours = 1
+auto_deploy_laps = false
+
+computer_extension_attributes = {
+  "Dev Department" = {
+    enabled                = true
+    description            = "Development department assignment"
+    input_type             = "POPUP"
+    inventory_display_type = "USER_AND_LOCATION"
+    data_type              = "STRING"
+    popup_choices          = ["Dev Team", "QA Team", "DevOps"]
+    script_contents        = null
+  }
 }
 
 # staging.tfvars  
-environment    = "staging"
-instance_count = 2
-instance_types = {
-  staging = "t2.small"
-}
+jamf_environment = "staging"
+api_token_lifetime_hours = 4
+password_rotation_hours = 12
+auto_deploy_laps = true
 
 # prod.tfvars
-environment    = "prod"
-instance_count = 5
-instance_types = {
-  prod = "t2.medium"
+jamf_environment = "prod"
+api_token_lifetime_hours = 2
+password_rotation_hours = 24
+auto_deploy_laps = true
+
+enrollment_customizations = {
+  "Production Enrollment" = {
+    display_name = "Corporate Device Enrollment - Production"
+    description  = "Production environment device enrollment"
+    branding = {
+      text_color        = "000000"
+      button_color      = "D32F2F"
+      button_text_color = "FFFFFF"
+      background_color  = "FFFFFF"
+    }
+    text_pane = {
+      title                = "Production Device Setup"
+      body                 = "This device will be configured for production use."
+      subtext              = "Please ensure you have proper authorization."
+      back_button_text     = "Back"
+      continue_button_text = "Continue"
+    }
+    sso_enabled = true
+  }
 }
 ```
 
 **🔄 Variable Loading Precedence (Highest to Lowest):**
 1. **Command line flags**: `-var` and `-var-file`
-2. **Environment variables**: `TF_VAR_name`
+2. **Environment variables**: `TF_VAR_jamf_environment`
 3. **terraform.tfvars.json**
 4. **terraform.tfvars**
 5. ***.auto.tfvars.json** (alphabetical order)
@@ -337,7 +730,7 @@ instance_types = {
 
 #### 📤 Output Values
 
-Output values expose information about your infrastructure for use by other configurations, scripts, or users.
+Output values expose information about your Jamf Pro infrastructure for use by other configurations, scripts, or users.
 
 **🎯 Basic Output Syntax:**
 ```hcl
@@ -349,996 +742,1448 @@ output "name" {
 }
 ```
 
-**📊 Simple Outputs:**
+**📊 Jamf Pro Resource Outputs:**
 ```hcl
-# Basic resource attribute outputs
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = aws_vpc.main.id
-}
-
-output "instance_public_ip" {
-  description = "Public IP address of the instance"
-  value       = aws_instance.web.public_ip
-}
-
-output "database_endpoint" {
-  description = "Database connection endpoint"
-  value       = aws_db_instance.main.endpoint
-  sensitive   = true  # Contains sensitive connection info
-}
-```
-
-**🗺️ Complex Outputs:**
-```hcl
-# Object output with multiple attributes
-output "vpc_info" {
-  description = "Complete VPC information"
+# Extension attribute outputs
+output "computer_extension_attribute_ids" {
+  description = "IDs of created computer extension attributes"
   value = {
-    id                = aws_vpc.main.id
-    cidr_block        = aws_vpc.main.cidr_block
-    arn               = aws_vpc.main.arn
-    default_route_table_id = aws_vpc.main.default_route_table_id
-    dhcp_options_id   = aws_vpc.main.dhcp_options_id
+    for name, attr in jamfpro_computer_extension_attribute.corporate_attributes :
+    name => attr.id
   }
 }
 
-# List output with for expression
-output "subnet_ids" {
-  description = "List of subnet IDs"
-  value = [
-    for subnet in aws_subnet.private : subnet.id
-  ]
-}
-
-# Map output with computed values
-output "instance_details" {
-  description = "Instance details by name"
+output "mobile_extension_attribute_details" {
+  description = "Details of mobile device extension attributes"
   value = {
-    for name, instance in aws_instance.web : name => {
-      id         = instance.id
-      public_ip  = instance.public_ip
-      private_ip = instance.private_ip
-      az         = instance.availability_zone
+    for name, attr in jamfpro_mobile_device_extension_attribute.device_tracking :
+    name => {
+      id          = attr.id
+      name        = attr.name
+      input_type  = attr.input_type
+      data_type   = attr.data_type
     }
   }
 }
-```
 
-**🔗 Conditional Outputs:**
-```hcl
-# Output that depends on conditions
-output "load_balancer_dns" {
-  description = "Load balancer DNS name (only if created)"
-  value       = var.create_load_balancer ? aws_lb.main[0].dns_name : null
+# API integration outputs (sensitive)
+output "api_integration_client_id" {
+  description = "API integration client ID"
+  value       = jamfpro_api_integration.corporate_api.client_id
+  sensitive   = true
 }
 
-# Output with conditional sensitivity
-output "admin_password" {
-  description = "Admin password for the database"
-  value       = var.create_database ? aws_db_instance.main[0].password : null
-  sensitive   = var.create_database
+output "api_integration_details" {
+  description = "API integration configuration details"
+  value = {
+    display_name = jamfpro_api_integration.corporate_api.display_name
+    enabled      = jamfpro_api_integration.corporate_api.enabled
+    token_lifetime = jamfpro_api_integration.corporate_api.access_token_lifetime_seconds
+  }
+}
+
+# Restricted software outputs
+output "restricted_software_policies" {
+  description = "Restricted software policy details"
+  value = {
+    for name, policy in jamfpro_restricted_software.corporate_restrictions :
+    name => {
+      id           = policy.id
+      process_name = policy.process_name
+      enabled      = policy.send_notification
+    }
+  }
+}
+
+# Enrollment customization outputs
+output "enrollment_customization_ids" {
+  description = "Enrollment customization IDs for reference"
+  value = {
+    for name, enrollment in jamfpro_enrollment_customization.corporate_enrollments :
+    name => enrollment.id
+  }
+}
+
+output "enrollment_branding_summary" {
+  description = "Summary of enrollment branding configurations"
+  value = {
+    for name, enrollment in jamfpro_enrollment_customization.corporate_enrollments :
+    name => {
+      display_name     = enrollment.display_name
+      button_color     = enrollment.branding_settings[0].button_color
+      background_color = enrollment.branding_settings[0].background_color
+    }
+  }
+}
+
+# VPP and LAPS outputs
+output "vpp_location_id" {
+  description = "Volume Purchasing Program location ID"
+  value       = jamfpro_volume_purchasing_locations.corporate_vpp.id
+}
+
+output "laps_configuration_summary" {
+  description = "LAPS configuration summary"
+  value = {
+    auto_deploy_enabled    = jamfpro_local_admin_password_settings.corporate_laps.auto_deploy_enabled
+    rotation_time_hours    = jamfpro_local_admin_password_settings.corporate_laps.password_rotation_time_seconds / 3600
+    auto_rotate_enabled    = jamfpro_local_admin_password_settings.corporate_laps.auto_rotate_enabled
+  }
+}
+
+# Computed outputs using locals
+output "extension_attribute_summary" {
+  description = "Summary of all extension attributes created"
+  value = {
+    total_computer_attributes = length(local.computer_attributes)
+    total_mobile_attributes   = length(local.mobile_attributes)
+    popup_attributes          = length(local.popup_attributes)
+    text_attributes          = length(local.text_attributes)
+    script_attributes        = length(local.script_attributes)
+  }
+}
+
+# Environment-specific outputs
+output "environment_configuration" {
+  description = "Current environment configuration summary"
+  value = {
+    environment         = var.jamf_environment
+    api_token_lifetime  = var.api_token_lifetime_hours
+    laps_rotation_hours = var.password_rotation_hours
+    total_restrictions  = length(var.restricted_software_configs)
+    enrollment_types    = length(var.enrollment_customizations)
+  }
 }
 ```
 
 #### 🏷️ Local Values
 
-Local values assign names to expressions, making configurations more readable and reducing repetition.
+Local values help reduce repetition and improve maintainability by computing expressions once and referencing them multiple times.
 
-**🔧 Basic Local Values:**
+**🎯 Local Value Syntax:**
 ```hcl
 locals {
-  # Simple computed values
-  environment = var.environment
-  region      = var.aws_region
-  
-  # String interpolation
-  name_prefix = "${local.environment}-${var.project_name}"
-  
-  # Conditional logic
-  instance_type = local.environment == "prod" ? "t3.large" : "t3.micro"
-  
-  # Complex expressions
-  availability_zones = slice(data.aws_availability_zones.available.names, 0, 3)
+  name = expression
 }
 ```
 
-**📋 Advanced Local Values:**
+**🔧 Jamf Pro Local Values:**
 ```hcl
 locals {
-  # Common tags applied to all resources
+  # Common naming conventions
+  resource_prefix = "${var.jamf_environment}-${random_string.suffix.result}"
+  
+  # Environment-specific settings
+  is_production = var.jamf_environment == "prod"
+  is_development = var.jamf_environment == "dev"
+  
+  # API configuration
+  api_token_lifetime_seconds = var.api_token_lifetime_hours * 3600
+  
+  # LAPS configuration
+  laps_rotation_seconds = var.password_rotation_hours * 3600
+  laps_expiration_days = var.jamf_environment == "prod" ? 90 : 30
+  
+  # Extension attribute categorization
+  computer_attributes = {
+    for name, config in var.computer_extension_attributes :
+    name => config
+  }
+  
+  mobile_attributes = {
+    for name, config in var.mobile_extension_attributes :
+    name => config
+  }
+  
+  popup_attributes = {
+    for name, config in var.computer_extension_attributes :
+    name => config
+    if config.input_type == "POPUP"
+  }
+  
+  text_attributes = {
+    for name, config in var.computer_extension_attributes :
+    name => config
+    if config.input_type == "TEXT"
+  }
+  
+  script_attributes = {
+    for name, config in var.computer_extension_attributes :
+    name => config
+    if config.input_type == "SCRIPT"
+  }
+  
+  # Restricted software message templates
+  restriction_messages = {
+    for name, config in var.restricted_software_configs :
+    name => "${config.display_message} Contact IT support for assistance."
+  }
+  
+  # Enrollment customization computed values
+  enrollment_titles = {
+    for name, config in var.enrollment_customizations :
+    name => "${config.display_name} - ${title(var.jamf_environment)}"
+  }
+  
+  # Branding color validation
+  valid_colors = {
+    for name, config in var.enrollment_customizations :
+    name => {
+      text_valid       = can(regex("^[0-9A-Fa-f]{6}$", config.branding.text_color))
+      button_valid     = can(regex("^[0-9A-Fa-f]{6}$", config.branding.button_color))
+      background_valid = can(regex("^[0-9A-Fa-f]{6}$", config.branding.background_color))
+    }
+  }
+  
+  # Security settings based on environment
+  security_settings = {
+    kill_process      = local.is_production ? true : var.kill_restricted_process
+    delete_executable = local.is_production ? true : false
+    send_notification = true
+  }
+  
+  # VPP configuration
+  vpp_config = {
+    auto_populate = local.is_production ? true : false
+    auto_register = local.is_production ? true : false
+    notifications = !local.is_development
+  }
+  
+  # Common tags for all resources
   common_tags = {
-    Environment = local.environment
-    Project     = var.project_name
-    ManagedBy   = "terraform"
-    Owner       = var.owner_email
-    CostCenter  = var.cost_center
+    Environment   = var.jamf_environment
+    ManagedBy     = "terraform"
+    Module        = "variables-and-data"
+    CreatedDate   = formatdate("YYYY-MM-DD", timestamp())
   }
   
-  # Environment-specific configuration
-  env_config = {
-    dev = {
-      instance_type = "t3.micro"
-      min_size      = 1
-      max_size      = 2
-      desired_size  = 1
-    }
-    staging = {
-      instance_type = "t3.small"
-      min_size      = 1
-      max_size      = 3
-      desired_size  = 2
-    }
-    prod = {
-      instance_type = "t3.medium"
-      min_size      = 2
-      max_size      = 10
-      desired_size  = 3
-    }
-  }
-  
-  # Current environment configuration
-  current_config = local.env_config[local.environment]
-  
-  # Computed CIDR blocks
-  subnet_cidrs = {
-    for i, az in local.availability_zones :
-    az => cidrsubnet(var.vpc_cidr, 8, i)
-  }
-  
-  # Security group rules
-  ingress_rules = {
-    http = {
-      port        = 80
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-    https = {
-      port        = 443
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-    ssh = {
-      port        = 22
-      protocol    = "tcp"
-      cidr_blocks = [var.vpc_cidr]
-    }
+  # Computed scope configurations
+  default_scope = {
+    all_computers = false
+    computer_ids  = []
+    building_ids  = local.is_production ? [1, 2, 3] : [99]
   }
 }
 ```
 
 #### 📥 Data Sources
 
-Data sources allow Terraform to **query existing infrastructure** and **external systems** to retrieve information for use in your configurations. They are **read-only** and don't create or modify resources.
+Data sources allow Terraform to fetch information about existing Jamf Pro infrastructure.
 
-**🎯 Key Benefits:**
-- **🔍 Discover existing resources** without managing them
-- **🔗 Reference external infrastructure** in your configurations  
-- **📊 Get dynamic information** like current IP addresses or AMI IDs
-- **🏗️ Build on existing foundations** without importing resources
-
-**🔍 Basic Data Source Syntax:**
+**🎯 Data Source Syntax:**
 ```hcl
 data "provider_type" "name" {
   # Configuration arguments
-  argument = "value"
-  
-  # Optional filters
+}
+```
+
+**Note**: *Currently, the Jamf Pro provider has limited data source support. The following examples demonstrate the pattern using hypothetical data sources that may be available in future provider versions.*
+
+**🔍 Hypothetical Jamf Pro Data Sources:**
+```hcl
+# Query existing categories
+data "jamfpro_categories" "existing" {
   filter {
-    name   = "filter_name"
-    values = ["filter_value"]
+    name   = "name"
+    values = ["Security", "Productivity"]
   }
 }
 
-# Reference data source attributes
-resource "example_resource" "main" {
-  attribute = data.provider_type.name.attribute_name
+# Get specific category details
+data "jamfpro_category" "security" {
+  name = "Security"
 }
+
+# Query existing sites
+data "jamfpro_sites" "all" {}
+
+data "jamfpro_site" "main" {
+  name = "Main Office"
+}
+
+# Get existing extension attributes
+data "jamfpro_computer_extension_attributes" "existing" {}
+
+# Query API integrations
+data "jamfpro_api_integrations" "current" {
+  enabled = true
+}
+
+# Get VPP locations
+data "jamfpro_volume_purchasing_locations" "existing" {}
 ```
 
 ### 🟢 Simple Use Cases
 
 **📍 Environment Information:**
 ```hcl
-# Get current AWS region
-data "aws_region" "current" {}
+# Random suffix for unique naming
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
 
-# Get current AWS account information
-data "aws_caller_identity" "current" {}
+# Simple extension attribute with environment-specific naming
+resource "jamfpro_computer_extension_attribute" "department" {
+  name        = "${var.jamf_environment}-Department-${random_string.suffix.result}"
+  enabled     = var.enable_extension_attribute
+  description = "Employee department for ${var.jamf_environment} environment"
+  input_type  = "POPUP"
+  popup_menu_choices = var.popup_menu_choices
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
 
-# Get current partition (aws, aws-cn, aws-us-gov)
-data "aws_partition" "current" {}
-
-# Use in resource tags
-resource "aws_s3_bucket" "example" {
-  bucket = "my-bucket-${data.aws_caller_identity.current.account_id}"
-  
-  tags = {
-    Region    = data.aws_region.current.name
-    AccountId = data.aws_caller_identity.current.account_id
-    Partition = data.aws_partition.current.partition
-  }
+# Basic API integration
+resource "jamfpro_api_integration" "basic" {
+  display_name                  = "${local.resource_prefix}-basic-api"
+  enabled                       = var.api_integration_enabled
+  access_token_lifetime_seconds = local.api_token_lifetime_seconds
+  authorization_scopes          = var.api_scopes
 }
 ```
 
-**🌍 Availability Zones:**
+**🔧 LAPS Configuration:**
 ```hcl
-# Get all available AZs
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Get AZs excluding specific ones
-data "aws_availability_zones" "filtered" {
-  state = "available"
-  
-  exclude_names = ["us-west-2d"]  # Exclude problematic AZ
-}
-
-# Use in subnet creation
-resource "aws_subnet" "public" {
-  count = length(data.aws_availability_zones.available.names)
-  
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 1}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-  
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "public-subnet-${count.index + 1}"
-    AZ   = data.aws_availability_zones.available.names[count.index]
-  }
+# Local admin password settings with environment-specific values
+resource "jamfpro_local_admin_password_settings" "corporate" {
+  auto_deploy_enabled                 = var.auto_deploy_laps
+  password_rotation_time_seconds      = local.laps_rotation_seconds
+  auto_rotate_enabled                 = local.is_production
+  auto_rotate_expiration_time_seconds = local.laps_expiration_days * 24 * 3600
 }
 ```
 
-**🖼️ Latest AMI Images:**
+**📱 Mobile Extension Attributes:**
 ```hcl
-# Get latest Ubuntu AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-  
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+# Mobile device location tracking
+resource "jamfpro_mobile_device_extension_attribute" "location" {
+  name                   = "Device Location - ${title(var.jamf_environment)}"
+  description            = "Primary location where mobile device is used"
+  data_type              = "STRING"
+  inventory_display_type = "USER_AND_LOCATION"
+  input_type             = "POPUP"
+  popup_menu_choices     = var.mobile_device_locations
 }
 
-# Get latest Amazon Linux 2 AMI
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-  
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
-# Get Windows Server AMI
-data "aws_ami" "windows" {
-  most_recent = true
-  owners      = ["amazon"]
-  
-  filter {
-    name   = "name"
-    values = ["Windows_Server-2022-English-Full-Base-*"]
-  }
-  
-  filter {
-    name   = "platform"
-    values = ["windows"]
-  }
-}
-
-# Use in instance creation
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  
-  tags = {
-    Name        = "web-server"
-    AMI_Name    = data.aws_ami.ubuntu.name
-    AMI_Date    = data.aws_ami.ubuntu.creation_date
-    Platform    = data.aws_ami.ubuntu.platform_details
-  }
+# User department tracking
+resource "jamfpro_mobile_device_extension_attribute" "user_dept" {
+  name                   = "User Department - ${title(var.jamf_environment)}"
+  description            = "Department of mobile device user"
+  data_type              = "STRING"
+  inventory_display_type = "GENERAL"
+  input_type             = "TEXT"
 }
 ```
 
 ### 🟡 Medium Use Cases
 
-**🌐 Existing VPC and Networking:**
+**🚫 Restricted Software with Dynamic Configuration:**
 ```hcl
-# Find existing VPC by tag
-data "aws_vpc" "existing" {
-  filter {
-    name   = "tag:Name"
-    values = ["production-vpc"]
-  }
-}
-
-# Alternative: Find VPC by CIDR
-data "aws_vpc" "by_cidr" {
-  cidr_block = "10.0.0.0/16"
-}
-
-# Get all subnets in the VPC
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]
+# Create restricted software policies from variable configuration
+resource "jamfpro_restricted_software" "corporate_restrictions" {
+  for_each = var.restricted_software_configs
+  
+  name                     = "${local.resource_prefix}-${each.key}"
+  process_name             = each.value.process_name
+  match_exact_process_name = each.value.match_exact_process_name
+  send_notification        = each.value.send_notification && local.security_settings.send_notification
+  kill_process             = each.value.kill_process && local.security_settings.kill_process
+  delete_executable        = each.value.delete_executable && local.security_settings.delete_executable
+  display_message          = local.restriction_messages[each.key]
+  
+  site_id {
+    id = -1
   }
   
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
-  }
-}
-
-# Get public subnets
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]
-  }
-  
-  filter {
-    name   = "tag:Type"
-    values = ["public"]
-  }
-}
-
-# Get detailed information for each subnet
-data "aws_subnet" "private_details" {
-  for_each = toset(data.aws_subnets.private.ids)
-  id       = each.value
-}
-
-data "aws_subnet" "public_details" {
-  for_each = toset(data.aws_subnets.public.ids)
-  id       = each.value
-}
-
-# Use existing network infrastructure
-resource "aws_instance" "app" {
-  count = length(data.aws_subnets.private.ids)
-  
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t3.small"
-  subnet_id              = data.aws_subnets.private.ids[count.index]
-  vpc_security_group_ids = [aws_security_group.app.id]
-  
-  tags = {
-    Name   = "app-server-${count.index + 1}"
-    Subnet = data.aws_subnet.private_details[data.aws_subnets.private.ids[count.index]].tags.Name
-    AZ     = data.aws_subnet.private_details[data.aws_subnets.private.ids[count.index]].availability_zone
-  }
-}
-```
-
-**🔐 Security Groups and IAM:**
-```hcl
-# Find existing security group
-data "aws_security_group" "database" {
-  filter {
-    name   = "tag:Name"
-    values = ["database-sg"]
-  }
-  
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]
-  }
-}
-
-# Get existing IAM role
-data "aws_iam_role" "ec2_role" {
-  name = "EC2-SSM-Role"
-}
-
-# Get IAM policy document for assume role
-data "aws_iam_policy_document" "ec2_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
+  scope {
+    all_computers = local.default_scope.all_computers
+    building_ids  = local.default_scope.building_ids
     
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+    exclusions {
+      computer_ids = local.is_development ? [1, 2, 3] : []
     }
   }
 }
+```
 
-# Get existing IAM policy
-data "aws_iam_policy" "ssm_managed_instance" {
-  name = "AmazonSSMManagedInstanceCore"
-}
-
-# Create instance profile using existing role
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "ec2-instance-profile"
-  role = data.aws_iam_role.ec2_role.name
-}
-
-# Use in EC2 instance
-resource "aws_instance" "secure_instance" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t3.micro"
-  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
-  vpc_security_group_ids = [data.aws_security_group.database.id]
+**🎨 Enrollment Customization with Complex Branding:**
+```hcl
+# Create enrollment customizations from variable configuration
+resource "jamfpro_enrollment_customization" "corporate" {
+  for_each = var.enrollment_customizations
   
-  tags = {
-    Name = "secure-instance"
+  site_id      = "-1"
+  display_name = local.enrollment_titles[each.key]
+  description  = "${each.value.description} (${title(var.jamf_environment)})"
+  
+  branding_settings {
+    text_color        = each.value.branding.text_color
+    button_color      = each.value.branding.button_color
+    button_text_color = each.value.branding.button_text_color
+    background_color  = each.value.branding.background_color
+  }
+  
+  # Conditional text pane
+  dynamic "text_pane" {
+    for_each = each.value.text_pane != null ? [each.value.text_pane] : []
+    content {
+      display_name         = "Welcome - ${each.key}"
+      rank                 = var.enrollment_rank
+      title                = text_pane.value.title
+      body                 = text_pane.value.body
+      subtext              = "${text_pane.value.subtext} Environment: ${upper(var.jamf_environment)}"
+      back_button_text     = text_pane.value.back_button_text
+      continue_button_text = text_pane.value.continue_button_text
+    }
+  }
+  
+  # Conditional SSO pane for production
+  dynamic "sso_pane" {
+    for_each = each.value.sso_enabled && local.is_production ? [1] : []
+    content {
+      display_name                       = "Corporate SSO - ${each.key}"
+      rank                               = var.enrollment_rank + 1
+      is_group_enrollment_access_enabled = true
+      group_enrollment_access_name       = "All-Employees"
+      is_use_jamf_connect                = true
+      short_name_attribute               = "sAMAccountName"
+      long_name_attribute                = "displayName"
+    }
   }
 }
 ```
 
-**📊 External Data and HTTP:**
+**💾 Volume Purchasing Program Integration:**
 ```hcl
-# Get current public IP
-data "http" "current_ip" {
-  url = "https://ifconfig.me/ip"
-  
-  request_headers = {
-    Accept = "text/plain"
-  }
-}
-
-# Get configuration from external API
-data "http" "service_config" {
-  url = "https://api.example.com/config"
-  
-  request_headers = {
-    Authorization = "Bearer ${var.api_token}"
-    Accept        = "application/json"
-  }
-}
-
-# Local file data
-data "local_file" "ssh_key" {
-  filename = "~/.ssh/id_rsa.pub"
-}
-
-# Template file with variables
-data "template_file" "user_data" {
-  template = file("${path.module}/templates/user_data.sh.tpl")
-  
-  vars = {
-    environment     = var.environment
-    region          = data.aws_region.current.name
-    config_endpoint = jsondecode(data.http.service_config.response_body).endpoint
-  }
-}
-
-# Use external data in security group
-resource "aws_security_group" "admin_access" {
-  name_prefix = "admin-access-"
-  vpc_id      = data.aws_vpc.existing.id
-  
-  ingress {
-    description = "SSH from admin IP"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.current_ip.response_body)}/32"]
-  }
-  
-  tags = {
-    Name     = "admin-access-sg"
-    AdminIP  = chomp(data.http.current_ip.response_body)
-  }
+# VPP location with environment-specific configuration
+resource "jamfpro_volume_purchasing_locations" "corporate" {
+  name                                      = "${title(var.jamf_environment)} Apple Business Manager"
+  service_token                             = var.vpp_service_token
+  automatically_populate_purchased_content  = local.vpp_config.auto_populate
+  send_notification_when_no_longer_assigned = local.vpp_config.notifications
+  auto_register_managed_users               = local.vpp_config.auto_register
+  site_id                                   = "-1"
 }
 ```
 
 ### 🔴 Complex Use Cases
 
-**🏗️ Multi-Tier Architecture Discovery:**
+**🏗️ Multi-Attribute Extension System:**
 ```hcl
-# Complex VPC discovery with multiple criteria
-data "aws_vpcs" "production" {
-  filter {
-    name   = "tag:Environment"
-    values = ["production"]
-  }
+# Create computer extension attributes from complex variable
+resource "jamfpro_computer_extension_attribute" "corporate_attributes" {
+  for_each = local.computer_attributes
   
-  filter {
-    name   = "tag:Project"
-    values = [var.project_name]
-  }
+  name        = "${local.resource_prefix}-${each.key}"
+  enabled     = each.value.enabled
+  description = "${each.value.description} (${title(var.jamf_environment)})"
+  input_type  = each.value.input_type
+  inventory_display_type = each.value.inventory_display_type
+  data_type   = each.value.data_type
   
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
+  # Conditional popup choices
+  popup_menu_choices = each.value.popup_choices != null ? each.value.popup_choices : null
+  
+  # Conditional script contents
+  script_contents = each.value.script_contents != null ? each.value.script_contents : null
 }
 
-# Get detailed information for each production VPC
-data "aws_vpc" "production_details" {
-  for_each = toset(data.aws_vpcs.production.ids)
-  id       = each.value
+# Create mobile extension attributes
+resource "jamfpro_mobile_device_extension_attribute" "device_tracking" {
+  for_each = local.mobile_attributes
+  
+  name                   = "${local.resource_prefix}-Mobile-${each.key}"
+  description            = each.value.description
+  data_type              = each.value.data_type
+  inventory_display_type = each.value.inventory_display_type
+  input_type             = each.value.input_type
+  popup_menu_choices     = each.value.popup_choices
+}
+```
+
+**🔐 Advanced API Integration with Role-Based Access:**
+```hcl
+# API role for extension attribute management
+resource "jamfpro_api_role" "extension_attribute_manager" {
+  display_name = "${local.resource_prefix}-ExtAttr-Manager"
+  privileges = [
+    "Create Computer Extension Attributes",
+    "Read Computer Extension Attributes", 
+    "Update Computer Extension Attributes",
+    "Create Mobile Device Extension Attributes",
+    "Read Mobile Device Extension Attributes",
+    "Update Mobile Device Extension Attributes"
+  ]
 }
 
-# Find the "main" production VPC based on tags
+# Advanced API integration with computed scopes
+resource "jamfpro_api_integration" "advanced" {
+  display_name                  = "${local.resource_prefix}-advanced-integration"
+  enabled                       = var.api_integration_enabled && local.is_production
+  access_token_lifetime_seconds = local.api_token_lifetime_seconds
+  authorization_scopes          = [jamfpro_api_role.extension_attribute_manager.display_name]
+  
+  depends_on = [
+    jamfpro_computer_extension_attribute.corporate_attributes,
+    jamfpro_mobile_device_extension_attribute.device_tracking
+  ]
+}
+```
+
+**🎯 Comprehensive Device Management Integration:**
+```hcl
+# Local values for complex integration
 locals {
-  main_vpc_id = [
-    for vpc_id, vpc in data.aws_vpc.production_details :
-    vpc_id if lookup(vpc.tags, "Type", "") == "main"
-  ][0]
-  
-  main_vpc = data.aws_vpc.production_details[local.main_vpc_id]
-}
-
-# Get all route tables in the main VPC
-data "aws_route_tables" "main_vpc" {
-  vpc_id = local.main_vpc_id
-}
-
-# Get detailed route table information
-data "aws_route_table" "main_vpc_details" {
-  for_each         = toset(data.aws_route_tables.main_vpc.ids)
-  route_table_id   = each.value
-}
-
-# Categorize subnets by type and tier
-data "aws_subnets" "web_tier" {
-  filter {
-    name   = "vpc-id"
-    values = [local.main_vpc_id]
-  }
-  
-  filter {
-    name   = "tag:Tier"
-    values = ["web"]
-  }
-  
-  filter {
-    name   = "tag:Type"
-    values = ["public"]
-  }
-}
-
-data "aws_subnets" "app_tier" {
-  filter {
-    name   = "vpc-id"
-    values = [local.main_vpc_id]
-  }
-  
-  filter {
-    name   = "tag:Tier"
-    values = ["application"]
-  }
-  
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
-  }
-}
-
-data "aws_subnets" "db_tier" {
-  filter {
-    name   = "vpc-id"
-    values = [local.main_vpc_id]
-  }
-  
-  filter {
-    name   = "tag:Tier"
-    values = ["database"]
-  }
-  
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
-  }
-}
-
-# Get subnet details for each tier
-data "aws_subnet" "web_tier_details" {
-  for_each = toset(data.aws_subnets.web_tier.ids)
-  id       = each.value
-}
-
-data "aws_subnet" "app_tier_details" {
-  for_each = toset(data.aws_subnets.app_tier.ids)
-  id       = each.value
-}
-
-data "aws_subnet" "db_tier_details" {
-  for_each = toset(data.aws_subnets.db_tier.ids)
-  id       = each.value
-}
-
-# Create locals for organized subnet information
-locals {
-  web_subnets = {
-    for id, subnet in data.aws_subnet.web_tier_details : 
-    subnet.availability_zone => {
-      id         = subnet.id
-      cidr_block = subnet.cidr_block
-      az         = subnet.availability_zone
+  # Compute extension attribute mappings
+  extension_attribute_mapping = {
+    for name, attr in jamfpro_computer_extension_attribute.corporate_attributes :
+    name => {
+      id          = attr.id
+      name        = attr.name
+      input_type  = attr.input_type
+      enabled     = attr.enabled
     }
   }
   
-  app_subnets = {
-    for id, subnet in data.aws_subnet.app_tier_details : 
-    subnet.availability_zone => {
-      id         = subnet.id
-      cidr_block = subnet.cidr_block
-      az         = subnet.availability_zone
-    }
+  # Integration configuration
+  integration_config = {
+    total_computer_attrs = length(jamfpro_computer_extension_attribute.corporate_attributes)
+    total_mobile_attrs   = length(jamfpro_mobile_device_extension_attribute.device_tracking)
+    total_restrictions   = length(jamfpro_restricted_software.corporate_restrictions)
+    api_enabled         = jamfpro_api_integration.advanced.enabled
+    laps_enabled        = jamfpro_local_admin_password_settings.corporate.auto_deploy_enabled
+    vpp_configured      = jamfpro_volume_purchasing_locations.corporate.id != null
   }
-  
-  db_subnets = {
-    for id, subnet in data.aws_subnet.db_tier_details : 
-    subnet.availability_zone => {
-      id         = subnet.id
-      cidr_block = subnet.cidr_block
-      az         = subnet.availability_zone
+}
+
+# Output comprehensive configuration
+output "device_management_summary" {
+  description = "Complete device management configuration summary"
+  value = {
+    environment = var.jamf_environment
+    configuration = local.integration_config
+    extension_attributes = local.extension_attribute_mapping
+    api_integration = {
+      id           = jamfpro_api_integration.advanced.id
+      display_name = jamfpro_api_integration.advanced.display_name
+      enabled      = jamfpro_api_integration.advanced.enabled
+    }
+    laps_settings = {
+      enabled           = jamfpro_local_admin_password_settings.corporate.auto_deploy_enabled
+      rotation_hours    = var.password_rotation_hours
+      auto_rotate       = jamfpro_local_admin_password_settings.corporate.auto_rotate_enabled
+    }
+    vpp_location = {
+      id   = jamfpro_volume_purchasing_locations.corporate.id
+      name = jamfpro_volume_purchasing_locations.corporate.name
+    }
+    enrollment_customizations = {
+      for name, enrollment in jamfpro_enrollment_customization.corporate :
+      name => {
+        id           = enrollment.id
+        display_name = enrollment.display_name
+      }
     }
   }
 }
 ```
-
-**🔍 Service Discovery and Integration:**
-```hcl
-# Discover existing RDS instances
-data "aws_db_instances" "existing" {}
-
-# Get details for specific database
-data "aws_db_instance" "main_db" {
-  db_instance_identifier = "production-main-db"
-}
-
-# Find load balancers
-data "aws_lb" "main_alb" {
-  name = "production-main-alb"
-}
-
-# Get load balancer listeners
-data "aws_lb_listener" "main_alb_https" {
-  load_balancer_arn = data.aws_lb.main_alb.arn
-  port              = 443
-}
-
-# Discover ECS cluster
-data "aws_ecs_cluster" "main" {
-  cluster_name = "production-cluster"
-}
-
-# Get ECS services in cluster
-data "aws_ecs_service" "web_service" {
-  service_name = "web-service"
-  cluster_arn  = data.aws_ecs_cluster.main.arn
-}
-
-# Find existing S3 buckets
-data "aws_s3_bucket" "static_assets" {
-  bucket = "production-static-assets-${data.aws_caller_identity.current.account_id}"
-}
-
-data "aws_s3_bucket" "logs" {
-  bucket = "production-logs-${data.aws_caller_identity.current.account_id}"
-}
-
-# Get CloudFront distribution
-data "aws_cloudfront_distribution" "main" {
-  id = var.cloudfront_distribution_id
-}
-
-# Complex integration using discovered services
-resource "aws_ecs_service" "api_service" {
-  name            = "api-service"
-  cluster         = data.aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 3
-  
-  load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
-    container_name   = "api"
-    container_port   = 8080
-  }
-  
-  network_configuration {
-    subnets         = [for subnet in local.app_subnets : subnet.id]
-    security_groups = [aws_security_group.api_service.id]
-  }
-  
-  depends_on = [data.aws_lb_listener.main_alb_https]
-}
-
-# Create target group that integrates with existing ALB
-resource "aws_lb_target_group" "api" {
-  name     = "api-service-tg"
-  port     = 8080
-  protocol = "HTTP"
-  vpc_id   = local.main_vpc_id
-  
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    interval            = 30
-    matcher             = "200"
-    path                = "/health"
-    port                = "traffic-port"
-    protocol            = "HTTP"
-    timeout             = 5
-    unhealthy_threshold = 2
-  }
-  
-  tags = {
-    Name = "api-service-target-group"
-  }
-}
-
-# Add listener rule to existing ALB
-resource "aws_lb_listener_rule" "api_service" {
-  listener_arn = data.aws_lb_listener.main_alb_https.arn
-  priority     = 100
-  
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
-  }
-  
-  condition {
-    path_pattern {
-      values = ["/api/*"]
-    }
-  }
-}
-```
-
-**💻 Exercise 7.2**: Data Source Integration
-**Duration**: 25 minutes
-
-Let's practice using data sources to integrate with existing infrastructure.
-
-**Step 1: Create Data Source Configuration**
-
-Create `data_sources.tf`:
-```hcl
-# Environment discovery
-data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Network discovery
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-data "aws_subnet" "default_details" {
-  for_each = toset(data.aws_subnets.default.ids)
-  id       = each.value
-}
-
-# AMI discovery
-data "aws_ami" "latest_ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-  
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-# External IP discovery
-data "http" "current_ip" {
-  url = "https://ifconfig.me/ip"
-}
-
-# Local configuration
-data "local_file" "config" {
-  filename = "${path.module}/config.json"
-}
-
-# Create config.json file
-resource "local_file" "config" {
-  filename = "${path.module}/config.json"
-  content = jsonencode({
-    environment = var.environment
-    region      = data.aws_region.current.name
-    vpc_id      = data.aws_vpc.default.id
-    timestamp   = timestamp()
-  })
-}
-```
-
-**Step 2: Use Data Sources in Resources**
-
-Create `main.tf`:
-```hcl
-# Security group using discovered information
-resource "aws_security_group" "web" {
-  name_prefix = "web-sg-"
-  vpc_id      = data.aws_vpc.default.id
-  description = "Security group for web servers"
-  
-  # Allow HTTP from anywhere
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  # Allow SSH from current IP only
-  ingress {
-    description = "SSH from current IP"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.current_ip.response_body)}/32"]
-  }
-  
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  tags = {
-    Name      = "web-security-group"
-    VPC       = data.aws_vpc.default.tags.Name
-    Region    = data.aws_region.current.name
-    CreatedBy = "terraform-data-sources-demo"
-  }
-}
-
-# EC2 instances using data sources
-resource "aws_instance" "web" {
-  count = min(length(data.aws_subnets.default.ids), 2) # Max 2 instances
-  
-  ami                    = data.aws_ami.latest_ubuntu.id
-  instance_type          = "t2.micro"
-  subnet_id              = data.aws_subnets.default.ids[count.index]
-  vpc_security_group_ids = [aws_security_group.web.id]
-  
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    instance_number = count.index + 1
-    region         = data.aws_region.current.name
-    account_id     = data.aws_caller_identity.current.account_id
-    vpc_id         = data.aws_vpc.default.id
-    subnet_id      = data.aws_subnets.default.ids[count.index]
-    config_data    = data.local_file.config.content
-  }))
-  
-  tags = {
-    Name = "web-server-${count.index + 1}"
-    AZ   = data.aws_subnet.default_details[data.aws_subnets.default.ids[count.index]].availability_zone
-    AMI  = data.aws_ami.latest_ubuntu.name
-  }
-}
-```
-
-**Step 3: Create User Data Script**
-
-Create `user_data.sh`:
-```bash
-#!/bin/bash
-# Update system
-apt-get update
-apt-get upgrade -y
-
-# Install nginx
-apt-get install -y nginx
-
-# Create custom index page with discovered information
-cat > /var/www/html/index.html << EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Data Sources Demo</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .info { background: #f0f8ff; padding: 20px; border-radius: 5px; margin: 10px 0; }
-        .highlight { color: #7B42BC; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h1>🔍 Terraform Data Sources Demo</h1>
-    
-    <div class="info">
-        <h2>Instance Information</h2>
-        <p><strong>Instance Number:</strong> <span class="highlight">${instance_number}</span></p>
-        <p><strong>Region:</strong> <span class="highlight">${region}</span></p>
-        <p><strong>Account ID:</strong> <span class="highlight">${account_id}</span></p>
-        <p><strong>VPC ID:</strong> <span class="highlight">${vpc_id}</span></p>
-        <p><strong>Subnet ID:</strong> <span class="highlight">${subnet_id}</span></p>
-    </div>
-    
-    <div class="info">
-        <h2>Configuration Data</h2>
-        <pre>${config_data}</pre>
-    </div>
-    
-    <p>This server was provisioned using Terraform data sources to discover existing infrastructure!</p>
-</body>
-</html>
-EOF
-
-# Start nginx
-systemctl start nginx
-systemctl enable nginx
-
-# Log deployment information
-echo "$(date): Instance ${instance_number} deployed in ${region}" >> /var/log/terraform-deployment.log
-```
-
-**Step 4: Test Data Source Integration**
-```bash
-# Initialize and apply
-terraform init
-terraform plan
-terraform apply
-
-# View discovered information
-terraform output
-
-# Test web servers
-curl $(terraform output -raw instance_public_ips | jq -r '.[0]')
-
-# Clean up
-terraform destroy
-```
-
-💡 **Pro Tip**: Data sources are perfect for integrating new resources with existing infrastructure without needing to import or manage existing resources!
 
 ---
 
-## ✅ Module 7 Summary
+## 🧪 **Lab 1**: Input Variables and Validation with Extension Attributes
+**Duration**: 25 minutes
+
+Let's practice creating extension attributes with various variable types and validation rules.
+
+**Step 1: Create Variable Definitions**
+
+Create `variables.tf`:
+```hcl
+variable "jamf_environment" {
+  description = "Jamf Pro environment"
+  type        = string
+  default     = "dev"
+  
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.jamf_environment)
+    error_message = "Environment must be dev, staging, or prod."
+  }
+}
+
+variable "extension_attribute_name" {
+  description = "Base name for extension attributes"
+  type        = string
+  default     = "Corporate"
+  
+  validation {
+    condition     = can(regex("^[A-Za-z0-9 _-]+$", var.extension_attribute_name))
+    error_message = "Extension attribute name must contain only alphanumeric characters, spaces, hyphens, and underscores."
+  }
+}
+
+variable "enable_extension_attributes" {
+  description = "Enable extension attributes for inventory collection"
+  type        = bool
+  default     = true
+}
+
+variable "department_choices" {
+  description = "Department choices for popup menu"
+  type        = list(string)
+  default     = ["Engineering", "Sales", "Marketing", "Support", "Executive"]
+  
+  validation {
+    condition     = length(var.department_choices) >= 2 && length(var.department_choices) <= 20
+    error_message = "Department choices must have between 2 and 20 options."
+  }
+}
+
+variable "mobile_locations" {
+  description = "Available mobile device locations"
+  type        = list(string)
+  default     = ["Head Office", "Branch Office", "Home Office", "Client Site"]
+}
+
+variable "computer_extension_configs" {
+  description = "Computer extension attribute configurations"
+  type = map(object({
+    enabled                = bool
+    description            = string
+    input_type             = string
+    inventory_display_type = string
+    data_type              = string
+    popup_choices          = optional(list(string))
+    script_contents        = optional(string)
+  }))
+  
+  default = {
+    "Department" = {
+      enabled                = true
+      description            = "Employee department assignment"
+      input_type             = "POPUP"
+      inventory_display_type = "USER_AND_LOCATION"
+      data_type              = "STRING"
+      popup_choices          = null # Will use var.department_choices
+      script_contents        = null
+    }
+    "Asset Tag" = {
+      enabled                = true
+      description            = "Physical asset tag number"
+      input_type             = "TEXT"
+      inventory_display_type = "HARDWARE"
+      data_type              = "STRING"
+      popup_choices          = null
+      script_contents        = null
+    }
+    "OS Build" = {
+      enabled                = true
+      description            = "Operating system build version"
+      input_type             = "SCRIPT"
+      inventory_display_type = "GENERAL"
+      data_type              = "STRING"
+      popup_choices          = null
+      script_contents        = "#!/bin/bash\nsw_vers -buildVersion"
+    }
+  }
+  
+  validation {
+    condition = alltrue([
+      for name, config in var.computer_extension_configs :
+      contains(["POPUP", "TEXT", "SCRIPT"], config.input_type)
+    ])
+    error_message = "Input type must be POPUP, TEXT, or SCRIPT."
+  }
+}
+
+variable "mobile_extension_configs" {
+  description = "Mobile device extension attribute configurations"
+  type = map(object({
+    description            = string
+    data_type              = string
+    inventory_display_type = string
+    input_type             = string
+    popup_choices          = optional(list(string))
+  }))
+  
+  default = {
+    "Device Location" = {
+      description            = "Primary location where device is used"
+      data_type              = "STRING"
+      inventory_display_type = "USER_AND_LOCATION"
+      input_type             = "POPUP"
+      popup_choices          = null # Will use var.mobile_locations
+    }
+    "User Department" = {
+      description            = "Department of device user"
+      data_type              = "STRING"
+      inventory_display_type = "GENERAL"
+      input_type             = "TEXT"
+      popup_choices          = null
+    }
+  }
+}
+```
+
+**Step 2: Create Main Configuration**
+
+Create `main.tf`:
+```hcl
+# Random suffix for unique naming
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
+# Local values for computed expressions
+locals {
+  resource_prefix = "${var.jamf_environment}-${random_string.suffix.result}"
+  
+  # Merge department choices into computer extension configs
+  computer_attributes = {
+    for name, config in var.computer_extension_configs :
+    name => merge(config, {
+      popup_choices = name == "Department" ? var.department_choices : config.popup_choices
+    })
+  }
+  
+  # Merge location choices into mobile extension configs
+  mobile_attributes = {
+    for name, config in var.mobile_extension_configs :
+    name => merge(config, {
+      popup_choices = name == "Device Location" ? var.mobile_locations : config.popup_choices
+    })
+  }
+}
+
+# Create computer extension attributes
+resource "jamfpro_computer_extension_attribute" "corporate_attributes" {
+  for_each = var.enable_extension_attributes ? local.computer_attributes : {}
+  
+  name        = "${var.extension_attribute_name} ${each.key} - ${local.resource_prefix}"
+  enabled     = each.value.enabled
+  description = "${each.value.description} (${title(var.jamf_environment)} Environment)"
+  input_type  = each.value.input_type
+  inventory_display_type = each.value.inventory_display_type
+  data_type   = each.value.data_type
+  
+  # Conditional popup choices
+  popup_menu_choices = each.value.popup_choices != null ? each.value.popup_choices : null
+  
+  # Conditional script contents
+  script_contents = each.value.script_contents != null ? each.value.script_contents : null
+}
+
+# Create mobile device extension attributes
+resource "jamfpro_mobile_device_extension_attribute" "device_tracking" {
+  for_each = var.enable_extension_attributes ? local.mobile_attributes : {}
+  
+  name                   = "${var.extension_attribute_name} Mobile ${each.key} - ${local.resource_prefix}"
+  description            = "${each.value.description} (${title(var.jamf_environment)} Environment)"
+  data_type              = each.value.data_type
+  inventory_display_type = each.value.inventory_display_type
+  input_type             = each.value.input_type
+  popup_menu_choices     = each.value.popup_choices
+}
+```
+
+**Step 3: Create Outputs**
+
+Create `outputs.tf`:
+```hcl
+output "computer_extension_attributes" {
+  description = "Created computer extension attributes"
+  value = {
+    for name, attr in jamfpro_computer_extension_attribute.corporate_attributes :
+    name => {
+      id          = attr.id
+      name        = attr.name
+      input_type  = attr.input_type
+      enabled     = attr.enabled
+    }
+  }
+}
+
+output "mobile_extension_attributes" {
+  description = "Created mobile device extension attributes"
+  value = {
+    for name, attr in jamfpro_mobile_device_extension_attribute.device_tracking :
+    name => {
+      id          = attr.id
+      name        = attr.name
+      input_type  = attr.input_type
+    }
+  }
+}
+
+output "configuration_summary" {
+  description = "Extension attribute configuration summary"
+  value = {
+    environment = var.jamf_environment
+    total_computer_attributes = length(jamfpro_computer_extension_attribute.corporate_attributes)
+    total_mobile_attributes   = length(jamfpro_mobile_device_extension_attribute.device_tracking)
+    enabled = var.enable_extension_attributes
+  }
+}
+```
+
+**Step 4: Create Environment-Specific Variables**
+
+Create `dev.tfvars`:
+```hcl
+jamf_environment = "dev"
+extension_attribute_name = "Development"
+enable_extension_attributes = true
+
+department_choices = [
+  "Dev Team",
+  "QA Team", 
+  "DevOps Team"
+]
+
+mobile_locations = [
+  "Dev Office",
+  "Home Office"
+]
+```
+
+Create `prod.tfvars`:
+```hcl
+jamf_environment = "prod"
+extension_attribute_name = "Production"
+enable_extension_attributes = true
+
+department_choices = [
+  "Engineering",
+  "Sales",
+  "Marketing", 
+  "Support",
+  "Executive",
+  "Finance",
+  "Human Resources"
+]
+
+mobile_locations = [
+  "Corporate Headquarters",
+  "Regional Office - East",
+  "Regional Office - West",
+  "Regional Office - International",
+  "Remote Work",
+  "Client Site"
+]
+```
+
+**Step 5: Test Variable Validation**
+
+```bash
+# Initialize
+terraform init
+
+# Test with default values
+terraform plan
+
+# Test with dev environment
+terraform plan -var-file="dev.tfvars"
+
+# Test with prod environment  
+terraform plan -var-file="prod.tfvars"
+
+# Test validation - this should fail
+terraform plan -var='jamf_environment=invalid'
+
+# Test validation - this should fail
+terraform plan -var='department_choices=["Only One"]'
+
+# Apply with dev environment
+terraform apply -var-file="dev.tfvars"
+```
+
+---
+
+## 🧪 **Lab 2**: Outputs and Locals with API Integration
+**Duration**: 20 minutes
+
+Practice using outputs and locals with API integrations and restricted software.
+
+**Step 1: Create Advanced Configuration**
+
+Create `advanced.tf`:
+```hcl
+variable "api_token_lifetime_hours" {
+  description = "API token lifetime in hours"
+  type        = number
+  default     = 2
+  
+  validation {
+    condition     = var.api_token_lifetime_hours >= 1 && var.api_token_lifetime_hours <= 24
+    error_message = "API token lifetime must be between 1 and 24 hours."
+  }
+}
+
+variable "api_integration_enabled" {
+  description = "Enable API integration"
+  type        = bool
+  default     = true
+}
+
+variable "restricted_software_configs" {
+  description = "Restricted software configurations"
+  type = map(object({
+    process_name             = string
+    match_exact_process_name = bool
+    send_notification        = bool
+    kill_process             = bool
+    delete_executable        = bool
+    display_message          = string
+  }))
+  
+  default = {
+    "unauthorized_installer" = {
+      process_name             = "Install macOS Big Sur.app"
+      match_exact_process_name = true
+      send_notification        = true
+      kill_process             = true
+      delete_executable        = true
+      display_message          = "Unauthorized macOS installation detected."
+    }
+    "gaming_software" = {
+      process_name             = "Steam.app"
+      match_exact_process_name = false
+      send_notification        = true
+      kill_process             = false
+      delete_executable        = false
+      display_message          = "Gaming applications are restricted during business hours."
+    }
+  }
+}
+
+# Local values for computed expressions
+locals {
+  # Environment-specific settings
+  is_production = var.jamf_environment == "prod"
+  
+  # API configuration
+  api_token_lifetime_seconds = var.api_token_lifetime_hours * 3600
+  
+  # Security settings based on environment
+  security_settings = {
+    kill_process      = local.is_production ? true : false
+    delete_executable = local.is_production ? true : false
+    send_notification = true
+  }
+  
+  # Computed restriction messages
+  restriction_messages = {
+    for name, config in var.restricted_software_configs :
+    name => "${config.display_message} Contact IT support at ext. 1234 for assistance."
+  }
+  
+  # Resource naming
+  resource_prefix = "${var.jamf_environment}-${random_string.suffix.result}"
+}
+
+# API Role for extension attribute management
+resource "jamfpro_api_role" "extension_manager" {
+  display_name = "${local.resource_prefix}-ExtAttr-Manager"
+  privileges = [
+    "Create Computer Extension Attributes",
+    "Read Computer Extension Attributes", 
+    "Update Computer Extension Attributes",
+    "Create Mobile Device Extension Attributes",
+    "Read Mobile Device Extension Attributes",
+    "Update Mobile Device Extension Attributes"
+  ]
+}
+
+# API Integration with computed values
+resource "jamfpro_api_integration" "corporate_api" {
+  display_name                  = "${local.resource_prefix}-corporate-integration"
+  enabled                       = var.api_integration_enabled
+  access_token_lifetime_seconds = local.api_token_lifetime_seconds
+  authorization_scopes          = [jamfpro_api_role.extension_manager.display_name]
+}
+
+# Restricted software with local computations
+resource "jamfpro_restricted_software" "corporate_restrictions" {
+  for_each = var.restricted_software_configs
+  
+  name                     = "${local.resource_prefix}-${each.key}"
+  process_name             = each.value.process_name
+  match_exact_process_name = each.value.match_exact_process_name
+  send_notification        = each.value.send_notification && local.security_settings.send_notification
+  kill_process             = each.value.kill_process && local.security_settings.kill_process
+  delete_executable        = each.value.delete_executable && local.security_settings.delete_executable
+  display_message          = local.restriction_messages[each.key]
+  
+  site_id {
+    id = -1
+  }
+  
+  scope {
+    all_computers = false
+    building_ids  = local.is_production ? [1, 2, 3] : [99]
+  }
+}
+```
+
+**Step 2: Create Advanced Outputs**
+
+Add to `outputs.tf`:
+```hcl
+# Sensitive API outputs
+output "api_integration_client_id" {
+  description = "API integration client ID"
+  value       = jamfpro_api_integration.corporate_api.client_id
+  sensitive   = true
+}
+
+output "api_integration_details" {
+  description = "API integration configuration details"
+  value = {
+    id           = jamfpro_api_integration.corporate_api.id
+    display_name = jamfpro_api_integration.corporate_api.display_name
+    enabled      = jamfpro_api_integration.corporate_api.enabled
+    token_lifetime_hours = var.api_token_lifetime_hours
+    scopes       = jamfpro_api_integration.corporate_api.authorization_scopes
+  }
+}
+
+# Restricted software outputs
+output "restricted_software_policies" {
+  description = "Restricted software policy details"
+  value = {
+    for name, policy in jamfpro_restricted_software.corporate_restrictions :
+    name => {
+      id                = policy.id
+      name              = policy.name
+      process_name      = policy.process_name
+      kill_process      = policy.kill_process
+      delete_executable = policy.delete_executable
+      message           = policy.display_message
+    }
+  }
+}
+
+# Computed local values outputs
+output "computed_settings" {
+  description = "Computed settings from local values"
+  value = {
+    is_production         = local.is_production
+    api_lifetime_seconds  = local.api_token_lifetime_seconds
+    security_settings     = local.security_settings
+    total_restrictions    = length(var.restricted_software_configs)
+    resource_prefix       = local.resource_prefix
+  }
+}
+
+# Environment summary
+output "environment_summary" {
+  description = "Complete environment configuration summary"
+  value = {
+    environment = var.jamf_environment
+    resources = {
+      computer_extension_attributes = length(jamfpro_computer_extension_attribute.corporate_attributes)
+      mobile_extension_attributes   = length(jamfpro_mobile_device_extension_attribute.device_tracking)
+      restricted_software_policies  = length(jamfpro_restricted_software.corporate_restrictions)
+      api_integrations              = 1
+    }
+    settings = {
+      extension_attributes_enabled = var.enable_extension_attributes
+      api_integration_enabled      = var.api_integration_enabled
+      api_token_lifetime_hours     = var.api_token_lifetime_hours
+    }
+  }
+}
+```
+
+**Step 3: Test Outputs and Locals**
+
+```bash
+# Apply configuration
+terraform apply -var-file="dev.tfvars"
+
+# View all outputs
+terraform output
+
+# View specific output
+terraform output api_integration_details
+
+# View sensitive output (will be hidden by default)
+terraform output api_integration_client_id
+
+# View computed settings
+terraform output computed_settings
+
+# View environment summary
+terraform output environment_summary
+```
+
+---
+
+## 🧪 **Lab 3**: Data Sources Integration with Enrollment and VPP
+**Duration**: 30 minutes
+
+Practice using data sources and building complex integrations.
+
+**Step 1: Create VPP and Enrollment Configuration**
+
+Create `integration.tf`:
+```hcl
+variable "vpp_service_token" {
+  description = "Apple Business Manager VPP service token"
+  type        = string
+  sensitive   = true
+  default     = "eyJleHBEYXRlIjoiMjAyNS0wMS0wMVQwMDowMDowMFoiLCJ0b2tlbiI6InNhbXBsZS10b2tlbiJ9"
+  
+  validation {
+    condition     = can(base64decode(var.vpp_service_token))
+    error_message = "VPP service token must be a valid base64 encoded string."
+  }
+}
+
+variable "password_rotation_hours" {
+  description = "LAPS password rotation interval in hours"
+  type        = number
+  default     = 24
+  
+  validation {
+    condition     = var.password_rotation_hours >= 1 && var.password_rotation_hours <= 168
+    error_message = "Password rotation must be between 1 and 168 hours (1 week)."
+  }
+}
+
+variable "enrollment_customizations" {
+  description = "Enrollment customization configurations"
+  type = map(object({
+    display_name = string
+    description  = string
+    branding = object({
+      text_color        = string
+      button_color      = string
+      button_text_color = string
+      background_color  = string
+    })
+    text_pane = object({
+      title                = string
+      body                 = string
+      subtext              = string
+      back_button_text     = string
+      continue_button_text = string
+    })
+    sso_enabled = bool
+  }))
+  
+  default = {
+    "Corporate Standard" = {
+      display_name = "Corporate Device Enrollment"
+      description  = "Standard corporate device enrollment process"
+      branding = {
+        text_color        = "000000"
+        button_color      = "0066CC"
+        button_text_color = "FFFFFF"
+        background_color  = "F5F5F5"
+      }
+      text_pane = {
+        title                = "Welcome to Corporate IT"
+        body                 = "We're setting up your device with the tools you need."
+        subtext              = "This process takes about 10 minutes."
+        back_button_text     = "Back"
+        continue_button_text = "Continue"
+      }
+      sso_enabled = true
+    }
+  }
+  
+  validation {
+    condition = alltrue([
+      for name, config in var.enrollment_customizations :
+      alltrue([
+        for color in values(config.branding) :
+        can(regex("^[0-9A-Fa-f]{6}$", color))
+      ])
+    ])
+    error_message = "All branding colors must be valid 6-digit hex codes."
+  }
+}
+
+# Local values for integration
+locals {
+  # LAPS configuration
+  laps_rotation_seconds = var.password_rotation_hours * 3600
+  laps_expiration_days = var.jamf_environment == "prod" ? 90 : 30
+  
+  # VPP configuration based on environment
+  vpp_config = {
+    auto_populate = local.is_production ? true : false
+    auto_register = local.is_production ? true : false
+    notifications = !local.is_development
+  }
+  
+  # Enrollment titles with environment
+  enrollment_titles = {
+    for name, config in var.enrollment_customizations :
+    name => "${config.display_name} - ${title(var.jamf_environment)}"
+  }
+  
+  is_development = var.jamf_environment == "dev"
+}
+
+# LAPS Configuration
+resource "jamfpro_local_admin_password_settings" "corporate_laps" {
+  auto_deploy_enabled                 = local.is_production
+  password_rotation_time_seconds      = local.laps_rotation_seconds
+  auto_rotate_enabled                 = local.is_production
+  auto_rotate_expiration_time_seconds = local.laps_expiration_days * 24 * 3600
+}
+
+# VPP Location
+resource "jamfpro_volume_purchasing_locations" "corporate_vpp" {
+  name                                      = "${title(var.jamf_environment)} Apple Business Manager"
+  service_token                             = var.vpp_service_token
+  automatically_populate_purchased_content  = local.vpp_config.auto_populate
+  send_notification_when_no_longer_assigned = local.vpp_config.notifications
+  auto_register_managed_users               = local.vpp_config.auto_register
+  site_id                                   = "-1"
+}
+
+# Enrollment Customizations
+resource "jamfpro_enrollment_customization" "corporate_enrollments" {
+  for_each = var.enrollment_customizations
+  
+  site_id      = "-1"
+  display_name = local.enrollment_titles[each.key]
+  description  = "${each.value.description} (${title(var.jamf_environment)} Environment)"
+  
+  branding_settings {
+    text_color        = each.value.branding.text_color
+    button_color      = each.value.branding.button_color
+    button_text_color = each.value.branding.button_text_color
+    background_color  = each.value.branding.background_color
+  }
+  
+  text_pane {
+    display_name         = "Welcome - ${each.key}"
+    rank                 = 1
+    title                = each.value.text_pane.title
+    body                 = each.value.text_pane.body
+    subtext              = "${each.value.text_pane.subtext} Environment: ${upper(var.jamf_environment)}"
+    back_button_text     = each.value.text_pane.back_button_text
+    continue_button_text = each.value.text_pane.continue_button_text
+  }
+  
+  # Conditional SSO pane for production
+  dynamic "sso_pane" {
+    for_each = each.value.sso_enabled && local.is_production ? [1] : []
+    content {
+      display_name                       = "Corporate SSO - ${each.key}"
+      rank                               = 2
+      is_group_enrollment_access_enabled = true
+      group_enrollment_access_name       = "All-Employees"
+      is_use_jamf_connect                = true
+      short_name_attribute               = "sAMAccountName"
+      long_name_attribute                = "displayName"
+    }
+  }
+  
+  # Dependencies on other resources
+  depends_on = [
+    jamfpro_volume_purchasing_locations.corporate_vpp,
+    jamfpro_local_admin_password_settings.corporate_laps
+  ]
+}
+```
+
+**Step 2: Create Integration Outputs**
+
+Add to `outputs.tf`:
+```hcl
+# LAPS configuration output
+output "laps_configuration" {
+  description = "LAPS configuration summary"
+  value = {
+    auto_deploy_enabled    = jamfpro_local_admin_password_settings.corporate_laps.auto_deploy_enabled
+    rotation_time_hours    = var.password_rotation_hours
+    auto_rotate_enabled    = jamfpro_local_admin_password_settings.corporate_laps.auto_rotate_enabled
+    expiration_days        = local.laps_expiration_days
+  }
+}
+
+# VPP location output (sensitive)
+output "vpp_location_id" {
+  description = "Volume Purchasing Program location ID"
+  value       = jamfpro_volume_purchasing_locations.corporate_vpp.id
+  sensitive   = true
+}
+
+output "vpp_configuration" {
+  description = "VPP configuration details"
+  value = {
+    name                = jamfpro_volume_purchasing_locations.corporate_vpp.name
+    auto_populate      = jamfpro_volume_purchasing_locations.corporate_vpp.automatically_populate_purchased_content
+    auto_register      = jamfpro_volume_purchasing_locations.corporate_vpp.auto_register_managed_users
+    send_notifications = jamfpro_volume_purchasing_locations.corporate_vpp.send_notification_when_no_longer_assigned
+  }
+}
+
+# Enrollment customization outputs
+output "enrollment_customizations" {
+  description = "Enrollment customization details"
+  value = {
+    for name, enrollment in jamfpro_enrollment_customization.corporate_enrollments :
+    name => {
+      id           = enrollment.id
+      display_name = enrollment.display_name
+      description  = enrollment.description
+      branding = {
+        button_color     = enrollment.branding_settings[0].button_color
+        background_color = enrollment.branding_settings[0].background_color
+      }
+    }
+  }
+}
+
+# Complete integration summary
+output "integration_summary" {
+  description = "Complete integration configuration summary"
+  value = {
+    environment = var.jamf_environment
+    configurations = {
+      laps_enabled          = jamfpro_local_admin_password_settings.corporate_laps.auto_deploy_enabled
+      vpp_configured        = jamfpro_volume_purchasing_locations.corporate_vpp.id != null
+      enrollment_customizations = length(jamfpro_enrollment_customization.corporate_enrollments)
+      api_integrations      = length([jamfpro_api_integration.corporate_api])
+      extension_attributes  = {
+        computer = length(jamfpro_computer_extension_attribute.corporate_attributes)
+        mobile   = length(jamfpro_mobile_device_extension_attribute.device_tracking)
+      }
+      restricted_software   = length(jamfpro_restricted_software.corporate_restrictions)
+    }
+    security_settings = local.security_settings
+    computed_values = {
+      laps_rotation_seconds = local.laps_rotation_seconds
+      api_token_lifetime    = local.api_token_lifetime_seconds
+      is_production        = local.is_production
+    }
+  }
+}
+```
+
+**Step 3: Create Complete Provider Configuration**
+
+Create `providers.tf`:
+```hcl
+terraform {
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
+  }
+}
+
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
+}
+```
+
+Add to `variables.tf`:
+```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  sensitive   = true
+  default     = "your-client-secret"
+}
+```
+
+**Step 4: Test Complete Integration**
+
+```bash
+# Initialize with all configurations
+terraform init
+
+# Plan with production settings
+terraform plan -var-file="prod.tfvars" \
+  -var="vpp_service_token=eyJleHBEYXRlIjoiMjAyNS0wMS0wMVQwMDowMDowMFoiLCJ0b2tlbiI6InNhbXBsZS10b2tlbiJ9"
+
+# Apply complete configuration
+terraform apply -var-file="prod.tfvars" \
+  -var="vpp_service_token=eyJleHBEYXRlIjoiMjAyNS0wMS0wMVQwMDowMDowMFoiLCJ0b2tlbiI6InNhbXBsZS10b2tlbiJ9"
+
+# View complete integration summary
+terraform output integration_summary
+
+# View LAPS configuration
+terraform output laps_configuration
+
+# View VPP configuration
+terraform output vpp_configuration
+
+# View enrollment customizations
+terraform output enrollment_customizations
+
+# Clean up
+terraform destroy -var-file="prod.tfvars" \
+  -var="vpp_service_token=eyJleHBEYXRlIjoiMjAyNS0wMS0wMVQwMDowMDowMFoiLCJ0b2tlbiI6InNhbXBsZS10b2tlbiJ9"
+```
+
+💡 **Pro Tip**: This comprehensive lab demonstrates how variables, locals, and outputs work together to create flexible, maintainable Jamf Pro configurations that can be easily adapted across different environments!
+
+---
+
+## ✅ Module 09 Summary
 
 **🎯 Learning Objectives Achieved:**
-- ✅ Mastered **input variables** with all data types and validation
-- ✅ Understood **variable definition files** and loading precedence
-- ✅ Implemented **output values** for information sharing
-- ✅ Created **local values** to reduce repetition and improve maintainability
-- ✅ Leveraged **data sources** for infrastructure discovery and integration
+- ✅ Mastered **input variables** with Jamf Pro resource types and validation
+- ✅ Understood **variable definition files** and environment-specific configurations
+- ✅ Implemented **output values** for Jamf Pro resource integration and sensitive data
+- ✅ Created **local values** for computed expressions in device management scenarios
+- ✅ Leveraged **data source patterns** for infrastructure discovery and integration
 
 **🔑 Key Concepts Covered:**
-- **Variable Types**: string, number, bool, list, map, object, complex nested types
-- **Validation Rules**: Custom validation with conditions and error messages
-- **Sensitive Variables**: Protecting confidential information in configurations
-- **Variable Files**: `.tfvars`, `.auto.tfvars`, `.tfvars.json` formats
+- **Variable Types**: string, number, bool, list, map, object with Jamf Pro examples
+- **Validation Rules**: Extension attribute naming, API token lifetimes, color codes
+- **Sensitive Variables**: API credentials, VPP tokens, LDAP passwords
+- **Variable Files**: Environment-specific configurations for dev/staging/prod
 - **Loading Precedence**: Understanding how Terraform resolves variable values
-- **Data Sources**: Simple, medium, and complex use cases for infrastructure discovery
+- **Local Values**: Computed security settings, resource naming, integration logic
 
 **💼 Professional Skills Developed:**
-- **Configuration Management**: Organizing variables and outputs effectively
-- **Security Best Practices**: Handling sensitive data appropriately
-- **Infrastructure Integration**: Using data sources to build on existing resources
-- **Code Organization**: Structuring configurations for maintainability
-- **Dynamic Configuration**: Creating flexible, reusable Terraform modules
+- **Configuration Management**: Organizing Jamf Pro variables and outputs effectively
+- **Security Best Practices**: Handling sensitive API credentials and tokens
+- **Infrastructure Integration**: Building upon existing Jamf Pro resources
+- **Code Organization**: Structuring configurations for multi-environment deployment
+- **Dynamic Configuration**: Creating flexible, reusable Jamf Pro modules
 
 **🏗️ Technical Achievements:**
-- Built complete AWS infrastructure with variables, locals, and data sources
-- Implemented advanced data source queries for multi-tier architecture discovery
-- Created dynamic security groups with external IP integration
-- Developed template-based configurations with variable substitution
-- Established patterns for infrastructure discovery and integration
+- Built complete Jamf Pro extension attribute system with validation
+- Implemented advanced API integration with role-based access control
+- Created dynamic software restriction policies with environment-specific settings
+- Developed enrollment customizations with complex branding configurations
+- Established patterns for VPP and LAPS integration across environments
 
-**➡️ Next Steps**: Ready to explore **Meta Arguments** where you'll learn to control resource behavior with `depends_on`, `count`, `for_each`, and lifecycle management!
+**➡️ Next Steps**: Ready to explore **Functions and Expressions** where you'll learn advanced HCL functions for data manipulation, string processing, and complex logic in Jamf Pro configurations!
 
 ---
 
@@ -1346,8 +2191,8 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 10: Meta Arguments](./module_10_meta_arguments.md)**
+**➡️ [Module 10: Functions and Expressions](./module_10_functions_and_expressions.md)**
 
-Master meta-arguments like count, for_each, and lifecycle rules.
+Master advanced HCL functions and expressions for complex Jamf Pro configurations.
 
 ---
