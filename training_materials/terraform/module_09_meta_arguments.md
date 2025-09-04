@@ -2,7 +2,6 @@
 *Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
 ---
 
-
 **⏱️ Duration**: 60 minutes  
 **🎯 Difficulty**: Intermediate  
 **📋 Prerequisites**: Completed Modules 1-8
@@ -14,8 +13,8 @@ By the end of this module, you will be able to:
 - ✅ **Control resource dependencies** using `depends_on` for explicit ordering
 - ✅ **Create multiple resource instances** using `count` and `for_each`
 - ✅ **Manage resource lifecycles** with lifecycle blocks and rules
-- ✅ **Configure provider aliases** for multi-region and multi-account deployments
-- ✅ **Implement advanced resource patterns** for complex infrastructure scenarios
+- ✅ **Configure provider aliases** for multi-environment deployments
+- ✅ **Implement advanced resource patterns** for complex Jamf Pro infrastructure scenarios
 - ✅ **Debug and troubleshoot** meta argument configurations effectively
 
 ---
@@ -32,23 +31,24 @@ By the end of this module, you will be able to:
 - **`lifecycle`** - Resource lifecycle management
 
 ```hcl
-# Meta arguments example
-resource "aws_instance" "web" {
+# Meta arguments example with Jamf Pro
+resource "jamfpro_policy" "security_baseline" {
   # Regular resource arguments
-  ami           = "ami-12345"
-  instance_type = "t3.micro"
+  name     = "Security Baseline Policy"
+  enabled  = true
+  category_id = jamfpro_category.security.id
   
   # Meta arguments
-  count      = 3                    # Create 3 instances
-  depends_on = [aws_vpc.main]       # Wait for VPC
-  provider   = aws.us_west_2        # Use specific provider
+  count      = 3                              # Create 3 policies for different environments
+  depends_on = [jamfpro_smart_computer_group.targets]  # Wait for target groups
+  provider   = jamfpro.production             # Use specific provider
   
   lifecycle {
-    create_before_destroy = true    # Lifecycle rule
+    create_before_destroy = true              # Lifecycle rule
   }
   
-  tags = {
-    Name = "web-${count.index}"     # Use count.index
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.targets[count.index].id]
   }
 }
 ```
@@ -57,125 +57,149 @@ resource "aws_instance" "web" {
 
 ## 🔗 depends_on: Explicit Dependencies
 
-Terraform automatically handles **implicit dependencies** through resource references, but sometimes you need **explicit control** over resource creation order.
+Terraform automatically handles **implicit dependencies** through resource references, but sometimes you need **explicit control** over resource creation order in Jamf Pro environments.
 
-### 🎯 When to Use depends_on
+### 🎯 When to Use depends_on in Jamf Pro
 
 **✅ Use depends_on when:**
-- Dependencies aren't expressed through resource attributes
-- You need to ensure ordering for external reasons
-- Resources have logical dependencies not visible to Terraform
-- Working with provisioners that need specific ordering
+- Organizational structure must be created before groups and policies
+- Scripts must exist before policies that reference them
+- Categories must be available before resources that use them
+- Network segments need to be configured before computer groups
+- Sites must exist before scoped resources
 
 **❌ Avoid depends_on when:**
 - You can use resource attribute references instead
-- The dependency is already implicit
+- The dependency is already implicit through resource IDs
 - You're trying to work around configuration issues
 
-### 🔧 Basic depends_on Usage
+### 🔧 Basic depends_on Usage with Jamf Pro
 
 ```hcl
-# VPC and Internet Gateway
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  
-  tags = {
-    Name = "main-vpc"
-  }
+# Organizational foundation
+resource "jamfpro_site" "headquarters" {
+  name = "Corporate Headquarters"
 }
 
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id  # Implicit dependency
-  
-  tags = {
-    Name = "main-igw"
-  }
+resource "jamfpro_building" "main_office" {
+  name            = "Main Office Building"
+  street_address1 = "123 Enterprise Way"
+  city            = "San Francisco"
+  state_province  = "California"
+  zip_postal_code = "94105"
+  country         = "United States"
 }
 
-# Route table with explicit dependency
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-  
-  # Explicit dependency - IGW must exist first
-  depends_on = [aws_internet_gateway.main]
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-  
-  tags = {
-    Name = "public-route-table"
-  }
+resource "jamfpro_department" "it_department" {
+  name = "Information Technology"
 }
 
-# Security group that depends on multiple resources
-resource "aws_security_group" "web" {
-  name_prefix = "web-sg-"
-  vpc_id      = aws_vpc.main.id
+# Network segment with explicit dependency
+resource "jamfpro_network_segment" "corporate_network" {
+  name             = "Corporate Network Segment"
+  starting_address = "10.0.0.1"
+  ending_address   = "10.0.0.254"
+  building         = jamfpro_building.main_office.name
+  department       = jamfpro_department.it_department.name
+  
+  # Explicit dependency - building and department must exist first
+  depends_on = [
+    jamfpro_building.main_office,
+    jamfpro_department.it_department
+  ]
+}
+
+# Computer group that depends on multiple organizational resources
+resource "jamfpro_smart_computer_group" "corporate_devices" {
+  name    = "Corporate Managed Devices"
+  site_id = jamfpro_site.headquarters.id
   
   # Multiple explicit dependencies
   depends_on = [
-    aws_vpc.main,
-    aws_internet_gateway.main,
-    aws_route_table.public
+    jamfpro_site.headquarters,
+    jamfpro_building.main_office,
+    jamfpro_department.it_department,
+    jamfpro_network_segment.corporate_network
   ]
   
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  criteria {
+    name        = "Building"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = jamfpro_building.main_office.name
   }
   
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  tags = {
-    Name = "web-security-group"
+  criteria {
+    name        = "Department"
+    priority    = 1
+    and_or      = "and"
+    search_type = "is"
+    value       = jamfpro_department.it_department.name
   }
 }
 ```
 
-### 🏗️ Complex Dependencies with Modules
+### 🏗️ Complex Dependencies with Categories and Scripts
 
 ```hcl
-# Module dependencies
-module "networking" {
-  source = "./modules/networking"
-  
-  vpc_cidr = var.vpc_cidr
-  environment = var.environment
+# Categories must be created first
+resource "jamfpro_category" "security" {
+  name     = "Security"
+  priority = 1
 }
 
-module "database" {
-  source = "./modules/database"
-  
-  vpc_id     = module.networking.vpc_id
-  subnet_ids = module.networking.private_subnet_ids
-  
-  # Explicit dependency on networking module
-  depends_on = [module.networking]
+resource "jamfpro_category" "maintenance" {
+  name     = "Maintenance"
+  priority = 2
 }
 
-module "application" {
-  source = "./modules/application"
+# Scripts that will be used in policies
+resource "jamfpro_script" "security_audit" {
+  name            = "Security Audit Script"
+  script_contents = file("${path.module}/scripts/security_audit.sh")
+  category_id     = jamfpro_category.security.id
+  os_requirements = "13"
+  priority        = "BEFORE"
   
-  vpc_id           = module.networking.vpc_id
-  subnet_ids       = module.networking.public_subnet_ids
-  database_endpoint = module.database.endpoint
+  # Explicit dependency on category
+  depends_on = [jamfpro_category.security]
+}
+
+resource "jamfpro_script" "system_cleanup" {
+  name            = "System Cleanup Script"
+  script_contents = file("${path.module}/scripts/cleanup.sh")
+  category_id     = jamfpro_category.maintenance.id
+  os_requirements = "13"
+  priority        = "AFTER"
   
-  # Wait for both networking and database
+  depends_on = [jamfpro_category.maintenance]
+}
+
+# Policy that depends on both scripts and groups
+resource "jamfpro_policy" "security_compliance" {
+  name        = "Security Compliance Policy"
+  enabled     = true
+  category_id = jamfpro_category.security.id
+  frequency   = "Once per week"
+  
+  # Wait for all prerequisites
   depends_on = [
-    module.networking,
-    module.database
+    jamfpro_script.security_audit,
+    jamfpro_smart_computer_group.corporate_devices,
+    jamfpro_category.security
   ]
+  
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.corporate_devices.id]
+  }
+  
+  payloads {
+    scripts {
+      id       = jamfpro_script.security_audit.id
+      priority = "Before"
+    }
+  }
 }
 ```
 
@@ -183,92 +207,114 @@ module "application" {
 
 ## 🔢 count: Creating Multiple Resources
 
-The **`count`** meta argument creates multiple instances of a resource using **numeric indexing**.
+The **`count`** meta argument creates multiple instances of a resource using **numeric indexing** - perfect for creating multiple environments or similar configurations in Jamf Pro.
 
-### 🎯 Basic count Usage
+### 🎯 Basic count Usage with Jamf Pro
 
 ```hcl
-# Create multiple EC2 instances
-resource "aws_instance" "web" {
-  count = 3  # Creates 3 instances: web[0], web[1], web[2]
-  
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.public[count.index].id
-  
-  tags = {
-    Name = "web-server-${count.index + 1}"  # web-server-1, web-server-2, web-server-3
-    Index = count.index                      # 0, 1, 2
-  }
+# Create multiple departments for different business units
+variable "business_units" {
+  description = "List of business units"
+  type        = list(string)
+  default     = ["Engineering", "Sales", "Marketing", "Support"]
 }
 
-# Create subnets across availability zones
-resource "aws_subnet" "public" {
-  count = length(data.aws_availability_zones.available.names)
+resource "jamfpro_department" "business_units" {
+  count = length(var.business_units)
+  name  = var.business_units[count.index]
+}
+
+# Create multiple sites for different locations
+variable "office_locations" {
+  description = "Office locations"
+  type        = list(string)
+  default     = ["New York", "San Francisco", "London"]
+}
+
+resource "jamfpro_site" "offices" {
+  count = length(var.office_locations)
+  name  = "${var.office_locations[count.index]} Office"
+}
+
+# Create computer groups for each department
+resource "jamfpro_smart_computer_group" "department_groups" {
+  count   = length(var.business_units)
+  name    = "${var.business_units[count.index]} Computers"
+  site_id = jamfpro_site.offices[0].id  # Use first site as default
   
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 1}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-  
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "public-subnet-${count.index + 1}"
-    AZ   = data.aws_availability_zones.available.names[count.index]
+  criteria {
+    name        = "Department"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = jamfpro_department.business_units[count.index].name
   }
 }
 ```
 
-### 🔄 Dynamic count with Variables
+### 🔄 Dynamic count with Environment Variables
 
 ```hcl
 # variables.tf
-variable "instance_count" {
-  description = "Number of instances to create"
+variable "environment_count" {
+  description = "Number of environments to create"
   type        = number
   default     = 2
   
   validation {
-    condition     = var.instance_count >= 1 && var.instance_count <= 10
-    error_message = "Instance count must be between 1 and 10."
+    condition     = var.environment_count >= 1 && var.environment_count <= 5
+    error_message = "Environment count must be between 1 and 5."
   }
 }
 
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "dev"
+variable "environment_names" {
+  description = "Environment names"
+  type        = list(string)
+  default     = ["development", "staging", "production"]
 }
 
 # main.tf
 locals {
-  # Conditional count based on environment
-  instance_count = var.environment == "prod" ? var.instance_count * 2 : var.instance_count
+  # Use the smaller of environment_count or available names
+  env_count = min(var.environment_count, length(var.environment_names))
 }
 
-resource "aws_instance" "app" {
-  count = local.instance_count
+# Create categories for each environment
+resource "jamfpro_category" "environments" {
+  count    = local.env_count
+  name     = title(var.environment_names[count.index])
+  priority = count.index + 1
+}
+
+# Create test policies for each environment
+resource "jamfpro_policy" "environment_testing" {
+  count       = local.env_count
+  name        = "${title(var.environment_names[count.index])} Testing Policy"
+  enabled     = var.environment_names[count.index] != "production"  # Disable prod by default
+  category_id = jamfpro_category.environments[count.index].id
+  frequency   = "Ongoing"
   
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.environment == "prod" ? "t3.small" : "t2.micro"
+  scope {
+    all_computers = var.environment_names[count.index] == "development"
+  }
   
-  tags = {
-    Name        = "${var.environment}-app-${count.index + 1}"
-    Environment = var.environment
-    Index       = count.index
+  payloads {
+    maintenance {
+      recon = true
+    }
   }
 }
 
-# Output all instance IDs
-output "instance_ids" {
-  description = "List of instance IDs"
-  value       = aws_instance.app[*].id
+# Output all policy IDs
+output "environment_policy_ids" {
+  description = "List of environment policy IDs"
+  value       = jamfpro_policy.environment_testing[*].id
 }
 
-# Output specific instance
-output "first_instance_ip" {
-  description = "IP of the first instance"
-  value       = aws_instance.app[0].public_ip
+# Output specific environment policy
+output "production_policy_id" {
+  description = "Production policy ID"
+  value       = length(jamfpro_policy.environment_testing) > 2 ? jamfpro_policy.environment_testing[2].id : null
 }
 ```
 
@@ -276,22 +322,22 @@ output "first_instance_ip" {
 
 ```hcl
 # ❌ PROBLEM: Removing middle element causes recreation
-variable "server_names" {
-  default = ["web1", "web2", "web3"]
+variable "app_names" {
+  default = ["Chrome", "Firefox", "Safari"]
 }
 
-resource "aws_instance" "servers" {
-  count = length(var.server_names)
+resource "jamfpro_mac_application" "browsers" {
+  count = length(var.app_names)
   
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
+  name            = var.app_names[count.index]
+  deployment_type = "Make Available in Self Service"
   
-  tags = {
-    Name = var.server_names[count.index]
+  scope {
+    all_computers = true
   }
 }
 
-# If you remove "web2", "web3" becomes "web2" and gets recreated!
+# If you remove "Firefox", "Safari" becomes "Firefox" and gets recreated!
 ```
 
 💡 **Pro Tip**: Use `for_each` instead of `count` when dealing with collections that might change, as it uses keys instead of numeric indices!
@@ -300,178 +346,252 @@ resource "aws_instance" "servers" {
 
 ## 🗝️ for_each: Key-Value Resource Creation
 
-The **`for_each`** meta argument creates multiple instances using **keys from a map or set**, providing more stable resource management than `count`.
+The **`for_each`** meta argument creates multiple instances using **keys from a map or set**, providing more stable resource management than `count` - ideal for Jamf Pro configurations.
 
-### 🎯 for_each with Sets
+### 🎯 for_each with Sets for Jamf Pro
 
 ```hcl
-# Create instances for specific environments
-variable "environments" {
-  description = "Set of environments to create"
+# Create computer groups for specific operating systems
+variable "supported_os_versions" {
+  description = "Set of supported macOS versions"
   type        = set(string)
-  default     = ["dev", "staging", "prod"]
+  default     = ["macOS 13", "macOS 14", "macOS 15"]
 }
 
-resource "aws_instance" "env_servers" {
-  for_each = var.environments
+resource "jamfpro_smart_computer_group" "os_groups" {
+  for_each = var.supported_os_versions
   
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = each.key == "prod" ? "t3.medium" : "t2.micro"
+  name = "${each.key} Computers"
   
-  tags = {
-    Name        = "${each.key}-server"      # each.key = "dev", "staging", "prod"
-    Environment = each.key
+  criteria {
+    name        = "Operating System Version"
+    priority    = 0
+    and_or      = "and"
+    search_type = "like"
+    value       = each.key
   }
 }
 
-# Output all instances
-output "environment_servers" {
+# Create policies for each OS group
+resource "jamfpro_policy" "os_maintenance" {
+  for_each = var.supported_os_versions
+  
+  name        = "${each.key} Maintenance Policy"
+  enabled     = true
+  frequency   = "Once per week"
+  category_id = jamfpro_category.maintenance.id
+  
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.os_groups[each.key].id]
+  }
+  
+  payloads {
+    maintenance {
+      recon       = true
+      permissions = true
+      byhost      = true
+    }
+  }
+}
+
+# Output all OS groups
+output "os_groups" {
   value = {
-    for env, instance in aws_instance.env_servers :
-    env => {
-      id        = instance.id
-      public_ip = instance.public_ip
+    for os, group in jamfpro_smart_computer_group.os_groups :
+    os => {
+      id   = group.id
+      name = group.name
     }
   }
 }
 ```
 
-### 🗺️ for_each with Maps
+### 🗺️ for_each with Complex Maps
 
 ```hcl
-# Complex configuration with maps
-variable "server_config" {
-  description = "Server configurations"
+# Complex application deployment configuration
+variable "application_config" {
+  description = "Application deployment configurations"
   type = map(object({
-    instance_type = string
-    volume_size   = number
-    environment   = string
+    deployment_type = string
+    category        = string
+    self_service    = bool
+    required_for    = list(string)  # List of departments
   }))
   
   default = {
-    web = {
-      instance_type = "t3.small"
-      volume_size   = 20
-      environment   = "prod"
+    "Google Chrome" = {
+      deployment_type = "Install Automatically"
+      category        = "Web Browsers"
+      self_service    = false
+      required_for    = ["Engineering", "Marketing", "Sales"]
     }
-    api = {
-      instance_type = "t3.medium"
-      volume_size   = 30
-      environment   = "prod"
+    "Slack" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Communication"
+      self_service    = true
+      required_for    = ["Engineering", "Marketing", "Sales", "IT"]
     }
-    worker = {
-      instance_type = "t3.large"
-      volume_size   = 50
-      environment   = "prod"
+    "Microsoft Office" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Productivity"
+      self_service    = true
+      required_for    = ["Marketing", "Sales", "Finance"]
     }
   }
 }
 
-resource "aws_instance" "servers" {
-  for_each = var.server_config
+# Create categories for applications
+resource "jamfpro_category" "app_categories" {
+  for_each = toset([for app in var.application_config : app.category])
   
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = each.value.instance_type
-  
-  root_block_device {
-    volume_size = each.value.volume_size
-    volume_type = "gp3"
-    encrypted   = true
-  }
-  
-  tags = {
-    Name        = "${each.key}-server"           # each.key = "web", "api", "worker"
-    Type        = each.key
-    Environment = each.value.environment         # each.value = entire object
-    VolumeSize  = each.value.volume_size
-  }
+  name     = each.key
+  priority = 5
 }
 
-# Create security groups for each server type
-resource "aws_security_group" "server_sg" {
-  for_each = var.server_config
+# Deploy applications with different configurations
+resource "jamfpro_mac_application" "enterprise_apps" {
+  for_each = var.application_config
   
-  name_prefix = "${each.key}-sg-"
-  vpc_id      = aws_vpc.main.id
-  description = "Security group for ${each.key} servers"
+  name            = each.key
+  deployment_type = each.value.deployment_type
+  category_id     = jamfpro_category.app_categories[each.value.category].id
   
-  # Dynamic rules based on server type
-  dynamic "ingress" {
-    for_each = each.key == "web" ? [80, 443] : each.key == "api" ? [8080] : []
+  scope {
+    all_computers = each.value.deployment_type == "Install Automatically"
+  }
+  
+  # Dynamic self service configuration
+  dynamic "self_service" {
+    for_each = each.value.self_service ? [1] : []
     content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+      install_button_text             = "Install ${each.key}"
+      self_service_description        = "Install ${each.key} for enhanced productivity"
+      force_users_to_view_description = false
+      feature_on_main_page            = contains(["Slack", "Microsoft Office"], each.key)
+      notification                    = "Self Service"
     }
   }
+}
+
+# Create computer extension attributes for each application
+resource "jamfpro_computer_extension_attribute" "app_versions" {
+  for_each = var.application_config
   
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  name                   = "${each.key} Version"
+  enabled                = true
+  description            = "Tracks the installed version of ${each.key}"
+  input_type             = "SCRIPT"
+  inventory_display_type = "GENERAL"
+  data_type              = "STRING"
   
-  tags = {
-    Name = "${each.key}-security-group"
-    Type = each.key
-  }
+  script_contents = templatefile("${path.module}/scripts/check_app_version.sh", {
+    app_name = each.key
+  })
 }
 ```
 
-### 🔄 for_each with Data Sources
+### 🔄 for_each with Dynamic Scoping
 
 ```hcl
-# Get all availability zones
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Create subnets in each AZ using for_each
-locals {
-  # Convert list to set for for_each
-  availability_zones = toset(data.aws_availability_zones.available.names)
-}
-
-resource "aws_subnet" "public" {
-  for_each = local.availability_zones
+# Department-based configuration
+variable "department_config" {
+  description = "Department-specific configurations"
+  type = map(object({
+    building_name = string
+    site_id       = number
+    restrictions  = list(string)
+    required_apps = list(string)
+  }))
   
-  vpc_id            = aws_vpc.main.id
-  availability_zone = each.key
-  cidr_block        = "10.0.${index(sort(data.aws_availability_zones.available.names), each.key) + 1}.0/24"
-  
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "public-subnet-${each.key}"
-    AZ   = each.key
-    Type = "public"
+  default = {
+    "Engineering" = {
+      building_name = "Tech Campus"
+      site_id       = 1
+      restrictions  = ["Install macOS High Sierra.app", "Torrent clients"]
+      required_apps = ["Xcode", "Docker", "Slack"]
+    }
+    "Marketing" = {
+      building_name = "Creative Center"
+      site_id       = 2
+      restrictions  = ["Gaming applications"]
+      required_apps = ["Adobe Creative Suite", "Figma", "Slack"]
+    }
+    "Finance" = {
+      building_name = "Corporate HQ"
+      site_id       = 1
+      restrictions  = ["Social media apps", "Gaming applications"]
+      required_apps = ["Excel", "QuickBooks", "Slack"]
+    }
   }
 }
 
-# Create NAT gateways in each public subnet
-resource "aws_eip" "nat" {
-  for_each = aws_subnet.public
+# Create smart groups for each department
+resource "jamfpro_smart_computer_group" "department_computers" {
+  for_each = var.department_config
   
-  domain = "vpc"
+  name    = "${each.key} Computers"
+  site_id = each.value.site_id
   
-  tags = {
-    Name = "nat-eip-${each.key}"
+  criteria {
+    name        = "Department"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = each.key
+  }
+  
+  criteria {
+    name        = "Building"
+    priority    = 1
+    and_or      = "and"
+    search_type = "is"
+    value       = each.value.building_name
   }
 }
 
-resource "aws_nat_gateway" "main" {
-  for_each = aws_subnet.public
-  
-  allocation_id = aws_eip.nat[each.key].id
-  subnet_id     = each.value.id
-  
-  tags = {
-    Name = "nat-gateway-${each.key}"
+# Create restricted software policies for each department
+resource "jamfpro_restricted_software" "department_restrictions" {
+  for_each = {
+    for dept, config in var.department_config :
+    dept => config
+    if length(config.restrictions) > 0
   }
   
-  depends_on = [aws_internet_gateway.main]
+  name                     = "${each.key} Software Restrictions"
+  process_name             = each.value.restrictions[0]  # Use first restriction as example
+  match_exact_process_name = false
+  send_notification        = true
+  kill_process             = true
+  delete_executable        = false
+  display_message          = "This software is not approved for ${each.key} department use."
+  
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.department_computers[each.key].id]
+  }
+}
+
+# Create policies for required applications
+resource "jamfpro_policy" "department_app_policies" {
+  for_each = var.department_config
+  
+  name        = "${each.key} Required Applications"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.app_categories["Productivity"].id
+  
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.department_computers[each.key].id]
+  }
+  
+  self_service {
+    use_for_self_service            = true
+    self_service_display_name       = "${each.key} App Bundle"
+    install_button_text             = "Install Required Apps"
+    self_service_description        = "Install applications required for ${each.key} department"
+    force_users_to_view_description = true
+    feature_on_main_page            = true
+  }
 }
 ```
 
@@ -479,375 +599,463 @@ resource "aws_nat_gateway" "main" {
 
 ## ♻️ lifecycle: Resource Lifecycle Management
 
-The **`lifecycle`** meta argument controls how Terraform manages resource creation, updates, and destruction.
+The **`lifecycle`** meta argument controls how Terraform manages resource creation, updates, and destruction - critical for production Jamf Pro environments.
 
-### 🔧 Lifecycle Rules
+### 🔧 Lifecycle Rules for Jamf Pro
 
 ```hcl
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
+# Critical security policy with protection
+resource "jamfpro_policy" "security_baseline" {
+  name        = "Corporate Security Baseline"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.security.id
   
   lifecycle {
-    # Create new resource before destroying old one
+    # Create new policy before destroying old one for zero downtime
     create_before_destroy = true
     
-    # Prevent accidental destruction
-    prevent_destroy = false  # Set to true for production
+    # Prevent accidental deletion of critical security policy
+    prevent_destroy = true
     
-    # Ignore changes to these attributes
+    # Ignore changes to certain fields that might be managed externally
     ignore_changes = [
-      ami,           # Ignore AMI updates
-      user_data,     # Ignore user data changes
-      tags["LastUpdated"]  # Ignore specific tag changes
+      scope.computer_ids,        # Computer assignments might change frequently
+      payloads.maintenance,      # Maintenance settings might be adjusted
     ]
   }
   
-  tags = {
-    Name        = "web-server"
-    LastUpdated = timestamp()
-  }
-}
-```
-
-### 🛡️ Advanced Lifecycle Management
-
-```hcl
-# Database with protection
-resource "aws_db_instance" "main" {
-  identifier = "main-database"
-  
-  engine         = "mysql"
-  engine_version = "8.0"
-  instance_class = "db.t3.micro"
-  
-  allocated_storage = 20
-  storage_type      = "gp2"
-  storage_encrypted = true
-  
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
-  
-  backup_retention_period = 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
-  
-  skip_final_snapshot = false
-  final_snapshot_identifier = "${var.db_name}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
-  
-  lifecycle {
-    # Prevent accidental deletion
-    prevent_destroy = true
-    
-    # Ignore password changes (managed externally)
-    ignore_changes = [password]
-    
-    # Always create new before destroying (for zero downtime)
-    create_before_destroy = false  # Not recommended for databases
+  scope {
+    all_computers = true
   }
   
-  tags = {
-    Name        = "main-database"
-    Environment = var.environment
-    Backup      = "enabled"
-  }
-}
-
-# Auto Scaling Group with lifecycle management
-resource "aws_launch_template" "app" {
-  name_prefix   = "app-template-"
-  image_id      = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  
-  vpc_security_group_ids = [aws_security_group.app.id]
-  
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    environment = var.environment
-  }))
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-  
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name        = "app-instance"
-      Environment = var.environment
+  payloads {
+    maintenance {
+      recon       = true
+      permissions = true
+      byhost      = true
+      system_cache = true
+      user_cache   = true
     }
   }
 }
 
-resource "aws_autoscaling_group" "app" {
-  name                = "app-asg"
-  vpc_zone_identifier = aws_subnet.private[*].id
-  target_group_arns   = [aws_lb_target_group.app.arn]
-  health_check_type   = "ELB"
+# Configuration profile with careful lifecycle management
+resource "jamfpro_macos_configuration_profile_plist" "security_profile" {
+  name                = "Corporate Security Configuration"
+  description         = "Mandatory security settings for all corporate devices"
+  level               = "System"
+  distribution_method = "Install Automatically"
+  payloads            = file("${path.module}/profiles/security.mobileconfig")
+  user_removable      = false
   
-  min_size         = var.min_size
-  max_size         = var.max_size
-  desired_capacity = var.desired_capacity
+  lifecycle {
+    # Always create new profile before removing old one
+    create_before_destroy = true
+    
+    # Don't accidentally destroy security profiles
+    prevent_destroy = true
+    
+    # Ignore payload changes if managed through external tools
+    ignore_changes = [
+      payloads  # Payload might be updated outside Terraform
+    ]
+  }
   
-  launch_template {
-    id      = aws_launch_template.app.id
-    version = "$Latest"
+  scope {
+    all_computers = true
+  }
+}
+```
+
+### 🛡️ Advanced Lifecycle Management for Enterprise
+
+```hcl
+# Computer prestage enrollment with protection
+resource "jamfpro_computer_prestage_enrollment" "corporate_prestage" {
+  display_name                          = "Corporate Device Enrollment"
+  mandatory                             = true
+  mdm_removable                         = false
+  support_phone_number                  = "1-800-IT-HELP"
+  support_email_address                 = "it-support@company.com"
+  department                            = "Information Technology"
+  default_prestage                      = true
+  enrollment_site_id                    = jamfpro_site.headquarters.id
+  keep_existing_site_membership         = false
+  keep_existing_location_information    = false
+  require_authentication                = true
+  authentication_prompt                 = "Welcome to your corporate managed device"
+  prevent_activation_lock               = true
+  enable_device_based_activation_lock   = false
+  device_enrollment_program_instance_id = "1"
+  
+  lifecycle {
+    # Never create before destroy for prestage (could cause enrollment issues)
+    create_before_destroy = false
+    
+    # Protect critical enrollment configuration
+    prevent_destroy = true
+    
+    # Ignore frequently changing fields
+    ignore_changes = [
+      prestage_installed_profile_ids,  # Profiles might be managed separately
+      custom_package_ids,              # Packages might be updated frequently
+    ]
+  }
+  
+  skip_setup_items {
+    biometric          = false
+    terms_of_address   = false
+    file_vault         = false
+    icloud_diagnostics = true
+    diagnostics        = true
+    accessibility      = false
+    apple_id           = true
+    screen_time        = true
+    siri               = true
+    display_tone       = false
+    restore            = false
+    appearance         = false
+    privacy            = false
+    payment            = true
+    registration       = false
+    tos                = false
+    icloud_storage     = true
+    location           = false
+    intelligence       = true
+    welcome            = false
+    wallpaper          = false
+  }
+  
+  account_settings {
+    payload_configured                           = true
+    local_admin_account_enabled                  = true
+    admin_username                               = "localadmin"
+    admin_password                               = var.local_admin_password
+    hidden_admin_account                         = true
+    local_user_managed                           = true
+    user_account_type                            = "STANDARD"
+    prefill_primary_account_info_feature_enabled = true
+    prefill_type                                 = "DEVICE_OWNER"
+    prevent_prefill_info_from_modification       = false
+  }
+}
+
+# Application with update management
+resource "jamfpro_mac_application" "critical_apps" {
+  for_each = toset(["Security Agent", "Compliance Monitor"])
+  
+  name            = each.key
+  deployment_type = "Install Automatically"
+  category_id     = jamfpro_category.security.id
+  
+  scope {
+    all_computers = true
   }
   
   lifecycle {
     create_before_destroy = true
-    ignore_changes       = [desired_capacity]  # Allow auto-scaling
-  }
-  
-  tag {
-    key                 = "Name"
-    value               = "app-asg-instance"
-    propagate_at_launch = true
+    
+    # Don't destroy critical security applications
+    prevent_destroy = each.key == "Security Agent"
+    
+    # Ignore version changes (managed by patch management)
+    ignore_changes = [
+      version
+    ]
   }
 }
 ```
 
 ---
 
-## 🔄 provider: Multi-Provider Configurations
+## 🔄 provider: Multi-Environment Configurations
 
-The **`provider`** meta argument selects a specific provider configuration when you have multiple provider aliases.
+The **`provider`** meta argument selects a specific provider configuration when you have multiple Jamf Pro instances or environments.
 
-### 🌍 Multi-Region AWS Setup
+### 🌍 Multi-Environment Jamf Pro Setup
 
 ```hcl
 # Provider configurations
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.0.1"
     }
   }
 }
 
-# Default provider (us-west-2)
-provider "aws" {
-  region = "us-west-2"
+# Production Jamf Pro instance
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.prod_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.prod_client_id
+  client_secret         = var.prod_client_secret
   
-  default_tags {
-    tags = {
-      Project     = var.project_name
-      Environment = var.environment
-      ManagedBy   = "terraform"
+  default_tags = {
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# Development/Testing Jamf Pro instance
+provider "jamfpro" {
+  alias = "development"
+  
+  jamfpro_instance_fqdn = var.dev_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.dev_client_id
+  client_secret         = var.dev_client_secret
+  
+  default_tags = {
+    Project     = var.project_name
+    Environment = "development"
+    ManagedBy   = "terraform"
+    Purpose     = "testing"
+  }
+}
+
+# Staging Jamf Pro instance
+provider "jamfpro" {
+  alias = "staging"
+  
+  jamfpro_instance_fqdn = var.staging_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.staging_client_id
+  client_secret         = var.staging_client_secret
+  
+  default_tags = {
+    Environment = "staging"
+    ManagedBy   = "terraform"
+  }
+}
+
+# Resources in production (default provider)
+resource "jamfpro_category" "prod_categories" {
+  for_each = toset(["Security", "Productivity", "Development"])
+  
+  name     = each.key
+  priority = 5
+}
+
+# Resources in development environment
+resource "jamfpro_category" "dev_categories" {
+  provider = jamfpro.development
+  
+  for_each = toset(["Testing", "Development", "Experimental"])
+  
+  name     = each.key
+  priority = 10
+}
+
+# Resources in staging environment
+resource "jamfpro_category" "staging_categories" {
+  provider = jamfpro.staging
+  
+  for_each = toset(["Pre-Production", "Testing", "Validation"])
+  
+  name     = each.key
+  priority = 8
+}
+
+# Test policies in development
+resource "jamfpro_policy" "dev_testing" {
+  provider = jamfpro.development
+  
+  name        = "Development Testing Policy"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.dev_categories["Testing"].id
+  
+  scope {
+    all_computers = true
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
     }
   }
 }
 
-# East region provider
-provider "aws" {
-  alias  = "east"
-  region = "us-east-1"
+# Production policies with staging validation
+resource "jamfpro_policy" "prod_deployment" {
+  name        = "Production Application Deployment"
+  enabled     = true
+  frequency   = "Once per computer"
+  category_id = jamfpro_category.prod_categories["Productivity"].id
   
-  default_tags {
-    tags = {
-      Project     = var.project_name
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Region      = "us-east-1"
+  # This policy depends on successful staging validation
+  depends_on = [jamfpro_policy.staging_validation]
+  
+  scope {
+    all_computers = false
+    computer_group_ids = [jamfpro_smart_computer_group.production_computers.id]
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
     }
   }
 }
 
-# Europe provider
-provider "aws" {
-  alias  = "europe"
-  region = "eu-west-1"
+# Staging validation policy
+resource "jamfpro_policy" "staging_validation" {
+  provider = jamfpro.staging
   
-  default_tags {
-    tags = {
-      Project     = var.project_name
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Region      = "eu-west-1"
-    }
-  }
-}
-
-# Resources in default region (us-west-2)
-resource "aws_s3_bucket" "main" {
-  bucket = "${var.project_name}-main-${random_id.bucket_suffix.hex}"
-}
-
-# Resources in us-east-1 (required for CloudFront)
-resource "aws_s3_bucket" "east" {
-  provider = aws.east  # Use the east provider
+  name        = "Staging Validation Policy"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.staging_categories["Validation"].id
   
-  bucket = "${var.project_name}-east-${random_id.bucket_suffix.hex}"
-}
-
-# Resources in Europe
-resource "aws_s3_bucket" "europe" {
-  provider = aws.europe  # Use the europe provider
-  
-  bucket = "${var.project_name}-europe-${random_id.bucket_suffix.hex}"
-}
-
-# CloudFront distribution (must use us-east-1 for ACM certificate)
-resource "aws_acm_certificate" "main" {
-  provider = aws.east  # ACM certificates for CloudFront must be in us-east-1
-  
-  domain_name       = var.domain_name
-  validation_method = "DNS"
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_cloudfront_distribution" "main" {
-  # CloudFront is global but uses us-east-1 for certificates
-  provider = aws.east
-  
-  origin {
-    domain_name = aws_s3_bucket.main.bucket_regional_domain_name
-    origin_id   = "S3-${aws_s3_bucket.main.bucket}"
-    
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
-    }
-  }
-  
-  enabled             = true
-  default_root_object = "index.html"
-  
-  default_cache_behavior {
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${aws_s3_bucket.main.bucket}"
-    compress              = true
-    viewer_protocol_policy = "redirect-to-https"
-    
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-  }
-  
-  viewer_certificate {
-    acm_certificate_arn = aws_acm_certificate.main.arn
-    ssl_support_method  = "sni-only"
-  }
-  
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
+  scope {
+    all_computers = true
   }
 }
 ```
 
-### 🏢 Multi-Account AWS Setup
+### 🏢 Multi-Tenant Jamf Pro Setup
 
 ```hcl
-# Production account provider
-provider "aws" {
-  alias  = "prod"
-  region = "us-west-2"
+# Client A Jamf Pro instance
+provider "jamfpro" {
+  alias = "client_a"
   
-  assume_role {
-    role_arn = "arn:aws:iam::${var.prod_account_id}:role/TerraformRole"
+  jamfpro_instance_fqdn = var.client_a_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.client_a_client_id
+  client_secret         = var.client_a_client_secret
+  
+  default_tags = {
+    Client      = "ClientA"
+    Environment = var.environment
   }
+}
+
+# Client B Jamf Pro instance
+provider "jamfpro" {
+  alias = "client_b"
   
-  default_tags {
-    tags = {
-      Environment = "production"
-      Account     = "prod"
+  jamfpro_instance_fqdn = var.client_b_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.client_b_client_id
+  client_secret         = var.client_b_client_secret
+  
+  default_tags = {
+    Client      = "ClientB"
+    Environment = var.environment
+  }
+}
+
+# Shared configuration for both clients
+locals {
+  standard_categories = ["Security", "Productivity", "Utilities"]
+  
+  standard_apps = {
+    "Google Chrome" = {
+      deployment_type = "Install Automatically"
+      category        = "Productivity"
+    }
+    "Slack" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Productivity"
     }
   }
 }
 
-# Development account provider
-provider "aws" {
-  alias  = "dev"
-  region = "us-west-2"
+# Deploy standard configuration to Client A
+resource "jamfpro_category" "client_a_categories" {
+  provider = jamfpro.client_a
   
-  assume_role {
-    role_arn = "arn:aws:iam::${var.dev_account_id}:role/TerraformRole"
-  }
+  for_each = toset(local.standard_categories)
   
-  default_tags {
-    tags = {
-      Environment = "development"
-      Account     = "dev"
-    }
+  name     = each.key
+  priority = 5
+}
+
+resource "jamfpro_mac_application" "client_a_apps" {
+  provider = jamfpro.client_a
+  
+  for_each = local.standard_apps
+  
+  name            = each.key
+  deployment_type = each.value.deployment_type
+  category_id     = jamfpro_category.client_a_categories[each.value.category].id
+  
+  scope {
+    all_computers = each.value.deployment_type == "Install Automatically"
   }
 }
 
-# Resources in production account
-resource "aws_vpc" "prod" {
-  provider = aws.prod
+# Deploy standard configuration to Client B
+resource "jamfpro_category" "client_b_categories" {
+  provider = jamfpro.client_b
   
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  for_each = toset(local.standard_categories)
   
-  tags = {
-    Name = "prod-vpc"
+  name     = each.key
+  priority = 5
+}
+
+resource "jamfpro_mac_application" "client_b_apps" {
+  provider = jamfpro.client_b
+  
+  for_each = local.standard_apps
+  
+  name            = each.key
+  deployment_type = each.value.deployment_type
+  category_id     = jamfpro_category.client_b_categories[each.value.category].id
+  
+  scope {
+    all_computers = each.value.deployment_type == "Install Automatically"
   }
 }
 
-# Resources in development account
-resource "aws_vpc" "dev" {
-  provider = aws.dev
+# Client-specific customizations
+resource "jamfpro_policy" "client_a_custom" {
+  provider = jamfpro.client_a
   
-  cidr_block           = "10.1.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  name        = "Client A Custom Security Policy"
+  enabled     = true
+  frequency   = "Once per week"
+  category_id = jamfpro_category.client_a_categories["Security"].id
   
-  tags = {
-    Name = "dev-vpc"
+  scope {
+    all_computers = true
   }
 }
 
-# Cross-account VPC peering
-resource "aws_vpc_peering_connection" "prod_to_dev" {
-  provider = aws.prod
+resource "jamfpro_policy" "client_b_custom" {
+  provider = jamfpro.client_b
   
-  vpc_id      = aws_vpc.prod.id
-  peer_vpc_id = aws_vpc.dev.id
-  peer_region = "us-west-2"
+  name        = "Client B Custom Compliance Policy"
+  enabled     = true
+  frequency   = "Once per day"
+  category_id = jamfpro_category.client_b_categories["Security"].id
   
-  tags = {
-    Name = "prod-to-dev-peering"
-  }
-}
-
-# Accept peering connection in dev account
-resource "aws_vpc_peering_connection_accepter" "dev_accept" {
-  provider = aws.dev
-  
-  vpc_peering_connection_id = aws_vpc_peering_connection.prod_to_dev.id
-  auto_accept              = true
-  
-  tags = {
-    Name = "dev-accept-peering"
+  scope {
+    all_computers = true
   }
 }
 ```
 
 ---
 
-## 💻 **Exercise 8.1**: Complete Meta Arguments Implementation
+## 💻 **Exercise 9.1**: Complete Meta Arguments Implementation with Jamf Pro
 **Duration**: 45 minutes
 
-Let's build a comprehensive multi-tier application using all meta arguments.
+Let's build a comprehensive Jamf Pro environment using all meta arguments to demonstrate enterprise device management.
 
 **Step 1: Project Structure**
 ```bash
-mkdir terraform-meta-arguments
-cd terraform-meta-arguments
+mkdir terraform-jamfpro-meta-arguments
+cd terraform-jamfpro-meta-arguments
 
 # Create file structure
 touch {main,variables,outputs,providers}.tf
-mkdir -p modules/{networking,compute,database}
+mkdir -p {scripts,profiles}
 ```
 
 **Step 2: Provider Configuration (`providers.tf`)**
@@ -856,9 +1064,9 @@ terraform {
   required_version = ">= 1.0"
   
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.0.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -867,33 +1075,34 @@ terraform {
   }
 }
 
-# Primary region provider
-provider "aws" {
-  region = var.primary_region
+# Production Jamf Pro provider
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.prod_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.prod_client_id
+  client_secret         = var.prod_client_secret
   
-  default_tags {
-    tags = {
-      Project     = var.project_name
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Region      = var.primary_region
-    }
+  default_tags = {
+    Project     = var.project_name
+    Environment = "production"
+    ManagedBy   = "terraform"
   }
 }
 
-# Secondary region for disaster recovery
-provider "aws" {
-  alias  = "secondary"
-  region = var.secondary_region
+# Development Jamf Pro provider for testing
+provider "jamfpro" {
+  alias = "development"
   
-  default_tags {
-    tags = {
-      Project     = var.project_name
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Region      = var.secondary_region
-      Purpose     = "disaster-recovery"
-    }
+  jamfpro_instance_fqdn = var.dev_jamf_url
+  auth_method           = "oauth2"
+  client_id             = var.dev_client_id
+  client_secret         = var.dev_client_secret
+  
+  default_tags = {
+    Project     = var.project_name
+    Environment = "development"
+    ManagedBy   = "terraform"
+    Purpose     = "testing"
   }
 }
 
@@ -906,69 +1115,128 @@ provider "random" {}
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "meta-args-demo"
+  default     = "enterprise-jamf-demo"
 }
 
-variable "environment" {
-  description = "Environment name"
+variable "prod_jamf_url" {
+  description = "Production Jamf Pro instance URL"
   type        = string
-  default     = "dev"
+  sensitive   = true
+}
+
+variable "dev_jamf_url" {
+  description = "Development Jamf Pro instance URL"
+  type        = string
+  sensitive   = true
+}
+
+variable "prod_client_id" {
+  description = "Production Jamf Pro OAuth2 client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "prod_client_secret" {
+  description = "Production Jamf Pro OAuth2 client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "dev_client_id" {
+  description = "Development Jamf Pro OAuth2 client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "dev_client_secret" {
+  description = "Development Jamf Pro OAuth2 client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "organization_structure" {
+  description = "Organization structure configuration"
+  type = object({
+    sites = list(string)
+    buildings = map(object({
+      site          = string
+      address       = string
+      city          = string
+      state         = string
+      zip           = string
+    }))
+    departments = list(string)
+  })
   
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be dev, staging, or prod."
+  default = {
+    sites = ["Corporate HQ", "West Coast Office"]
+    
+    buildings = {
+      "Main Campus" = {
+        site    = "Corporate HQ"
+        address = "123 Enterprise Way"
+        city    = "San Francisco"
+        state   = "California"
+        zip     = "94105"
+      }
+      "Innovation Center" = {
+        site    = "West Coast Office"
+        address = "456 Tech Boulevard"
+        city    = "Seattle"
+        state   = "Washington"
+        zip     = "98101"
+      }
+    }
+    
+    departments = ["Engineering", "Marketing", "Sales", "IT", "Finance"]
   }
 }
 
-variable "primary_region" {
-  description = "Primary AWS region"
-  type        = string
-  default     = "us-west-2"
-}
-
-variable "secondary_region" {
-  description = "Secondary AWS region for DR"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "server_configurations" {
-  description = "Server configurations for different tiers"
+variable "application_catalog" {
+  description = "Enterprise application catalog"
   type = map(object({
-    instance_type = string
-    min_size      = number
-    max_size      = number
-    desired_size  = number
-    ports         = list(number)
+    deployment_type = string
+    category        = string
+    self_service    = bool
+    required_for    = list(string)  # List of departments
   }))
   
   default = {
-    web = {
-      instance_type = "t3.small"
-      min_size      = 2
-      max_size      = 6
-      desired_size  = 2
-      ports         = [80, 443]
+    "Google Chrome" = {
+      deployment_type = "Install Automatically"
+      category        = "Web Browsers"
+      self_service    = false
+      required_for    = ["Engineering", "Marketing", "Sales"]
     }
-    api = {
-      instance_type = "t3.medium"
-      min_size      = 2
-      max_size      = 8
-      desired_size  = 3
-      ports         = [8080, 8443]
+    "Slack" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Communication"
+      self_service    = true
+      required_for    = ["Engineering", "Marketing", "Sales", "IT"]
     }
-    worker = {
-      instance_type = "t3.large"
-      min_size      = 1
-      max_size      = 4
-      desired_size  = 2
-      ports         = []
+    "Microsoft Office" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Productivity"
+      self_service    = true
+      required_for    = ["Marketing", "Sales", "Finance"]
+    }
+    "Xcode" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Development"
+      self_service    = true
+      required_for    = ["Engineering"]
+    }
+    "Adobe Creative Suite" = {
+      deployment_type = "Make Available in Self Service"
+      category        = "Creative"
+      self_service    = true
+      required_for    = ["Marketing"]
     }
   }
 }
 
-variable "enable_disaster_recovery" {
-  description = "Enable disaster recovery in secondary region"
+variable "enable_development_testing" {
+  description = "Enable development environment testing"
   type        = bool
   default     = false
 }
@@ -981,434 +1249,361 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Data sources
-data "aws_availability_zones" "primary" {
-  state = "available"
-}
-
-data "aws_availability_zones" "secondary" {
-  provider = aws.secondary
-  state    = "available"
-}
-
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
+# Organizational Foundation - Sites
+resource "jamfpro_site" "organization_sites" {
+  for_each = toset(var.organization_structure.sites)
   
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+  name = each.key
 }
 
-# Primary region networking
-resource "aws_vpc" "primary" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+# Buildings with explicit dependencies
+resource "jamfpro_building" "organization_buildings" {
+  for_each = var.organization_structure.buildings
   
-  tags = {
-    Name = "${var.project_name}-primary-vpc"
-  }
+  name            = each.key
+  street_address1 = each.value.address
+  city            = each.value.city
+  state_province  = each.value.state
+  zip_postal_code = each.value.zip
+  country         = "United States"
+  
+  # Explicit dependency on sites
+  depends_on = [jamfpro_site.organization_sites]
 }
 
-# Internet Gateway with explicit dependency
-resource "aws_internet_gateway" "primary" {
-  vpc_id = aws_vpc.primary.id
+# Departments
+resource "jamfpro_department" "organization_departments" {
+  count = length(var.organization_structure.departments)
   
-  tags = {
-    Name = "${var.project_name}-primary-igw"
-  }
+  name = var.organization_structure.departments[count.index]
 }
 
-# Public subnets using for_each
+# Categories for applications using for_each
 locals {
-  primary_azs = slice(data.aws_availability_zones.primary.names, 0, 3)
+  app_categories = toset([for app in var.application_catalog : app.category])
 }
 
-resource "aws_subnet" "public" {
-  for_each = toset(local.primary_azs)
+resource "jamfpro_category" "app_categories" {
+  for_each = local.app_categories
   
-  vpc_id            = aws_vpc.primary.id
-  availability_zone = each.key
-  cidr_block        = "10.0.${index(local.primary_azs, each.key) + 1}.0/24"
-  
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "${var.project_name}-public-${each.key}"
-    Type = "public"
-  }
+  name     = each.key
+  priority = 5
 }
 
-# Private subnets using for_each
-resource "aws_subnet" "private" {
-  for_each = toset(local.primary_azs)
+# Smart computer groups for each department using count
+resource "jamfpro_smart_computer_group" "department_groups" {
+  count = length(var.organization_structure.departments)
   
-  vpc_id            = aws_vpc.primary.id
-  availability_zone = each.key
-  cidr_block        = "10.0.${index(local.primary_azs, each.key) + 10}.0/24"
+  name    = "${var.organization_structure.departments[count.index]} Computers"
+  site_id = jamfpro_site.organization_sites[var.organization_structure.sites[0]].id
   
-  tags = {
-    Name = "${var.project_name}-private-${each.key}"
-    Type = "private"
-  }
-}
-
-# Route table with explicit dependency
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.primary.id
-  
-  depends_on = [aws_internet_gateway.primary]
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.primary.id
-  }
-  
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
-}
-
-# Route table associations using for_each
-resource "aws_route_table_association" "public" {
-  for_each = aws_subnet.public
-  
-  subnet_id      = each.value.id
-  route_table_id = aws_route_table.public.id
-}
-
-# NAT Gateways using for_each
-resource "aws_eip" "nat" {
-  for_each = aws_subnet.public
-  
-  domain = "vpc"
-  
-  depends_on = [aws_internet_gateway.primary]
-  
-  tags = {
-    Name = "${var.project_name}-nat-eip-${each.key}"
-  }
-}
-
-resource "aws_nat_gateway" "main" {
-  for_each = aws_subnet.public
-  
-  allocation_id = aws_eip.nat[each.key].id
-  subnet_id     = each.value.id
-  
-  depends_on = [aws_internet_gateway.primary]
-  
-  tags = {
-    Name = "${var.project_name}-nat-${each.key}"
-  }
-}
-
-# Private route tables using for_each
-resource "aws_route_table" "private" {
-  for_each = aws_subnet.private
-  
-  vpc_id = aws_vpc.primary.id
-  
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[each.key].id
-  }
-  
-  tags = {
-    Name = "${var.project_name}-private-rt-${each.key}"
-  }
-}
-
-resource "aws_route_table_association" "private" {
-  for_each = aws_subnet.private
-  
-  subnet_id      = each.value.id
-  route_table_id = aws_route_table.private[each.key].id
-}
-
-# Security groups using for_each
-resource "aws_security_group" "app_tiers" {
-  for_each = var.server_configurations
-  
-  name_prefix = "${each.key}-sg-"
-  vpc_id      = aws_vpc.primary.id
-  description = "Security group for ${each.key} tier"
-  
-  # Dynamic ingress rules
-  dynamic "ingress" {
-    for_each = each.value.ports
-    content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = each.key == "web" ? ["0.0.0.0/0"] : [aws_vpc.primary.cidr_block]
-    }
-  }
-  
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  tags = {
-    Name = "${var.project_name}-${each.key}-sg"
-    Tier = each.key
-  }
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Launch templates using for_each
-resource "aws_launch_template" "app_tiers" {
-  for_each = var.server_configurations
-  
-  name_prefix   = "${each.key}-lt-"
-  image_id      = data.aws_ami.ubuntu.id
-  instance_type = each.value.instance_type
-  
-  vpc_security_group_ids = [aws_security_group.app_tiers[each.key].id]
-  
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    tier        = each.key
-    environment = var.environment
-    ports       = jsonencode(each.value.ports)
-  }))
-  
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.project_name}-${each.key}-instance"
-      Tier = each.key
-    }
-  }
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Auto Scaling Groups using for_each
-resource "aws_autoscaling_group" "app_tiers" {
-  for_each = var.server_configurations
-  
-  name                = "${var.project_name}-${each.key}-asg"
-  vpc_zone_identifier = values(aws_subnet.private)[*].id
-  
-  min_size         = each.value.min_size
-  max_size         = each.value.max_size
-  desired_capacity = each.value.desired_size
-  
-  health_check_type         = "EC2"
-  health_check_grace_period = 300
-  
-  launch_template {
-    id      = aws_launch_template.app_tiers[each.key].id
-    version = "$Latest"
-  }
-  
-  # Explicit dependencies
+  # Explicit dependencies on organizational structure
   depends_on = [
-    aws_nat_gateway.main,
-    aws_route_table_association.private
+    jamfpro_site.organization_sites,
+    jamfpro_department.organization_departments
   ]
   
-  tag {
-    key                 = "Name"
-    value               = "${var.project_name}-${each.key}-asg-instance"
-    propagate_at_launch = true
+  criteria {
+    name        = "Department"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = var.organization_structure.departments[count.index]
+  }
+}
+
+# Computer extension attributes for application tracking
+resource "jamfpro_computer_extension_attribute" "app_tracking" {
+  for_each = var.application_catalog
+  
+  name                   = "${each.key} Installation Status"
+  enabled                = true
+  description            = "Tracks installation status of ${each.key}"
+  input_type             = "SCRIPT"
+  inventory_display_type = "GENERAL"
+  data_type              = "STRING"
+  
+  script_contents = templatefile("${path.module}/scripts/check_app.sh", {
+    app_name = each.key
+  })
+}
+
+# Enterprise applications using for_each
+resource "jamfpro_mac_application" "enterprise_apps" {
+  for_each = var.application_catalog
+  
+  name            = each.key
+  deployment_type = each.value.deployment_type
+  category_id     = jamfpro_category.app_categories[each.value.category].id
+  
+  scope {
+    all_computers = each.value.deployment_type == "Install Automatically"
+    
+    # Scope to specific departments if not automatically installed
+    computer_group_ids = each.value.deployment_type != "Install Automatically" ? [
+      for i, dept in var.organization_structure.departments :
+      jamfpro_smart_computer_group.department_groups[i].id
+      if contains(each.value.required_for, dept)
+    ] : []
   }
   
-  tag {
-    key                 = "Tier"
-    value               = each.key
-    propagate_at_launch = true
+  # Dynamic self service configuration
+  dynamic "self_service" {
+    for_each = each.value.self_service ? [1] : []
+    content {
+      install_button_text             = "Install ${each.key}"
+      self_service_description        = "Install ${each.key} for enhanced productivity"
+      force_users_to_view_description = false
+      feature_on_main_page            = contains(["Slack", "Microsoft Office"], each.key)
+      notification                    = "Self Service"
+    }
   }
   
   lifecycle {
     create_before_destroy = true
-    ignore_changes       = [desired_capacity]
+    # Protect critical applications
+    prevent_destroy = contains(["Google Chrome", "Slack"], each.key)
   }
 }
 
-# Disaster Recovery in Secondary Region (conditional)
-resource "aws_vpc" "secondary" {
-  count = var.enable_disaster_recovery ? 1 : 0
+# Security baseline policy with lifecycle protection
+resource "jamfpro_policy" "security_baseline" {
+  name        = "Corporate Security Baseline"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.app_categories["Security"].id
   
-  provider = aws.secondary
+  # Explicit dependencies on foundational resources
+  depends_on = [
+    jamfpro_smart_computer_group.department_groups,
+    jamfpro_category.app_categories
+  ]
   
-  cidr_block           = "10.1.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  scope {
+    all_computers = true
+  }
   
-  tags = {
-    Name    = "${var.project_name}-secondary-vpc"
-    Purpose = "disaster-recovery"
+  payloads {
+    maintenance {
+      recon       = true
+      permissions = true
+      byhost      = true
+      system_cache = true
+      user_cache   = true
+    }
   }
   
   lifecycle {
-    prevent_destroy = false
+    create_before_destroy = true
+    prevent_destroy       = true
+    ignore_changes       = [
+      scope.computer_ids,  # Computer assignments might change
+    ]
   }
 }
 
-# Secondary region subnets (using count for simplicity in DR)
-resource "aws_subnet" "secondary_public" {
-  count = var.enable_disaster_recovery ? length(slice(data.aws_availability_zones.secondary.names, 0, 2)) : 0
-  
-  provider = aws.secondary
-  
-  vpc_id            = aws_vpc.secondary[0].id
-  availability_zone = data.aws_availability_zones.secondary.names[count.index]
-  cidr_block        = "10.1.${count.index + 1}.0/24"
-  
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name    = "${var.project_name}-secondary-public-${count.index + 1}"
-    Purpose = "disaster-recovery"
+# Department-specific policies using for_each
+resource "jamfpro_policy" "department_policies" {
+  for_each = {
+    for i, dept in var.organization_structure.departments :
+    dept => i
   }
+  
+  name        = "${each.key} Department Policy"
+  enabled     = true
+  frequency   = "Once per week"
+  category_id = jamfpro_category.app_categories["Productivity"].id
+  
+  scope {
+    computer_group_ids = [jamfpro_smart_computer_group.department_groups[each.value].id]
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
+  }
+  
+  self_service {
+    use_for_self_service            = true
+    self_service_display_name       = "${each.key} Maintenance"
+    install_button_text             = "Run Maintenance"
+    self_service_description        = "Run maintenance tasks for ${each.key} department computers"
+    force_users_to_view_description = false
+    feature_on_main_page            = false
+  }
+  
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Development environment testing (conditional)
+resource "jamfpro_category" "dev_testing" {
+  count    = var.enable_development_testing ? 1 : 0
+  provider = jamfpro.development
+  
+  name     = "Development Testing"
+  priority = 10
+}
+
+resource "jamfpro_policy" "dev_test_policy" {
+  count    = var.enable_development_testing ? 1 : 0
+  provider = jamfpro.development
+  
+  name        = "Development Test Policy"
+  enabled     = true
+  frequency   = "Ongoing"
+  category_id = jamfpro_category.dev_testing[0].id
+  
+  scope {
+    all_computers = true
+  }
+  
+  payloads {
+    maintenance {
+      recon = true
+    }
+  }
+  
+  lifecycle {
+    prevent_destroy = false  # Allow destruction in dev environment
+  }
+}
+
+# Network segments for each building
+resource "jamfpro_network_segment" "building_networks" {
+  for_each = var.organization_structure.buildings
+  
+  name             = "${each.key} Network"
+  starting_address = "10.${index(keys(var.organization_structure.buildings), each.key) + 1}.0.1"
+  ending_address   = "10.${index(keys(var.organization_structure.buildings), each.key) + 1}.0.254"
+  building         = each.key
+  
+  # Explicit dependency on buildings
+  depends_on = [jamfpro_building.organization_buildings]
 }
 ```
 
-**Step 5: Create User Data Script (`user_data.sh`)**
+**Step 5: Create Application Check Script (`scripts/check_app.sh`)**
 ```bash
 #!/bin/bash
-# Update system
-apt-get update
-apt-get upgrade -y
 
-# Install basic tools
-apt-get install -y curl wget jq nginx
+# Check if application is installed
+APP_NAME="${app_name}"
+APP_PATH="/Applications/$APP_NAME.app"
 
-# Create application directory
-mkdir -p /opt/app
-
-# Create tier-specific configuration
-cat > /opt/app/config.json << EOF
-{
-  "tier": "${tier}",
-  "environment": "${environment}",
-  "ports": ${ports},
-  "instance_id": "$(curl -s http://169.254.169.254/latest/meta-data/instance-id)",
-  "availability_zone": "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)",
-  "local_ipv4": "$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)"
-}
-EOF
-
-# Configure nginx with tier-specific page
-cat > /var/www/html/index.html << EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>${tier} Tier - ${environment}</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .tier-${tier} { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .info { background: #f0f8ff; padding: 20px; border-radius: 5px; margin: 10px 0; }
-        .highlight { color: #7B42BC; font-weight: bold; }
-    </style>
-</head>
-<body class="tier-${tier}">
-    <h1>🔧 ${tier} Tier Server</h1>
-    <div class="info">
-        <h2>Server Information</h2>
-        <p><strong>Tier:</strong> <span class="highlight">${tier}</span></p>
-        <p><strong>Environment:</strong> <span class="highlight">${environment}</span></p>
-        <p><strong>Instance ID:</strong> <span class="highlight">$(curl -s http://169.254.169.254/latest/meta-data/instance-id)</span></p>
-        <p><strong>Availability Zone:</strong> <span class="highlight">$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)</span></p>
-    </div>
-    <p>This server demonstrates Terraform meta arguments!</p>
-</body>
-</html>
-EOF
-
-# Start services
-systemctl start nginx
-systemctl enable nginx
-
-# Log deployment
-echo "$(date): ${tier} tier instance deployed in ${environment}" >> /var/log/terraform-deployment.log
+if [ -d "$APP_PATH" ]; then
+    # Get version if available
+    VERSION=$(defaults read "$APP_PATH/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null)
+    if [ -n "$VERSION" ]; then
+        echo "Installed - Version $VERSION"
+    else
+        echo "Installed - Version Unknown"
+    fi
+else
+    echo "Not Installed"
+fi
 ```
 
 **Step 6: Outputs (`outputs.tf`)**
 ```hcl
-output "vpc_info" {
-  description = "VPC information"
+output "organizational_structure" {
+  description = "Created organizational structure"
   value = {
-    primary = {
-      id         = aws_vpc.primary.id
-      cidr_block = aws_vpc.primary.cidr_block
-    }
-    secondary = var.enable_disaster_recovery ? {
-      id         = aws_vpc.secondary[0].id
-      cidr_block = aws_vpc.secondary[0].cidr_block
-    } : null
-  }
-}
-
-output "subnet_info" {
-  description = "Subnet information"
-  value = {
-    public = {
-      for az, subnet in aws_subnet.public :
-      az => {
-        id         = subnet.id
-        cidr_block = subnet.cidr_block
+    sites = {
+      for site_name, site in jamfpro_site.organization_sites :
+      site_name => {
+        id   = site.id
+        name = site.name
       }
     }
-    private = {
-      for az, subnet in aws_subnet.private :
-      az => {
-        id         = subnet.id
-        cidr_block = subnet.cidr_block
+    
+    buildings = {
+      for building_name, building in jamfpro_building.organization_buildings :
+      building_name => {
+        id   = building.id
+        name = building.name
+      }
+    }
+    
+    departments = {
+      for i, dept in jamfpro_department.organization_departments :
+      var.organization_structure.departments[i] => {
+        id   = dept.id
+        name = dept.name
       }
     }
   }
 }
 
-output "auto_scaling_groups" {
-  description = "Auto Scaling Group information"
+output "computer_groups" {
+  description = "Created computer groups"
   value = {
-    for tier, asg in aws_autoscaling_group.app_tiers :
-    tier => {
-      name         = asg.name
-      min_size     = asg.min_size
-      max_size     = asg.max_size
-      desired_size = asg.desired_capacity
+    for i, group in jamfpro_smart_computer_group.department_groups :
+    var.organization_structure.departments[i] => {
+      id   = group.id
+      name = group.name
     }
   }
 }
 
-output "security_groups" {
-  description = "Security group information"
+output "enterprise_applications" {
+  description = "Deployed enterprise applications"
   value = {
-    for tier, sg in aws_security_group.app_tiers :
-    tier => {
-      id   = sg.id
-      name = sg.name
+    for app_name, app in jamfpro_mac_application.enterprise_apps :
+    app_name => {
+      id              = app.id
+      name            = app.name
+      deployment_type = app.deployment_type
+      category_id     = app.category_id
     }
   }
 }
 
-output "nat_gateways" {
-  description = "NAT Gateway information"
+output "policies" {
+  description = "Created policies"
   value = {
-    for az, nat in aws_nat_gateway.main :
-    az => {
-      id        = nat.id
-      public_ip = aws_eip.nat[az].public_ip
+    security_baseline = {
+      id   = jamfpro_policy.security_baseline.id
+      name = jamfpro_policy.security_baseline.name
+    }
+    
+    department_policies = {
+      for dept, policy in jamfpro_policy.department_policies :
+      dept => {
+        id   = policy.id
+        name = policy.name
+      }
     }
   }
+}
+
+output "network_segments" {
+  description = "Created network segments"
+  value = {
+    for building, segment in jamfpro_network_segment.building_networks :
+    building => {
+      id               = segment.id
+      name             = segment.name
+      starting_address = segment.starting_address
+      ending_address   = segment.ending_address
+    }
+  }
+}
+
+output "development_resources" {
+  description = "Development environment resources (if enabled)"
+  value = var.enable_development_testing ? {
+    test_category = {
+      id   = jamfpro_category.dev_testing[0].id
+      name = jamfpro_category.dev_testing[0].name
+    }
+    test_policy = {
+      id   = jamfpro_policy.dev_test_policy[0].id
+      name = jamfpro_policy.dev_test_policy[0].name
+    }
+  } : null
 }
 ```
 
@@ -1417,18 +1612,22 @@ output "nat_gateways" {
 # Initialize
 terraform init
 
-# Plan with disaster recovery disabled
+# Plan with development testing disabled
 terraform plan
 
 # Apply
 terraform apply
 
-# Test with disaster recovery enabled
-terraform plan -var="enable_disaster_recovery=true"
-terraform apply -var="enable_disaster_recovery=true"
+# Test with development environment enabled
+terraform plan -var="enable_development_testing=true"
+terraform apply -var="enable_development_testing=true"
 
 # View outputs
 terraform output
+
+# Test specific outputs
+terraform output organizational_structure
+terraform output enterprise_applications
 
 # Clean up
 terraform destroy
@@ -1436,66 +1635,65 @@ terraform destroy
 
 **🔍 What This Exercise Demonstrates:**
 
-1. **`depends_on`**: Explicit dependencies between networking components
-2. **`count`**: Conditional disaster recovery resources
-3. **`for_each`**: Dynamic subnet, security group, and ASG creation
-4. **`provider`**: Multi-region deployment with aliases
-5. **`lifecycle`**: Resource protection and creation strategies
+1. **`depends_on`**: Explicit dependencies between organizational structure, groups, and policies
+2. **`count`**: Creating multiple departments and groups with numeric indexing
+3. **`for_each`**: Dynamic creation of sites, applications, and department-specific resources
+4. **`provider`**: Multi-environment deployment with production and development instances
+5. **`lifecycle`**: Resource protection for critical policies and applications
 
-💡 **Pro Tip**: Meta arguments are powerful tools for managing complex infrastructure patterns. Use them thoughtfully to create maintainable and scalable Terraform configurations!
+💡 **Pro Tip**: This exercise demonstrates real-world Jamf Pro patterns used in enterprise environments. The meta arguments ensure proper resource ordering, stable management, and protection of critical configurations!
 
 ---
 
-## ✅ Module 8 Summary
+## ✅ Module 9 Summary
 
 **🎯 Learning Objectives Achieved:**
-- ✅ Mastered **explicit dependencies** with `depends_on` for resource ordering
-- ✅ Implemented **multiple resource creation** using `count` and `for_each`
-- ✅ Configured **resource lifecycle management** with lifecycle blocks
-- ✅ Established **multi-provider configurations** with aliases
-- ✅ Built **complex infrastructure patterns** using all meta arguments
+- ✅ Mastered **explicit dependencies** with `depends_on` for Jamf Pro resource ordering
+- ✅ Implemented **multiple resource creation** using `count` and `for_each` for enterprise scale
+- ✅ Configured **resource lifecycle management** with lifecycle blocks for production safety
+- ✅ Established **multi-environment configurations** with provider aliases
+- ✅ Built **complex Jamf Pro infrastructure patterns** using all meta arguments
 
 **🔑 Key Concepts Covered:**
-- **Meta Arguments**: Special arguments available to all resource types
-- **depends_on**: Explicit dependency management and ordering control
-- **count**: Numeric indexing for multiple resource instances
-- **for_each**: Key-value mapping for stable resource management
-- **provider**: Multi-region and multi-account provider configurations
-- **lifecycle**: Resource creation, update, and destruction control
+- **Meta Arguments**: Special arguments available to all Jamf Pro resource types
+- **depends_on**: Explicit dependency management for organizational structure
+- **count**: Numeric indexing for departments, groups, and policies
+- **for_each**: Key-value mapping for stable application and configuration management
+- **provider**: Multi-environment Jamf Pro instance configurations
+- **lifecycle**: Resource creation, update, and destruction control for production safety
 
 **💼 Professional Skills Developed:**
-- **Dependency Management**: Understanding implicit vs explicit dependencies
-- **Resource Scaling**: Creating multiple resources efficiently
-- **Multi-Cloud Strategy**: Managing resources across regions and accounts
-- **Lifecycle Control**: Protecting critical resources and managing updates
-- **Infrastructure Patterns**: Implementing enterprise-grade configurations
+- **Dependency Management**: Understanding implicit vs explicit dependencies in MDM
+- **Resource Scaling**: Creating multiple Jamf Pro resources efficiently
+- **Multi-Environment Strategy**: Managing resources across development and production Jamf Pro instances
+- **Lifecycle Control**: Protecting critical policies and configurations
+- **Enterprise Patterns**: Implementing large-scale device management configurations
 
 **🏗️ Technical Achievements:**
-- Built multi-tier application with all meta arguments
-- Implemented disaster recovery across multiple regions
-- Created dynamic security groups and auto-scaling groups
-- Established cross-account VPC peering connections
-- Developed comprehensive infrastructure with lifecycle protection
+- Built comprehensive Jamf Pro organizational structure with all meta arguments
+- Implemented multi-environment testing across development and production instances
+- Created dynamic application deployment based on department requirements
+- Established network segments and computer groups with proper dependencies
+- Developed enterprise-grade policies with lifecycle protection
 
 **🔧 Advanced Patterns Mastered:**
-- **Conditional Resources**: Using `count` for optional infrastructure
-- **Dynamic Configuration**: Using `for_each` with complex data structures
-- **Cross-Region Deployment**: Multi-provider configurations with aliases
-- **Resource Protection**: Lifecycle rules for critical infrastructure
-- **Dependency Orchestration**: Explicit ordering for complex deployments
+- **Conditional Resources**: Using `count` for optional development environment resources
+- **Dynamic Configuration**: Using `for_each` with complex Jamf Pro data structures
+- **Multi-Instance Deployment**: Provider configurations for different Jamf Pro environments
+- **Resource Protection**: Lifecycle rules for critical security and compliance policies
+- **Dependency Orchestration**: Explicit ordering for complex MDM deployments
 
-**➡️ Next Steps**: Ready to explore **Expressions** where you'll learn about advanced Terraform language features including conditionals, loops, and dynamic blocks!
-
----
+**➡️ Next Steps**: Ready to explore **Variables and Data** where you'll learn about advanced Terraform language features including conditionals, loops, and dynamic blocks specifically applied to Jamf Pro configurations!
 
 ---
 
 ## 🔗 **Next Steps**
 
-Ready to continue your Terraform journey? Proceed to the next module:
+Ready to continue your Terraform journey with Jamf Pro? Proceed to the next module:
 
 **➡️ [Module 10: Variables and Data](./module_10_variables_and_data.md)**
 
-Understand Terraform expressions, functions, and dynamic configurations.
+Understand Terraform expressions, functions, and dynamic configurations for advanced Jamf Pro management.
 
 ---
+
