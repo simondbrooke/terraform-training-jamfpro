@@ -2232,27 +2232,234 @@ terraform output organization_summary  # Notice total_employees changes
 - Locals for conditional logic: `condition ? true_value : false_value`
 - Locals for calculations: `sum()`, `length()`, string manipulation
 
+---
 
-💡 **Pro Tip**: This comprehensive lab demonstrates how variables, locals, and outputs work together to create flexible, maintainable Jamf Pro configurations that can be easily adapted across different environments!
+## 🧪 **Lab 9**: Environment Variables - System-Level Configuration
+**Duration**: 15 minutes
+
+Learn how to use system environment variables with Terraform.
+
+**🎯 What You'll Learn:**
+- How to use `TF_VAR_*` environment variables
+- When environment variables are useful
+- Security benefits of environment variables
+
+**Step 1: Understand Environment Variables**
+
+Environment variables starting with `TF_VAR_` automatically become Terraform variables:
+- `TF_VAR_environment` becomes `var.environment`
+- `TF_VAR_team_size` becomes `var.team_size`
+- `TF_VAR_api_token` becomes `var.api_token`
+
+**Step 2: Set Environment Variables**
+
+In your terminal (macOS/Linux):
+```bash
+# Set basic variables
+export TF_VAR_environment="dev"
+export TF_VAR_department_name="DevOps"
+export TF_VAR_team_size=8
+
+# Set list variables (JSON format)
+export TF_VAR_department_list='["DevOps", "Security", "Platform"]'
+
+# Set map variables (JSON format)
+export TF_VAR_team_sizes='{"devops": 8, "security": 4, "platform": 6}'
+```
+
+For Windows PowerShell:
+```powershell
+# Set basic variables
+$env:TF_VAR_environment = "dev"
+$env:TF_VAR_department_name = "DevOps"
+$env:TF_VAR_team_size = 8
+
+# Set list variables (JSON format)
+$env:TF_VAR_department_list = '["DevOps", "Security", "Platform"]'
+
+# Set map variables (JSON format)
+$env:TF_VAR_team_sizes = '{"devops": 8, "security": 4, "platform": 6}'
+```
+
+**Step 3: Test Environment Variables**
+
+```bash
+# Check what environment variables are set
+echo $TF_VAR_environment
+echo $TF_VAR_department_name
+
+# Plan using environment variables (no -var needed!)
+terraform plan
+
+# Apply using environment variables
+terraform apply
+
+# Override environment variables with command line
+terraform plan -var='team_size=12'  # This overrides TF_VAR_team_size
+
+# Clear environment variables when done
+unset TF_VAR_environment
+unset TF_VAR_department_name
+unset TF_VAR_team_size
+```
+
+**🎉 You've learned:**
+- Environment variables: `TF_VAR_name` becomes `var.name`
+- Useful for CI/CD pipelines and scripts
+- JSON format for complex types: `TF_VAR_list='["a", "b"]'`
+- Command line still overrides environment variables
+- Scripts can set multiple variables at once
+
+---
+
+## 🧪 **Lab 10**: Sensitive Variables - Handling Secrets Safely
+**Duration**: 20 minutes
+
+Learn how to handle sensitive data like API keys and passwords safely.
+
+**🎯 What You'll Learn:**
+- How to mark variables as sensitive
+- Best practices for handling secrets
+- How sensitive variables affect outputs
+
+**Step 1: Create Sensitive Variables**
+
+Add to your `variables.tf`:
+```hcl
+# Sensitive API credentials
+variable "jamf_client_id" {
+  description = "Jamf Pro OAuth2 client ID"
+  type        = string
+  sensitive   = true
+  default     = "your-client-id"
+}
+
+variable "jamf_client_secret" {
+  description = "Jamf Pro OAuth2 client secret"
+  type        = string
+  sensitive   = true
+  default     = "your-client-secret"
+}
+
+# Sensitive service token
+variable "vpp_service_token" {
+  description = "Apple Business Manager VPP service token"
+  type        = string
+  sensitive   = true
+  default     = "sample-base64-encoded-token"
+  
+  validation {
+    condition     = length(var.vpp_service_token) > 10
+    error_message = "VPP service token must be provided."
+  }
+}
+```
+
+**Step 2: Use Sensitive Variables in Resources**
+
+Update `main.tf`:
+```hcl
+# Extension attribute that references sensitive data indirectly
+resource "jamfpro_computer_extension_attribute" "security_info" {
+  name        = "Security-Config-${local.resource_prefix}"
+  enabled     = true
+  description = "Security configuration status (API: ${length(var.jamf_client_id) > 0 ? "configured" : "not configured"})"
+  input_type  = "TEXT"
+  inventory_display_type = "GENERAL"
+  data_type   = "STRING"
+}
+```
+
+**Step 3: Handle Sensitive Outputs**
+
+Add to `outputs.tf`:
+```hcl
+# This output will be marked as sensitive automatically
+output "api_client_id" {
+  description = "API client ID (sensitive)"
+  value       = var.jamf_client_id
+  sensitive   = true
+}
+
+# Safe output - doesn't expose sensitive data
+output "security_status" {
+  description = "Security configuration status"
+  value = {
+    vpp_configured = length(var.vpp_service_token) > 10
+    api_configured = length(var.jamf_client_id) > 0
+  }
+}
+```
+
+**Step 4: Test Sensitive Variables**
+
+```bash
+# Set sensitive variables via environment (recommended)
+export TF_VAR_jamf_client_id="real-client-id-123"
+export TF_VAR_jamf_client_secret="super-secret-client-secret"
+export TF_VAR_vpp_service_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+
+# Plan - notice sensitive values are hidden
+terraform plan
+
+# Apply
+terraform apply
+
+# View outputs - sensitive ones are hidden
+terraform output
+
+# View specific sensitive output (still hidden)
+terraform output api_client_id
+
+# View non-sensitive status
+terraform output security_status
+
+# Clean up sensitive environment variables
+unset TF_VAR_jamf_client_id
+unset TF_VAR_jamf_client_secret
+unset TF_VAR_vpp_service_token
+```
+
+**🎉 You've learned:**
+- Mark sensitive variables with `sensitive = true`
+- Sensitive values are hidden in logs and output
+- Use environment variables for secrets in CI/CD
+- Never commit sensitive values to version control
+- Terraform automatically handles sensitive data propagation
 
 ---
 
 ## ✅ Module 09 Summary
 
 **🎯 Learning Objectives Achieved:**
-- ✅ Mastered **input variables** with Jamf Pro resource types and validation
-- ✅ Understood **variable definition files** and environment-specific configurations
-- ✅ Implemented **output values** for Jamf Pro resource integration and sensitive data
-- ✅ Created **local values** for computed expressions in device management scenarios
-- ✅ Leveraged **data source patterns** for infrastructure discovery and integration
+- ✅ Mastered **input variables** with progressive complexity from basics to advanced
+- ✅ Understood **variable definition files** and environment-specific configurations  
+- ✅ Implemented **output values** for Jamf Pro resource integration and data retrieval
+- ✅ Created **local values** for computed expressions and avoiding repetition
+- ✅ Applied **environment variables** for system-level and CI/CD configuration
+- ✅ Implemented **sensitive variables** for secure credential handling
+- ✅ Understood **variable precedence** and loading order
 
-**🔑 Key Concepts Covered:**
-- **Variable Types**: string, number, bool, list, map, object with Jamf Pro examples
-- **Validation Rules**: Extension attribute naming, API token lifetimes, color codes
-- **Sensitive Variables**: API credentials, VPP tokens, LDAP passwords
+**🔑 Complete Learning Path Covered:**
+- **Lab 1**: Variables - The Very Basics (string, number, bool fundamentals)
+- **Lab 2**: Using Variables in Resources (interpolation and resource flexibility)
+- **Lab 3**: Outputs - Getting Information Back (simple and structured outputs)
+- **Lab 4**: Variable Files - Different Environments (.tfvars and environment management)
+- **Lab 5**: Validation - Making Variables Safer (validation rules and patterns)
+- **Lab 6**: Lists - Working with Collections (ordered data and iteration)
+- **Lab 7**: Maps - Key-Value Pairs (lookups and associations)
+- **Lab 8**: Locals - Computed Values (calculations and avoiding repetition)
+- **Lab 9**: Environment Variables - System-Level Configuration (TF_VAR_* usage)
+- **Lab 10**: Sensitive Variables - Handling Secrets Safely (security best practices)
+
+**🔑 Key Concepts Mastered:**
+- **Variable Types**: string, number, bool, list, map with progressive complexity
+- **Validation Rules**: Length, range, pattern, choice validation with real examples
+- **Sensitive Variables**: API credentials, tokens with security best practices
 - **Variable Files**: Environment-specific configurations for dev/staging/prod
-- **Loading Precedence**: Understanding how Terraform resolves variable values
-- **Local Values**: Computed security settings, resource naming, integration logic
+- **Environment Variables**: TF_VAR_* for CI/CD and system-level configuration
+- **Variable Precedence**: Command line > var-file > TF_VAR > .tfvars > defaults
+- **Local Values**: Computed expressions, string manipulation, conditional logic
 
 **💼 Professional Skills Developed:**
 - **Configuration Management**: Organizing Jamf Pro variables and outputs effectively
