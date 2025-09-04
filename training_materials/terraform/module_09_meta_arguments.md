@@ -1607,13 +1607,30 @@ touch {main,variables,outputs,providers}.tf scripts/security_audit.sh
 
 **main.tf:**
 ```hcl
+# Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# 1. Jamf Pro requires globally unique resource names across the entire instance
+# 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
+# 3. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
+# 
+# This pattern is essential for any Jamf Pro Terraform configuration used in:
+# - Training environments
+# - Shared sandbox instances  
+# - Multi-user development scenarios
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
 # Foundation Layer - Must be created first
 resource "jamfpro_site" "headquarters" {
-  name = "Corporate Headquarters"
+  name = "Corporate Headquarters-${random_string.suffix.result}"
 }
 
 resource "jamfpro_building" "main_office" {
-  name            = "Main Office Building"
+  name            = "Main Office Building-${random_string.suffix.result}"
   street_address1 = "123 Enterprise Way"
   city            = "San Francisco"
   state_province  = "California"
@@ -1624,12 +1641,12 @@ resource "jamfpro_building" "main_office" {
 }
 
 resource "jamfpro_department" "it_department" {
-  name = "Information Technology"
+  name = "Information Technology-${random_string.suffix.result}"
 }
 
 # Infrastructure Layer - Depends on foundation
 resource "jamfpro_network_segment" "corporate_network" {
-  name             = "Corporate Network Segment"
+  name             = "Corporate Network Segment-${random_string.suffix.result}"
   starting_address = "10.0.0.1"
   ending_address   = "10.0.0.254"
   building         = jamfpro_building.main_office.name
@@ -1642,20 +1659,42 @@ resource "jamfpro_network_segment" "corporate_network" {
   ]
 }
 
+# Computer group that depends on multiple organizational resources
+resource "jamfpro_smart_computer_group" "corporate_devices" {
+  name    = "Corporate Managed Devices-${random_string.suffix.result}"
+  site_id = jamfpro_site.headquarters.id
+  
+  criteria {
+    name        = "Building"
+    priority    = 0
+    and_or      = "and"
+    search_type = "is"
+    value       = jamfpro_building.main_office.name
+  }
+  
+  # Multiple explicit dependencies
+  depends_on = [
+    jamfpro_site.headquarters,
+    jamfpro_building.main_office,
+    jamfpro_department.it_department,
+    jamfpro_network_segment.corporate_network
+  ]
+}
+
 # Categories for organization
 resource "jamfpro_category" "security" {
-  name     = "Security"
+  name     = "Security-${random_string.suffix.result}"
   priority = 1
 }
 
 resource "jamfpro_category" "maintenance" {
-  name     = "Maintenance"
+  name     = "Maintenance-${random_string.suffix.result}"
   priority = 2
 }
 
 # Scripts that will be used in policies
 resource "jamfpro_script" "security_audit" {
-  name            = "Security Audit Script"
+  name            = "Security Audit Script-${random_string.suffix.result}"
   script_contents = file("${path.module}/scripts/security_audit.sh")
   category_id     = jamfpro_category.security.id
   os_requirements = "13"
@@ -1666,7 +1705,7 @@ resource "jamfpro_script" "security_audit" {
 }
 
 resource "jamfpro_script" "system_cleanup" {
-  name            = "System Cleanup Script"
+  name            = "System Cleanup Script-${random_string.suffix.result}"
   script_contents = file("${path.module}/scripts/cleanup.sh")
   category_id     = jamfpro_category.maintenance.id
   os_requirements = "13"
@@ -1677,10 +1716,10 @@ resource "jamfpro_script" "system_cleanup" {
 
 # Policy that depends on both scripts and groups
 resource "jamfpro_policy" "security_compliance" {
-  name        = "Security Compliance Policy"
+  name        = "Security Compliance Policy-${random_string.suffix.result}"
   enabled     = true
   category_id = jamfpro_category.security.id
-  frequency   = "Once per week"
+  frequency   = "Once every week"
   
   # Wait for all prerequisites - script, group, and categories
   depends_on = [
@@ -1690,6 +1729,7 @@ resource "jamfpro_policy" "security_compliance" {
   ]
   
   scope {
+    all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.corporate_devices.id]
   }
   
@@ -1704,7 +1744,120 @@ resource "jamfpro_policy" "security_compliance" {
     }
   }
 }
+
 ```
+
+**variables.tf:**
+```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "your-client-secret"
+  sensitive   = true
+}
+
+```
+
+**outputs.tf:**
+```hcl
+output "dependency_chain" {
+  description = "Shows the dependency chain created"
+  value = {
+    foundation_layer = {
+      site       = jamfpro_site.headquarters.name
+      building   = jamfpro_building.main_office.name
+      department = jamfpro_department.it_department.name
+    }
+    
+    infrastructure_layer = {
+      network_segment = jamfpro_network_segment.corporate_network.name
+      categories = [
+        jamfpro_category.security.name,
+        jamfpro_category.maintenance.name
+      ]
+    }
+    
+    application_layer = {
+      script         = jamfpro_script.security_audit.name
+      computer_group = jamfpro_smart_computer_group.corporate_devices.name
+    }
+    
+    policy_layer = {
+      security_policy = jamfpro_policy.security_compliance.name
+    }
+  }
+}
+
+output "creation_order" {
+  description = "Logical creation order enforced by depends_on"
+  value = [
+    "1. Foundation: Site, Building, Department (parallel creation)",
+    "2. Infrastructure: Network Segment (depends on Building + Department)",
+    "3. Categories: Security, Maintenance (parallel creation)",
+    "4. Scripts: Security Audit (depends on Security category)",
+    "5. Groups: Corporate Devices (depends on all foundation)",
+    "6. Policies: Security Compliance (depends on Script + Group + Category)"
+  ]
+}
+
+output "depends_on_best_practices" {
+  description = "Best practices for using depends_on"
+  value = {
+    when_to_use = [
+      "✅ Dependencies not expressed through resource attributes",
+      "✅ Ensuring logical ordering for business reasons",
+      "✅ Working around provider limitations",
+      "✅ Explicit control over creation/destruction order"
+    ]
+    
+    when_not_to_use = [
+      "⚠️ Dependencies already expressed in resource attributes",
+      "⚠️ Over-constraining parallel resource creation",
+      "⚠️ Using it as a workaround for poor resource design"
+    ]
+    
+    alternatives = [
+      "🔄 Use resource attribute references when possible",
+      "🔄 Consider data sources for external dependencies",
+      "🔄 Use implicit dependencies through references"
+    ]
+  }
+}
+
+output "dependency_types" {
+  description = "Types of dependencies demonstrated"
+  value = {
+    implicit_dependencies = [
+      "Network Segment references Building and Department names",
+      "Script references Category ID",
+      "Policy references Script ID and Group ID"
+    ]
+    
+    explicit_dependencies = [
+      "Network Segment depends_on Building and Department resources",
+      "Computer Group depends_on Site, Building, Department, Network",
+      "Scripts depend_on their respective Categories",
+      "Policy depends_on Script, Group, and Category"
+    ]
+    
+    mixed_approach = "Combines both implicit (attribute references) and explicit (depends_on) dependencies for complete control"
+  }
+}
+
+```
+
 
 **scripts/security_audit.sh:**
 ```bash
