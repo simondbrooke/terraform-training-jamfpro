@@ -492,15 +492,12 @@ terraform destroy \
 
 ---
 
-## 🚀 Next Steps
+## 🔗 **Next Steps**
 
-Once you've completed this setup successfully, you're ready to begin the Module 04 hands-on labs:
+Ready to continue your Terraform journey? Proceed to the next module:
 
-1. **[Lab 1]**: First Terraform Configuration (30 min)
-2. **[Lab 2]**: Working with Variables and Outputs (45 min)  
-3. **[Lab 3]**: Resource Dependencies and State (45 min)
-4. **[Lab 4]**: Complete Infrastructure Lifecycle (60 min)
+**➡️ [Module 5: Terraform Basics](./module_05_terraform_basics.md)**
 
-**💡 Pro Tip**: Keep this setup guide handy - you might need to refer back to it if you encounter environment issues during the labs!
+Dive deep into the core Terraform workflow and commands - where you'll master the essential operations for managing infrastructure.
 
-**🎉 Congratulations!** Your Terraform development environment is now ready for hands-on learning!
+---

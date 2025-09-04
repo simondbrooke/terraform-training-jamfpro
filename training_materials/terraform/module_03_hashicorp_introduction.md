@@ -435,8 +435,8 @@ terraform state list    # List managed resources
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 4: Terraform Basics](./module_04_terraform_basics.md)**
+**➡️ [Module 4: Lab Setup](./module_04_lab_setup.md)**
 
-Dive deep into the core Terraform workflow and commands - where you'll master the essential operations for managing infrastructure.
+Setup your Terraform development environment and get ready for the hands-on labs.
 
 ---
