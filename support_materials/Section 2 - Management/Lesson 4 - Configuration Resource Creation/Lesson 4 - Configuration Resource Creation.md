@@ -29,7 +29,7 @@ var (
 
 ## Creating the Configuration Profile in Jamf Pro
 
-So that we can download the Configuration Profile, it has to be created in the Jamf Pro tenant. This may seem counter productive, why is it getting created in the Jamf Pro UI and then re-created in Terraform?
+So that we can download the Configuration Profile, it has to be created in the Jamf Pro tenant. This may seem counterproductive, why is it getting created in the Jamf Pro UI and then re-created in Terraform?
 
 This is for a few reasons. The main one being so that everything is created in code and is managed by the Terraform provider. Another reason is that in a Route to Live environment, you would create the Configuration Profile in the UI, then download it, delete the profile, and push it through your Route to Live using only the one definition in code, rather than needing to duplicate effort across all of your tenants.
 

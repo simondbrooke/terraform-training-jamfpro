@@ -65,7 +65,7 @@ Follow these steps:
 
 Follow these steps:
 
-1. Opening the PLIST file that you created, try and change some of the key value pairs to modify how the profile is configured
+1. Opening the PLIST file that you created, try and change some key value pairs to modify how the profile is configured
 2. Save the file
 3. Now modify the scope of the Config Profile, if you need help with this, try visiting the Terraform Registry webpage
 4. Run a `terraform plan` and `terraform apply` to make the changes to the config profile
@@ -73,12 +73,12 @@ Follow these steps:
 
 #### Exercise 3 - Verifying Drift Detection
 
-Now that you have a config profile that is configured by Terraform, lets try modifying it in the UI and see the behaviour of the Terraform when we next run our `terraform apply`
+Now that you have a config profile that is configured by Terraform, let's try modifying it in the UI and see the behaviour of the Terraform when we next run our `terraform apply`
 
 Follow these steps:
 
 1. Browse to your Jamf Pro instance
-2. Find your Config Profile that you created in the previouse exercise
+2. Find your Config Profile that you created in the previous exercise
 3. Make a change to the profile, to the scope, the plist or even the distribution method
 4. Save the profile
 5. Come back to your Terraform Project and run a `terraform plan`

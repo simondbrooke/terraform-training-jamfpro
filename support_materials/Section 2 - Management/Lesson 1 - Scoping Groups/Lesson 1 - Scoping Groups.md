@@ -1,17 +1,17 @@
 # Lesson 1 - Scoping Groups
 
-This lesson will describe how to create Smart Group resources. Using similar techniques as in the previous section, you can create smart groups in your terraform project and then link to them in policies either by their ID in Jamf Pro or by using the resouce ID in Terraform. Using the Terraform resource ID can make the codebase dynamic and will mean that whenever you update the Smart Group, it will automatically sync with whatever the smart group is scoped to.
+This lesson will describe how to create Smart Group resources. Using similar techniques as in the previous section, you can create smart groups in your terraform project and then link to them in policies either by their ID in Jamf Pro or by using the resource ID in Terraform. Using the Terraform resource ID can make the codebase dynamic and will mean that whenever you update the Smart Group, it will automatically sync with whatever the smart group is scoped to.
 
 In this lesson, we will cover the following topics:
 
 - [Static Computer & Mobile Device Groups](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%202/Lesson%201%20-%20Scoping%20Groups/Lesson%201%20-%20Scoping%20Groups.md#static-computer--mobile-groups)
 - [Smart Computer & Mobile Device Groups](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%202/Lesson%201%20-%20Scoping%20Groups/Lesson%201%20-%20Scoping%20Groups.md#smart-computer--mobile-groups)
 
-For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terrafrom Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
+For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 
 ## Static Computer & Mobile Groups
 
-Static Computer Groups in Terraform require you to know all of the Computer IDs in Jamf Pro so that you can scope the specific devices to the Group. Creating Static Computer Groups can be done by using the following resource:
+Static Computer Groups in Terraform require you to know all Computer IDs in Jamf Pro so that you can scope the specific devices to the Group. Creating Static Computer Groups can be done by using the following resource:
 
 ```
 resource "jamfpro_static_computer_group" "jamfpro_static_computer_group_001" {
@@ -123,7 +123,7 @@ You can see more about Static Mobile Device Groups on this [Terraform Registry](
 
 ### Scoping Groups - Exercise 1 - Creating a Static Computer Group
 
-In this exercise you will create a Static Computer Group using the resouce mentioned above. This exercise requires that you have device records in your Jamf Pro instance so that you can use the Device ID's.
+In this exercise you will create a Static Computer Group using the resource mentioned above. This exercise requires that you have device records in your Jamf Pro instance so that you can use the Device ID's.
 
 Follow these steps:
 
@@ -145,7 +145,7 @@ Follow these steps:
 
 ### Scoping Groups - Exercise 3 - Creating a Smart Computer Group
 
-In this exercise you will create a Smart Computer Group using the resouce mentioned above. In this exercise, you can create a Smart Group with whatever criteria that you want.
+In this exercise you will create a Smart Computer Group using the resource mentioned above. In this exercise, you can create a Smart Group with whatever criteria that you want.
 
 Follow these steps:
 

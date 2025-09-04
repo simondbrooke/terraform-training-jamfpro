@@ -8,7 +8,7 @@ There are multiple ways to create Extension Attributes in Jamf, and in the same 
   - [Script Example]()
 - [Mobile Device Extension Attribute]()
 
-For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terrafrom Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
+For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 
 ## Computer Extension Attributes
 

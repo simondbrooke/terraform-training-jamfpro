@@ -7,11 +7,11 @@ In this lesson we are going to discuss basic configuration of a Jamf Pro server.
 - [Configuring Self Service](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%201/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md#configuring-self-service)
 - [Deploying a Health Check Policy](https://github.com/macdeacon99/terraform-training-jamfpro/blob/doc-updating/support_materials/Section%201/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md#configuring-self-service)
 
-For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terrafrom Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
+For more information on any of the resources we are going to create today, you can see the full breakdown from the schema on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources) webpage.
 
 ## Sites
 
-Sites are used in Jamf Pro to organise and seperate object functionality into specific areas for easier management.
+Sites are used in Jamf Pro to organise and separate object functionality into specific areas for easier management.
 A site can be created in Terraform using the following resource:
 
 ```
@@ -103,7 +103,7 @@ resource "jamfpro_self_service_settings" "example" {
 }
 ```
 
-This resource will create a 'jamfpro_self_service_settings' with the unique identifier 'example'. The Self Service Configuration has multiple attributes that are required. You can see more details on the full requirements on the registry page below. All of the attributes written above are required, but there are additional optional attributes which can be found in the Terraform Registry link below.
+This resource will create a 'jamfpro_self_service_settings' with the unique identifier 'example'. The Self Service Configuration has multiple attributes that are required. You can see more details on the full requirements on the registry page below. All the attributes written above are required, but there are additional optional attributes which can be found in the Terraform Registry link below.
 
 Once you apply this run, the Self Service Configurations will be configured in the linked Jamf Pro tenant.
 
@@ -238,7 +238,7 @@ Follow the steps below to create the Self Service Health Check:
 5. Using the example of the Script resource above, create a script resource and point it to the `healthCheck.sh` file by using the following `file("files/scripts/healthCheck.sh")`
 6. Run your terraform and upload your script by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
 7. Now that the script is uploaded, browse to your Jamf Pro tenant and find the ID of the script that has been uploaded
-8. Once you have the scirpt ID, you can create the Policy
+8. Once you have the script ID, you can create the Policy
 9. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `policies.tf`
 10. Using the policy resource example above, create a policy that uses the script that was previously uploaded by pointing the script payload to the script ID you had from the previous step, ensure that the scope of the policy is set to **All Devices**
 11. Run your terraform and create your policy by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory

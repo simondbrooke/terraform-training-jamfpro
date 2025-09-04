@@ -1,6 +1,6 @@
 # Policies
 
-This tutorial introduces the Terraform **`jamfpro_policy`** resource (part of the `deploymenttheory/jamfpro` provider) and guides you through several hands-on lessons so you can learn by doing.
+This tutorial introduces the Terraform **`jamfpro_policy`** resource (part of the `deploymenttheory/jamfpro` provider) and guides you through several hands-on lessons, so you can learn by doing.
 
 ---
 
@@ -150,13 +150,13 @@ Using the same resource, follow these steps:
 
 #### Lesson 3 - Modifying a policies payloads
 
-You now have a policy that is scoped to all. Let's say you want to have a maintanance payload attached to the payload to run an inventory collection after the script runs. Let's add that into the policy.
+You now have a policy that is scoped to all. Let's say you want to have a maintenance payload attached to the payload to run an inventory collection after the script runs. Let's add that into the policy.
 
-Using the link to the terraform registry above, find the maintanance payload and follow these steps:
+Using the link to the terraform registry above, find the maintenance payload and follow these steps:
 
-1. Modify the `payloads` attribute and add in the maintanance payload, configure it to run an inventory update
+1. Modify the `payloads` attribute and add in the maintenance payload, configure it to run an inventory update
 2. Run `terraform plan` and `terraform apply` to modify the policy
-3. Veryify that the change have been successful in the UI
+3. Verify that the change have been successful in the UI
 
 #### Lesson 4 - Drift Detection
 
