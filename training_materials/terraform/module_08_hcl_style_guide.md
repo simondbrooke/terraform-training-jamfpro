@@ -1633,10 +1633,10 @@ Use this checklist to ensure your Terraform code follows best practices:
 
 ## 🔗 **Next Steps**
 
-Ready to continue your Terraform journey? Proceed to the next module:
+Ready to continue your Terraform journey with Jamf Pro? Proceed to the next module:
 
 **➡️ [Module 9: Meta Arguments](./module_09_meta_arguments.md)**
 
-Master meta-arguments like count, for_each, and lifecycle rules.
+Understand Terraform expressions, functions, and dynamic configurations for advanced Jamf Pro management.
 
 ---

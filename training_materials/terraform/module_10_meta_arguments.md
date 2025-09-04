@@ -1,4 +1,4 @@
-# 🔧 Module 09: Meta Arguments
+# 🔧 Module 10: Meta Arguments
 *Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
 ---
 
@@ -3716,11 +3716,11 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 
 ## 🔗 **Next Steps**
 
-Ready to continue your Terraform journey with Jamf Pro? Proceed to the next module:
+Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 10: Variables and Data](./module_10_variables_and_data.md)**
+**➡️ [Module 11: Expressions](./module_11_expressions.md)**
 
-Understand Terraform expressions, functions, and dynamic configurations for advanced Jamf Pro management.
+Learn powerful meta-arguments like count, for_each, and lifecycle rules.
 
 ---
 

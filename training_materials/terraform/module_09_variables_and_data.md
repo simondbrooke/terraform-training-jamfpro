@@ -1342,14 +1342,12 @@ terraform destroy
 
 ---
 
----
-
 ## 🔗 **Next Steps**
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 11: Expressions](./module_11_expressions.md)**
+**➡️ [Module 10: Meta Arguments](./module_10_meta_arguments.md)**
 
-Learn powerful meta-arguments like count, for_each, and lifecycle rules.
+Master meta-arguments like count, for_each, and lifecycle rules.
 
 ---
