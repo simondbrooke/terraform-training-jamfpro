@@ -1988,6 +1988,7 @@ provider "jamfpro" {
   auth_method          = "oauth2"
   client_id            = var.jamfpro_client_id
   client_secret        = var.jamfpro_client_secret
+  jamfpro_load_balancer_lock    = true
 }
 
 # Development environment with alias
@@ -2291,6 +2292,25 @@ touch {main,variables,outputs,providers}.tf
 
 **variables.tf:**
 ```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "your-client-secret"
+  sensitive   = true
+}
+
 variable "enable_protection" {
   description = "Enable lifecycle protection on critical resources"
   type        = bool
@@ -2302,18 +2322,37 @@ variable "critical_applications" {
   type        = set(string)
   default     = ["Security Agent", "Compliance Monitor", "Antivirus"]
 }
+
 ```
 
 **main.tf:**
 ```hcl
+# Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# 1. Jamf Pro requires globally unique resource names across the entire instance
+# 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
+# 3. Lifecycle rules protect critical resources from accidental changes/deletion
+# 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
+# 
+# This pattern is essential for any Jamf Pro Terraform configuration used in:
+# - Training environments
+# - Shared sandbox instances  
+# - Multi-user development scenarios
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
 # Critical security category with maximum protection
 resource "jamfpro_category" "critical_security" {
-  name     = "Critical Security"
+  name     = "Critical Security-${random_string.suffix.result}"
   priority = 1
   
   lifecycle {
     # Prevent accidental deletion of critical category
-    prevent_destroy = var.enable_protection
+    prevent_destroy = true
     
     # Create replacement before destroying (zero downtime)
     create_before_destroy = true
@@ -2325,13 +2364,13 @@ resource "jamfpro_category" "critical_security" {
 
 # Critical security policy with comprehensive lifecycle rules
 resource "jamfpro_policy" "critical_security_policy" {
-  name        = "CRITICAL - Security Baseline - DO NOT DELETE"
+  name        = "CRITICAL - Security Baseline - DO NOT DELETE-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.critical_security.id
   
   scope {
-    all_computers = true
+    all_computers = false
   }
   
   payloads {
@@ -2346,49 +2385,75 @@ resource "jamfpro_policy" "critical_security_policy" {
   
   lifecycle {
     # Maximum protection for critical security policy
-    prevent_destroy = var.enable_protection
+    prevent_destroy = true
     
     # Always create new before destroying old (zero downtime)
     create_before_destroy = true
     
     # Ignore changes that might be managed externally
     ignore_changes = [
-      scope.computer_ids,           # Computer assignments might change
-      payloads.maintenance.verify, # Maintenance settings might be adjusted
-      enabled                       # Someone might temporarily disable
+      enabled  # Someone might temporarily disable
     ]
   }
 }
 
-# Protected applications with conditional lifecycle
-resource "jamfpro_mac_application" "critical_apps" {
+# Protected applications using app_installer (adapted from previous exercises)
+resource "jamfpro_app_installer" "critical_apps" {
   for_each = var.critical_applications
   
-  name            = each.key
-  deployment_type = "Install Automatically"
+  name            = "${each.key}-${random_string.suffix.result}"
+  app_title_name  = each.key == "Security Agent" ? "Microsoft Defender" : each.key == "Compliance Monitor" ? "Jamf Connect" : "Slack"
+  enabled         = true
+  deployment_type = "SELF_SERVICE"
+  update_behavior = "AUTOMATIC"
   category_id     = jamfpro_category.critical_security.id
-  
-  scope {
-    all_computers = true
+  site_id         = "-1"
+  smart_group_id  = "1"
+
+  install_predefined_config_profiles = false
+  trigger_admin_notifications        = false
+
+  notification_settings {
+    notification_message  = "A new update is available for ${each.key}"
+    notification_interval = 1
+    deadline_message      = "Update deadline approaching for ${each.key}"
+    deadline              = 1
+    quit_delay            = 1
+    complete_message      = "${each.key} update completed successfully"
+    relaunch              = true
+    suppress              = false
+  }
+
+  self_service_settings {
+    include_in_featured_category   = true
+    include_in_compliance_category = false
+    force_view_description         = true
+    description                    = "Critical security application: ${each.key}"
+
+    categories {
+      id       = jamfpro_category.critical_security.id
+      featured = true
+    }
   }
   
   lifecycle {
     create_before_destroy = true
     
-    # Conditional protection based on app criticality
-    prevent_destroy = contains(["Security Agent", "Compliance Monitor"], each.key)
+    # Note: prevent_destroy must be a literal boolean, cannot use expressions
+    # For demonstration, we'll protect all critical apps
+    prevent_destroy = true
     
     # Ignore version changes (managed by patch management)
     ignore_changes = [
-      version,
-      bundle_id  # These might be updated by external systems
+      latest_available_version,
+      selected_version
     ]
   }
 }
 
 # Test policy with different lifecycle rules for comparison
 resource "jamfpro_policy" "test_policy" {
-  name        = "Test Policy - Safe to Modify"
+  name        = "Test Policy - Safe to Modify-${random_string.suffix.result}"
   enabled     = false  # Start disabled for testing
   frequency   = "Once per computer"
   category_id = jamfpro_category.critical_security.id
@@ -2409,8 +2474,7 @@ resource "jamfpro_policy" "test_policy" {
     
     # Allow external changes to these fields
     ignore_changes = [
-      enabled,  # Admins might enable/disable for testing
-      scope     # Scope might be adjusted manually
+      enabled  # Admins might enable/disable for testing
     ]
     
     # No prevent_destroy - this can be deleted if needed
@@ -2419,7 +2483,7 @@ resource "jamfpro_policy" "test_policy" {
 
 # Standard category with no special lifecycle rules
 resource "jamfpro_category" "standard_category" {
-  name     = "Standard Applications"
+  name     = "Standard Applications-${random_string.suffix.result}"
   priority = 50
   
   # No lifecycle block = default Terraform behavior
@@ -2428,7 +2492,7 @@ resource "jamfpro_category" "standard_category" {
 
 # Demonstration of lifecycle with replacement triggers
 resource "jamfpro_script" "maintenance_script" {
-  name            = "System Maintenance Script"
+  name            = "System Maintenance Script-${random_string.suffix.result}"
   script_contents = "#!/bin/bash\necho 'Running maintenance...'\necho 'Version: 1.0'"
   category_id     = jamfpro_category.standard_category.id
   os_requirements = "13"
@@ -2443,6 +2507,7 @@ resource "jamfpro_script" "maintenance_script" {
     create_before_destroy = true
   }
 }
+
 ```
 
 **outputs.tf:**
@@ -2453,22 +2518,22 @@ output "lifecycle_protection_summary" {
     critical_resources = {
       category = {
         name            = jamfpro_category.critical_security.name
-        prevent_destroy = var.enable_protection
+        prevent_destroy = true
         protections     = ["prevent_destroy", "create_before_destroy", "ignore_changes"]
       }
       
       policy = {
         name            = jamfpro_policy.critical_security_policy.name
-        prevent_destroy = var.enable_protection
+        prevent_destroy = true
         protections     = ["prevent_destroy", "create_before_destroy", "ignore_changes"]
       }
       
       applications = {
-        for app_name, app in jamfpro_mac_application.critical_apps :
+        for app_name, app in jamfpro_app_installer.critical_apps :
         app_name => {
           name            = app.name
-          prevent_destroy = contains(["Security Agent", "Compliance Monitor"], app_name)
-          protections     = ["create_before_destroy", "ignore_changes"]
+          prevent_destroy = true
+          protections     = ["prevent_destroy", "create_before_destroy", "ignore_changes"]
         }
       }
     }
@@ -2484,6 +2549,12 @@ output "lifecycle_protection_summary" {
         name        = jamfpro_category.standard_category.name
         protections = []
         note        = "Standard Terraform lifecycle - no special protection"
+      }
+      
+      script = {
+        name        = jamfpro_script.maintenance_script.name
+        protections = ["create_before_destroy", "replace_triggered_by"]
+        note        = "Will be replaced when category changes"
       }
     }
   }
@@ -2524,30 +2595,51 @@ output "lifecycle_rules_guide" {
       ]
       warning = "Use carefully - can mask important configuration drift"
     }
+    
+    replace_triggered_by = {
+      description = "Forces replacement when referenced resources change"
+      use_when = [
+        "Resources that must be recreated when dependencies change",
+        "Scripts that depend on specific categories",
+        "Configurations that become invalid when references change"
+      ]
+      note = "Use sparingly - can cause unnecessary resource churn"
+    }
   }
 }
 
 output "protection_status" {
   description = "Current protection status"
   value = {
-    protection_enabled = var.enable_protection
-    protected_resources = var.enable_protection ? [
+    protection_enabled = true
+    protected_resources = [
       "Critical Security Category",
       "Critical Security Policy", 
       "Security Agent Application",
-      "Compliance Monitor Application"
-    ] : []
+      "Compliance Monitor Application",
+      "Antivirus Application"
+    ]
     
-    next_steps = var.enable_protection ? [
+    next_steps = [
       "✅ Critical resources are protected from accidental deletion",
-      "⚠️  To destroy protected resources, set enable_protection=false first",
-      "🔧 Monitor for configuration drift on ignored attributes"
-    ] : [
-      "⚠️  Protection is disabled - critical resources can be destroyed",
-      "🔧 Enable protection for production environments"
+      "⚠️  To destroy protected resources, edit lifecycle blocks to set prevent_destroy=false",
+      "🔧 Monitor for configuration drift on ignored attributes",
+      "📝 Note: lifecycle meta-arguments require literal values, not variables"
     ]
   }
 }
+
+output "lifecycle_meta_argument_demo" {
+  description = "Demonstrates lifecycle meta-argument capabilities"
+  value = {
+    prevent_destroy = "Blocks terraform destroy on critical resources",
+    create_before_destroy = "Ensures zero-downtime updates by creating replacement first",
+    ignore_changes = "Prevents Terraform from reverting external changes to specified attributes",
+    replace_triggered_by = "Forces resource replacement when referenced resources change",
+    conditional_protection = "Use variables to enable/disable protection based on environment"
+  }
+}
+
 ```
 
 **Test the configuration:**
