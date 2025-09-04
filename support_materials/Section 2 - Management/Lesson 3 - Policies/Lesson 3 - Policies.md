@@ -6,9 +6,9 @@ This tutorial introduces the Terraform **`jamfpro_policy`** resource (part of th
 
 ## What Is `jamfpro_policy`?
 
-The `jamfpro_policy` resource allows you to define and manage Jamf Pro Policies using Terraform, supporting Jamf Pro’s Classic and modern APIs via the community provider **deploymenttheory/jamfpro** :contentReference[oaicite:0]{index=0}.
+The `jamfpro_policy` resource allows you to define and manage Jamf Pro Policies using Terraform, supporting Jamf Pro’s Classic and modern APIs via the community provider **deploymenttheory/jamfpro**.
 
-This Terraform provider lets you codify device management resources—like policies, smart groups, scripts, configuration profiles—as infrastructure-as-code for Jamf Pro environments :contentReference[oaicite:1]{index=1}.
+This Terraform provider lets you codify device management resources—like policies, smart groups, scripts, configuration profiles—as infrastructure-as-code for Jamf Pro environments.
 
 ---
 
@@ -134,7 +134,7 @@ Create a basic policy that runs a script on all devices. This lesson will be sim
 
 Using the resource above follow these steps:
 
-1. If not already done so, create the script and policy that was mentioned [Section 1 - Lesson 1]()
+1. If not already done so, create the script and policy that was mentioned [Section 1 - Lesson 1](/support_materials/Section%201%20-%20Configuration/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md)
 2. Use `terraform plan` and `terraform apply` to create the script and policy in your Jamf Pro instance
 3. Once created, verify that the policy and script is created in your Jamf Pro instance
 

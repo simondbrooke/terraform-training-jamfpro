@@ -1,6 +1,6 @@
 # Lesson 4 - Configuration Resource Creation
 
-Creating Configuration Profiles is a little more difficult than creating policies, because it relies on having an unsigned PLIST of the configuration to upload to the Jamf Pro tenant. This can be done in a number of ways, but the easiest way is to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) mentioned in the [Section Overview]().
+Creating Configuration Profiles is a little more difficult than creating policies, because it relies on having an unsigned PLIST of the configuration to upload to the Jamf Pro tenant. This can be done in a number of ways, but the easiest way is to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) mentioned in the [Section Overview](/support_materials/Section%202%20-%20Management/Section%202%20-%20Management.md).
 
 This lesson will cover how to set up the Jamf Pro GO SDK and how to create and download the Configuration Profile that will be used in the next lesson to create the Configuration Profile resource.
 
