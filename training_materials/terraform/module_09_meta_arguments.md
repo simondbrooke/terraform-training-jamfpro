@@ -781,7 +781,7 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.1"
+      version = "~> 0.24.0"
     }
   }
 }
@@ -1067,19 +1067,46 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.1"
+      version = "~> 0.24.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
     }
   }
 }
 
 provider "jamfpro" {
-  # Uses environment variables:
-  # JAMFPRO_INSTANCE_NAME, JAMFPRO_CLIENT_ID, JAMFPRO_CLIENT_SECRET
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
+  jamfpro_load_balancer_lock    = true
 }
+
 ```
 
 **variables.tf:**
 ```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-oauth2-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "your-oauth2-client-secret"
+  sensitive   = true
+}
+
 variable "app_categories" {
   description = "Application categories with priorities"
   type = map(object({
@@ -1112,68 +1139,128 @@ variable "standard_applications" {
   type = map(object({
     category        = string
     deployment_type = string
-    self_service    = bool
+    enabled         = bool
+    update_behavior = string
+    smart_group_id  = string
+    description     = string
+    featured        = bool
+    app_title_name  = string
   }))
   
   default = {
     "Google Chrome" = {
       category        = "Productivity"
-      deployment_type = "Install Automatically"
-      self_service    = false
+      deployment_type = "SELF_SERVICE"
+      enabled         = true
+      update_behavior = "AUTOMATIC"
+      smart_group_id  = "1"
+      description     = "Google Chrome web browser for enhanced productivity"
+      featured        = false
+      app_title_name  = "Google Chrome"
     }
     "Slack" = {
       category        = "Productivity"
-      deployment_type = "Make Available in Self Service"
-      self_service    = true
+      deployment_type = "SELF_SERVICE"
+      enabled         = true
+      update_behavior = "AUTOMATIC"
+      smart_group_id  = "1"
+      description     = "Team communication and collaboration platform"
+      featured        = true
+      app_title_name  = "Slack"
     }
-    "Xcode" = {
+    "Docker Desktop" = {
       category        = "Development"
-      deployment_type = "Make Available in Self Service"
-      self_service    = true
+      deployment_type = "SELF_SERVICE"
+      enabled         = true
+      update_behavior = "AUTOMATIC"
+      smart_group_id  = "1"
+      description     = "Containerization platform for developers"
+      featured        = false
+      app_title_name  = "Docker Desktop"
     }
-    "Adobe Photoshop" = {
+    "Adobe Photoshop 2024" = {
       category        = "Creative"
-      deployment_type = "Make Available in Self Service"
-      self_service    = true
+      deployment_type = "SELF_SERVICE"
+      enabled         = true
+      update_behavior = "AUTOMATIC"
+      smart_group_id  = "1"
+      description     = "Professional image editing and graphic design software"
+      featured        = false
+      app_title_name  = "Adobe Photoshop 2024"
     }
   }
 }
+
 ```
 
 **main.tf:**
 ```hcl
+# Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# 1. Jamf Pro requires globally unique resource names across the entire instance
+# 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
+# 3. App installer 'app_title_name' must match exactly from the Jamf App Catalog
+# 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
+# 
+# This pattern is essential for any Jamf Pro Terraform configuration used in:
+# - Training environments
+# - Shared sandbox instances  
+# - Multi-user development scenarios
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
 # Create categories using for_each with complex data
 resource "jamfpro_category" "app_categories" {
   for_each = var.app_categories
   
-  name     = each.key
+  name     = "${each.key}-${random_string.suffix.result}"
   priority = each.value.priority
 }
 
-# Create applications using for_each, referencing categories
-resource "jamfpro_mac_application" "standard_apps" {
+# Create applications using for_each with jamfpro_app_installer
+resource "jamfpro_app_installer" "standard_apps" {
   for_each = var.standard_applications
   
-  name            = each.key
+  name            = "${each.key}-${random_string.suffix.result}"
+  app_title_name  = each.value.app_title_name
+  enabled         = each.value.enabled
   deployment_type = each.value.deployment_type
+  update_behavior = each.value.update_behavior
   category_id     = jamfpro_category.app_categories[each.value.category].id
-  
-  scope {
-    all_computers = each.value.deployment_type == "Install Automatically"
+  site_id         = "-1"
+  smart_group_id  = each.value.smart_group_id
+
+  install_predefined_config_profiles = false
+  trigger_admin_notifications        = false
+
+  notification_settings {
+    notification_message  = "A new update is available for ${each.key}"
+    notification_interval = 1
+    deadline_message      = "Update deadline approaching for ${each.key}"
+    deadline              = 1
+    quit_delay            = 1
+    complete_message      = "${each.key} update completed successfully"
+    relaunch              = true
+    suppress              = false
   }
-  
-  # Conditional self service block using dynamic
-  dynamic "self_service" {
-    for_each = each.value.self_service ? [1] : []
-    content {
-      install_button_text             = "Install ${each.key}"
-      self_service_description        = "Install ${each.key} for enhanced productivity"
-      force_users_to_view_description = false
-      feature_on_main_page            = each.key == "Slack"
-      notification                    = "Self Service"
+
+  self_service_settings {
+    include_in_featured_category   = each.value.featured
+    include_in_compliance_category = false
+    force_view_description         = true
+    description                    = each.value.description
+
+    categories {
+      id       = jamfpro_category.app_categories[each.value.category].id
+      featured = each.value.featured
     }
   }
 }
+
 ```
 
 **outputs.tf:**
@@ -1194,13 +1281,14 @@ output "categories_created" {
 output "applications_deployed" {
   description = "Applications deployed with for_each"
   value = {
-    for name, app in jamfpro_mac_application.standard_apps :
+    for name, app in jamfpro_app_installer.standard_apps :
     name => {
       id              = app.id
       name            = app.name
       deployment_type = app.deployment_type
       category        = var.standard_applications[name].category
-      self_service    = var.standard_applications[name].self_service
+      enabled         = var.standard_applications[name].enabled
+      featured        = var.standard_applications[name].featured
     }
   }
 }
@@ -1214,6 +1302,7 @@ output "for_each_advantages" {
     "✅ Can reference resources by meaningful names"
   ]
 }
+
 ```
 
 **Test the configuration:**
@@ -1253,6 +1342,25 @@ touch {main,variables,outputs,providers}.tf
 
 **variables.tf:**
 ```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "your-client-secret"
+  sensitive   = true
+}
+
 variable "departments" {
   description = "List of department names"
   type        = list(string)
@@ -1277,24 +1385,66 @@ variable "create_test_environments" {
 }
 ```
 
+**providers.tf:**
+```hcl
+terraform {
+  required_providers {
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.24.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
+  }
+}
+
+provider "jamfpro" {
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
+  jamfpro_load_balancer_lock    = true
+}
+
+```
+
 **main.tf:**
 ```hcl
+# Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# 1. Jamf Pro requires globally unique resource names across the entire instance
+# 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
+# 3. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
+# 
+# This pattern is essential for any Jamf Pro Terraform configuration used in:
+# - Training environments
+# - Shared sandbox instances  
+# - Multi-user development scenarios
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
 # Create departments using count - simple list iteration
 resource "jamfpro_department" "company_departments" {
   count = length(var.departments)
-  name  = var.departments[count.index]
+  name  = "${var.departments[count.index]}-${random_string.suffix.result}"
 }
 
 # Create sites using count - perfect for simple lists
 resource "jamfpro_site" "office_sites" {
   count = length(var.office_locations)
-  name  = "${var.office_locations[count.index]} Office"
+  name  = "${var.office_locations[count.index]} Office-${random_string.suffix.result}"
 }
 
 # Create smart groups for each department using count
 resource "jamfpro_smart_computer_group" "department_groups" {
   count   = length(var.departments)
-  name    = "${var.departments[count.index]} Computers"
+  name    = "${var.departments[count.index]} Computers-${random_string.suffix.result}"
   site_id = jamfpro_site.office_sites[0].id  # Use first site
   
   criteria {
@@ -1310,15 +1460,15 @@ resource "jamfpro_smart_computer_group" "department_groups" {
 resource "jamfpro_category" "test_categories" {
   count = var.create_test_environments
   
-  name     = "Test Environment ${count.index + 1}"
-  priority = 90 + count.index
+  name     = "Test Environment ${count.index + 1}-${random_string.suffix.result}"
+  priority = 1 + count.index
 }
 
 # Create policies for test environments
 resource "jamfpro_policy" "test_policies" {
   count = var.create_test_environments
   
-  name        = "Test Policy ${count.index + 1}"
+  name        = "Test Policy ${count.index + 1}-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.test_categories[count.index].id
@@ -1333,6 +1483,7 @@ resource "jamfpro_policy" "test_policies" {
     }
   }
 }
+
 ```
 
 **outputs.tf:**
@@ -1387,22 +1538,35 @@ output "test_environments" {
 }
 
 output "count_considerations" {
+  description = "Key considerations when using count"
+  value = [
+    "⚠️ Resources are addressed by index (0, 1, 2...)",
+    "⚠️ Adding/removing items can affect other resources",
+    "⚠️ Best for simple lists that rarely change",
+    "✅ Perfect for conditional resource creation",
+    "✅ Good for creating N identical resources",
+    "✅ Simpler than for_each for basic scenarios"
+  ]
+}
+
+output "when_to_use_count" {
   description = "When to use count vs for_each"
   value = {
-    use_count_when = [
-      "✅ Working with simple lists",
-      "✅ Creating a specific number of similar resources",
-      "✅ List order doesn't change often",
-      "✅ Resources are truly identical except for index"
+    use_count = [
+      "Simple lists that rarely change",
+      "Conditional resource creation (count = var.enabled ? 1 : 0)",
+      "Creating N identical resources",
+      "When you don't need stable resource addressing"
     ]
-    avoid_count_when = [
-      "❌ Items might be added/removed from middle of list",
-      "❌ Resources need to be referenced by meaningful names",
-      "❌ Each resource has unique configuration",
-      "❌ Working with complex data structures"
+    use_for_each = [
+      "Complex data structures (maps/sets)",
+      "Resources that may be added/removed frequently", 
+      "When you need stable resource addressing",
+      "When resources reference each other by keys"
     ]
   }
 }
+
 ```
 
 **Test the configuration:**
@@ -1656,7 +1820,7 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.1"
+      version = "~> 0.24.0"
     }
   }
 }
@@ -2219,7 +2383,7 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = "~> 0.0.1"
+      version = "~> 0.24.0"
     }
     random = {
       source  = "hashicorp/random"
