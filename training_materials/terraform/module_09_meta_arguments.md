@@ -1975,32 +1975,65 @@ terraform {
       source  = "deploymenttheory/jamfpro"
       version = "~> 0.24.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 }
 
 # Production environment (default provider)
 provider "jamfpro" {
-  # Uses JAMFPRO_INSTANCE_NAME, JAMFPRO_CLIENT_ID, JAMFPRO_CLIENT_SECRET
-  # In real scenarios, these would point to production instance
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
 
 # Development environment with alias
+# Note: In a real scenario, this would point to a different Jamf Pro instance
+# For demo purposes, using same instance with alias to demonstrate provider usage
 provider "jamfpro" {
-  alias = "development"
-  # In practice, this would use different environment variables:
-  # JAMFPRO_DEV_INSTANCE_NAME, JAMFPRO_DEV_CLIENT_ID, etc.
-  # For demo purposes, using same instance with alias
+  alias                = "development"
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
 
 # Staging environment with alias
+# Note: In production, this would use different credentials and instance
 provider "jamfpro" {
-  alias = "staging"
-  # Would normally point to staging instance
+  alias                = "staging"
+  jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
+  auth_method          = "oauth2"
+  client_id            = var.jamfpro_client_id
+  client_secret        = var.jamfpro_client_secret
 }
+
 ```
 
 **variables.tf:**
 ```hcl
+variable "jamfpro_instance_fqdn" {
+  description = "The Jamf Pro instance FQDN"
+  type        = string
+  default     = "https://your-instance.jamfcloud.com"
+}
+
+variable "jamfpro_client_id" {
+  description = "The Jamf Pro OAuth2 client ID"
+  type        = string
+  default     = "your-client-id"
+}
+
+variable "jamfpro_client_secret" {
+  description = "The Jamf Pro OAuth2 client secret"
+  type        = string
+  default     = "your-client-secret"
+  sensitive   = true
+}
+
 variable "enable_development" {
   description = "Enable development environment resources"
   type        = bool
@@ -2024,30 +2057,49 @@ variable "environment_specific_apps" {
   type = map(list(string))
   default = {
     production  = ["Slack", "Microsoft Office"]
-    development = ["Xcode", "Docker", "Postman"]
+    development = ["Docker Desktop", "GitHub Desktop"]
     staging     = ["Test Runner", "Performance Monitor"]
   }
 }
+
 ```
 
 **main.tf:**
 ```hcl
+# Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
+# 
+# IMPORTANT NOTES for Jamf Pro Terraform exercises:
+# 1. Jamf Pro requires globally unique resource names across the entire instance
+# 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
+# 3. Provider aliases allow managing multiple environments from single configuration
+# 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
+# 
+# This pattern is essential for any Jamf Pro Terraform configuration used in:
+# - Training environments
+# - Shared sandbox instances  
+# - Multi-user development scenarios
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
+
 # Production resources (default provider)
 resource "jamfpro_category" "prod_categories" {
   for_each = var.shared_categories
   
-  name     = "PROD-${each.key}"
+  name     = "PROD-${each.key}-${random_string.suffix.result}"
   priority = 5
 }
 
 resource "jamfpro_policy" "prod_baseline" {
-  name        = "Production Security Baseline"
+  name        = "Production Security Baseline-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.prod_categories["Security"].id
   
   scope {
-    all_computers = true
+    all_computers = false
   }
   
   payloads {
@@ -2063,7 +2115,7 @@ resource "jamfpro_category" "dev_categories" {
   for_each = var.enable_development ? var.shared_categories : []
   provider = jamfpro.development
   
-  name     = "DEV-${each.key}"
+  name     = "DEV-${each.key}-${random_string.suffix.result}"
   priority = 10
 }
 
@@ -2071,13 +2123,13 @@ resource "jamfpro_policy" "dev_testing" {
   count    = var.enable_development ? 1 : 0
   provider = jamfpro.development
   
-  name        = "Development Testing Policy"
+  name        = "Development Testing Policy-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.dev_categories["Testing"].id
   
   scope {
-    all_computers = true
+    all_computers = false
   }
   
   payloads {
@@ -2092,7 +2144,7 @@ resource "jamfpro_category" "staging_categories" {
   for_each = var.enable_staging ? var.shared_categories : []
   provider = jamfpro.staging
   
-  name     = "STAGING-${each.key}"
+  name     = "STAGING-${each.key}-${random_string.suffix.result}"
   priority = 8
 }
 
@@ -2100,7 +2152,7 @@ resource "jamfpro_policy" "staging_validation" {
   count    = var.enable_staging ? 1 : 0
   provider = jamfpro.staging
   
-  name        = "Staging Validation Policy"
+  name        = "Staging Validation Policy-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Once per computer"
   category_id = jamfpro_category.staging_categories["Testing"].id
@@ -2118,13 +2170,10 @@ resource "jamfpro_policy" "staging_validation" {
 
 # Cross-environment dependency example
 resource "jamfpro_policy" "prod_deployment" {
-  name        = "Production Deployment Policy"
+  name        = "Production Deployment Policy-${random_string.suffix.result}"
   enabled     = var.enable_staging ? false : true  # Only enable if staging is not used
   frequency   = "Once per computer"
   category_id = jamfpro_category.prod_categories["Productivity"].id
-  
-  # This policy should only run after staging validation (if staging exists)
-  depends_on = var.enable_staging ? [jamfpro_policy.staging_validation] : []
   
   scope {
     all_computers = false
@@ -2136,6 +2185,7 @@ resource "jamfpro_policy" "prod_deployment" {
     }
   }
 }
+
 ```
 
 **outputs.tf:**
@@ -2187,6 +2237,17 @@ output "deployment_workflow" {
     step_5 = "Monitor and maintain across all environments"
   }
 }
+
+output "provider_meta_argument_demo" {
+  description = "Demonstrates how provider meta-argument works"
+  value = {
+    default_provider = "Resources without provider argument use default jamfpro provider",
+    aliased_providers = "Resources with provider = jamfpro.alias use specific provider instance",
+    conditional_resources = "Use count/for_each with variables to enable/disable environments",
+    cross_environment_deps = "Use depends_on between environments for promotion workflows"
+  }
+}
+
 ```
 
 **Test the configuration:**
