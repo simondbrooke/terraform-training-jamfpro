@@ -1635,8 +1635,8 @@ Use this checklist to ensure your Terraform code follows best practices:
 
 Ready to continue your Terraform journey with Jamf Pro? Proceed to the next module:
 
-**➡️ [Module 9: Meta Arguments](./module_09_meta_arguments.md)**
+**➡️ [Module 9: Variables and Data](./module_09_variables_and_data.md)**
 
-Understand Terraform expressions, functions, and dynamic configurations for advanced Jamf Pro management.
+Understand Terraform variables, data sources.
 
 ---
