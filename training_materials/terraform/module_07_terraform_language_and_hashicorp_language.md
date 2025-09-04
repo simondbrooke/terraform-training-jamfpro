@@ -291,6 +291,7 @@ output "category_id" {
 }
 ```
 
+
 **💡 Key Points:**
 - **Runtime Parsing**: All `.tf` files are loaded simultaneously
 - **Order Independence**: Files are processed in alphabetical order, but dependencies determine execution
@@ -314,6 +315,15 @@ networking.tf
 security.tf
 monitoring.tf
 ```
+
+**💡 Tip for Larger Configurations:**
+
+In larger Terraform projects, consider additional organizational factors:
+
+- **File Length**: Keep individual files manageable (typically under 500-1000 lines)
+- **Logical Type Grouping**: Group similar resource types together (all policies, all groups, all categories)
+- **Logical Outcome Grouping**: Group resources that work together to achieve a specific outcome or business function
+- **Module Structure**: Break complex configurations into reusable modules for better maintainability
 
 #### ⚙️ Terraform Settings Block
 
