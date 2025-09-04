@@ -53,5 +53,7 @@ To do this, follow these steps:
 3. Browse to the `/go-api-sdk-jamfpro-main/recipes/macos_configuration_profiles/ExportMacOSConfigurationProfileToFile/` directory in your terminal
 4. Now that everything is set up, run `go run ExportMacOSConfigurationProfileToFile.go`
 5. This should export your PLIST file to wherever you have set your `exportDir` variable to
+6. Ensure that your PLIST file has been created
+7. Now go back to your Jamf Pro tenant and delete the configuration profile in the UI
 
 Now that you have this file, you can continue to your next lesson
