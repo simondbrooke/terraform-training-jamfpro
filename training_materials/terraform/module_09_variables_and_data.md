@@ -1292,320 +1292,434 @@ output "device_management_summary" {
 
 ---
 
-## 🧪 **Lab 1**: Input Variables and Validation with Extension Attributes
-**Duration**: 25 minutes
+## 🧪 **Lab 1**: Variables - The Very Basics
+**Duration**: 10 minutes
 
-Let's practice creating extension attributes with various variable types and validation rules.
+Let's start with the absolute basics - what is a variable and how do you create one?
 
-**Step 1: Create Variable Definitions**
+**🎯 What You'll Learn:**
+- How to declare a simple variable
+- Basic variable types (string, number, bool)
+- How variables work without any complexity
 
-Create `variables.tf`:
+**Step 1: Create Your First Variables**
+
+Create a new directory `terraform-variables-basics` and create `variables.tf`:
 ```hcl
-variable "jamf_environment" {
-  description = "Jamf Pro environment"
+# This is a simple string variable
+variable "department_name" {
+  description = "Name of the department"
   type        = string
-  default     = "dev"
-  
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.jamf_environment)
-    error_message = "Environment must be dev, staging, or prod."
-  }
+  default     = "Engineering"
 }
 
-variable "extension_attribute_name" {
-  description = "Base name for extension attributes"
-  type        = string
-  default     = "Corporate"
-  
-  validation {
-    condition     = can(regex("^[A-Za-z0-9 _-]+$", var.extension_attribute_name))
-    error_message = "Extension attribute name must contain only alphanumeric characters, spaces, hyphens, and underscores."
-  }
+# This is a simple number variable  
+variable "team_size" {
+  description = "Number of people in the team"
+  type        = number
+  default     = 5
 }
 
-variable "enable_extension_attributes" {
-  description = "Enable extension attributes for inventory collection"
+# This is a simple boolean variable
+variable "is_active" {
+  description = "Whether the department is active"
   type        = bool
   default     = true
 }
+```
 
-variable "department_choices" {
-  description = "Department choices for popup menu"
-  type        = list(string)
-  default     = ["Engineering", "Sales", "Marketing", "Support", "Executive"]
-  
-  validation {
-    condition     = length(var.department_choices) >= 2 && length(var.department_choices) <= 20
-    error_message = "Department choices must have between 2 and 20 options."
-  }
+**Step 2: See Your Variables**
+
+Create `main.tf` (we're not creating resources yet, just learning variables):
+```hcl
+# We'll use locals to show how variables work
+locals {
+  department_info = "Department: ${var.department_name}"
+  team_info       = "Team Size: ${var.team_size}"
+  status_info     = "Active: ${var.is_active}"
+}
+```
+
+**Step 3: Output Your Variables**
+
+Create `outputs.tf`:
+```hcl
+output "department_name" {
+  description = "The department name from our variable"
+  value       = var.department_name
 }
 
-variable "mobile_locations" {
-  description = "Available mobile device locations"
-  type        = list(string)
-  default     = ["Head Office", "Branch Office", "Home Office", "Client Site"]
+output "team_size" {
+  description = "The team size from our variable"
+  value       = var.team_size
 }
 
-variable "computer_extension_configs" {
-  description = "Computer extension attribute configurations"
-  type = map(object({
-    enabled                = bool
-    description            = string
-    input_type             = string
-    inventory_display_type = string
-    data_type              = string
-    popup_choices          = optional(list(string))
-    script_contents        = optional(string)
-  }))
-  
-  default = {
-    "Department" = {
-      enabled                = true
-      description            = "Employee department assignment"
-      input_type             = "POPUP"
-      inventory_display_type = "USER_AND_LOCATION"
-      data_type              = "STRING"
-      popup_choices          = null # Will use var.department_choices
-      script_contents        = null
-    }
-    "Asset Tag" = {
-      enabled                = true
-      description            = "Physical asset tag number"
-      input_type             = "TEXT"
-      inventory_display_type = "HARDWARE"
-      data_type              = "STRING"
-      popup_choices          = null
-      script_contents        = null
-    }
-    "OS Build" = {
-      enabled                = true
-      description            = "Operating system build version"
-      input_type             = "SCRIPT"
-      inventory_display_type = "GENERAL"
-      data_type              = "STRING"
-      popup_choices          = null
-      script_contents        = "#!/bin/bash\nsw_vers -buildVersion"
-    }
-  }
-  
-  validation {
-    condition = alltrue([
-      for name, config in var.computer_extension_configs :
-      contains(["POPUP", "TEXT", "SCRIPT"], config.input_type)
-    ])
-    error_message = "Input type must be POPUP, TEXT, or SCRIPT."
-  }
+output "is_active" {
+  description = "Whether the department is active"
+  value       = var.is_active
 }
 
-variable "mobile_extension_configs" {
-  description = "Mobile device extension attribute configurations"
-  type = map(object({
-    description            = string
-    data_type              = string
-    inventory_display_type = string
-    input_type             = string
-    popup_choices          = optional(list(string))
-  }))
-  
-  default = {
-    "Device Location" = {
-      description            = "Primary location where device is used"
-      data_type              = "STRING"
-      inventory_display_type = "USER_AND_LOCATION"
-      input_type             = "POPUP"
-      popup_choices          = null # Will use var.mobile_locations
-    }
-    "User Department" = {
-      description            = "Department of device user"
-      data_type              = "STRING"
-      inventory_display_type = "GENERAL"
-      input_type             = "TEXT"
-      popup_choices          = null
-    }
+output "combined_info" {
+  description = "All information combined"
+  value = {
+    department = var.department_name
+    size       = var.team_size
+    active     = var.is_active
   }
 }
 ```
 
-**Step 2: Create Main Configuration**
+**Step 4: Test Your First Variables**
 
-Create `main.tf`:
+```bash
+# Initialize (creates .terraform directory)
+terraform init
+
+# See what Terraform will do (no resources, just variables)
+terraform plan
+
+# Apply to see the outputs
+terraform apply
+
+# Try changing a variable value
+terraform plan -var='department_name=Sales'
+terraform apply -var='department_name=Sales'
+
+# Try changing multiple variables
+terraform apply -var='department_name=Marketing' -var='team_size=8' -var='is_active=false'
+```
+
+**🎉 Congratulations!** You've learned:
+- How to declare variables with `variable "name" { }`
+- The three basic types: `string`, `number`, `bool`
+- How to reference variables with `var.name`
+- How to override variables with `-var`
+
+---
+
+## 🧪 **Lab 2**: Using Variables in Resources
+**Duration**: 15 minutes
+
+Now let's use variables to actually create Jamf Pro resources!
+
+**🎯 What You'll Learn:**
+- How to use variables in real resources
+- String interpolation with `${}`
+- How variables make configurations flexible
+
+**Step 1: Add Resource Variables**
+
+Add to your `variables.tf`:
 ```hcl
-# Random suffix for unique naming
+# Variables for creating a Jamf Pro extension attribute
+variable "attribute_name" {
+  description = "Name for the extension attribute"
+  type        = string
+  default     = "Department"
+}
+
+variable "attribute_description" {
+  description = "Description for the extension attribute"
+  type        = string
+  default     = "Employee department"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+}
+```
+
+**Step 2: Create a Real Resource Using Variables**
+
+Update `main.tf`:
+```hcl
+# Random suffix for unique naming (required for Jamf Pro)
 resource "random_string" "suffix" {
   length  = 6
   upper   = false
   special = false
 }
 
-# Local values for computed expressions
-locals {
-  resource_prefix = "${var.jamf_environment}-${random_string.suffix.result}"
-  
-  # Merge department choices into computer extension configs
-  computer_attributes = {
-    for name, config in var.computer_extension_configs :
-    name => merge(config, {
-      popup_choices = name == "Department" ? var.department_choices : config.popup_choices
-    })
-  }
-  
-  # Merge location choices into mobile extension configs
-  mobile_attributes = {
-    for name, config in var.mobile_extension_configs :
-    name => merge(config, {
-      popup_choices = name == "Device Location" ? var.mobile_locations : config.popup_choices
-    })
-  }
-}
-
-# Create computer extension attributes
-resource "jamfpro_computer_extension_attribute" "corporate_attributes" {
-  for_each = var.enable_extension_attributes ? local.computer_attributes : {}
-  
-  name        = "${var.extension_attribute_name} ${each.key} - ${local.resource_prefix}"
-  enabled     = each.value.enabled
-  description = "${each.value.description} (${title(var.jamf_environment)} Environment)"
-  input_type  = each.value.input_type
-  inventory_display_type = each.value.inventory_display_type
-  data_type   = each.value.data_type
-  
-  # Conditional popup choices
-  popup_menu_choices = each.value.popup_choices != null ? each.value.popup_choices : null
-  
-  # Conditional script contents
-  script_contents = each.value.script_contents != null ? each.value.script_contents : null
-}
-
-# Create mobile device extension attributes
-resource "jamfpro_mobile_device_extension_attribute" "device_tracking" {
-  for_each = var.enable_extension_attributes ? local.mobile_attributes : {}
-  
-  name                   = "${var.extension_attribute_name} Mobile ${each.key} - ${local.resource_prefix}"
-  description            = "${each.value.description} (${title(var.jamf_environment)} Environment)"
-  data_type              = each.value.data_type
-  inventory_display_type = each.value.inventory_display_type
-  input_type             = each.value.input_type
-  popup_menu_choices     = each.value.popup_choices
+# Create an extension attribute using our variables
+resource "jamfpro_computer_extension_attribute" "department" {
+  name        = "${var.attribute_name}-${var.environment}-${random_string.suffix.result}"
+  enabled     = var.is_active
+  description = "${var.attribute_description} for ${var.department_name} team"
+  input_type  = "TEXT"
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
 }
 ```
 
-**Step 3: Create Outputs**
+**Step 3: Update Outputs to Show Resource Information**
 
-Create `outputs.tf`:
+Update `outputs.tf`:
 ```hcl
-output "computer_extension_attributes" {
-  description = "Created computer extension attributes"
-  value = {
-    for name, attr in jamfpro_computer_extension_attribute.corporate_attributes :
-    name => {
-      id          = attr.id
-      name        = attr.name
-      input_type  = attr.input_type
-      enabled     = attr.enabled
-    }
-  }
+output "extension_attribute_id" {
+  description = "ID of the created extension attribute"
+  value       = jamfpro_computer_extension_attribute.department.id
 }
 
-output "mobile_extension_attributes" {
-  description = "Created mobile device extension attributes"
-  value = {
-    for name, attr in jamfpro_mobile_device_extension_attribute.device_tracking :
-    name => {
-      id          = attr.id
-      name        = attr.name
-      input_type  = attr.input_type
-    }
-  }
+output "extension_attribute_name" {
+  description = "Full name of the extension attribute"
+  value       = jamfpro_computer_extension_attribute.department.name
 }
 
-output "configuration_summary" {
-  description = "Extension attribute configuration summary"
+output "resource_summary" {
+  description = "Summary of what we created"
   value = {
-    environment = var.jamf_environment
-    total_computer_attributes = length(jamfpro_computer_extension_attribute.corporate_attributes)
-    total_mobile_attributes   = length(jamfpro_mobile_device_extension_attribute.device_tracking)
-    enabled = var.enable_extension_attributes
+    attribute_id   = jamfpro_computer_extension_attribute.department.id
+    attribute_name = jamfpro_computer_extension_attribute.department.name
+    department     = var.department_name
+    environment    = var.environment
+    team_size      = var.team_size
   }
 }
 ```
 
-**Step 4: Create Environment-Specific Variables**
+**Step 4: Test Variables with Real Resources**
+
+```bash
+# Plan to see what will be created
+terraform plan
+
+# Apply to create the extension attribute
+terraform apply
+
+# Try different values
+terraform plan -var='department_name=Sales' -var='attribute_name=Department Code'
+terraform apply -var='department_name=Sales' -var='attribute_name=Department Code'
+
+# Clean up
+terraform destroy
+```
+
+**🎉 You've learned:**
+- How to use variables in resource arguments
+- String interpolation: `"${var.name}"`
+- How variables make resources flexible and reusable
+
+---
+
+## 🧪 **Lab 3**: Outputs - Getting Information Back
+**Duration**: 10 minutes
+
+Let's master outputs - how to get information from your Terraform resources.
+
+**🎯 What You'll Learn:**
+- Different types of outputs
+- How to structure output data
+- When outputs are useful
+
+**Step 1: Create Multiple Resources**
+
+Update `main.tf` to create more resources:
+```hcl
+# Create multiple extension attributes
+resource "jamfpro_computer_extension_attribute" "department" {
+  name        = "Department-${var.environment}-${random_string.suffix.result}"
+  enabled     = var.is_active
+  description = "Employee department"
+  input_type  = "TEXT"
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
+
+resource "jamfpro_computer_extension_attribute" "location" {
+  name        = "Location-${var.environment}-${random_string.suffix.result}"
+  enabled     = var.is_active
+  description = "Office location"
+  input_type  = "TEXT"
+  inventory_display_type = "USER_AND_LOCATION"
+  data_type   = "STRING"
+}
+```
+
+**Step 2: Create Different Types of Outputs**
+
+Replace `outputs.tf`:
+```hcl
+# Simple value output
+output "department_attribute_id" {
+  description = "ID of the department extension attribute"
+  value       = jamfpro_computer_extension_attribute.department.id
+}
+
+# Multiple related values
+output "all_attribute_ids" {
+  description = "IDs of all extension attributes"
+  value = {
+    department = jamfpro_computer_extension_attribute.department.id
+    location   = jamfpro_computer_extension_attribute.location.id
+  }
+}
+
+# Computed/calculated output
+output "total_attributes_created" {
+  description = "Total number of extension attributes created"
+  value       = 2
+}
+
+# Mixed data output
+output "deployment_summary" {
+  description = "Complete deployment information"
+  value = {
+    environment = var.environment
+    department  = var.department_name
+    attributes = {
+      department_id   = jamfpro_computer_extension_attribute.department.id
+      department_name = jamfpro_computer_extension_attribute.department.name
+      location_id     = jamfpro_computer_extension_attribute.location.id
+      location_name   = jamfpro_computer_extension_attribute.location.name
+    }
+    settings = {
+      team_size = var.team_size
+      active    = var.is_active
+    }
+  }
+}
+```
+
+**Step 3: Test Different Output Types**
+
+```bash
+# Apply to create resources
+terraform apply
+
+# View all outputs
+terraform output
+
+# View a specific output
+terraform output department_attribute_id
+
+# View structured output
+terraform output deployment_summary
+
+# Output in JSON format (useful for scripts)
+terraform output -json deployment_summary
+```
+
+**🎉 You've learned:**
+- Simple outputs: `value = resource.attribute`
+- Structured outputs with maps: `{ key = value }`
+- How to view outputs with `terraform output`
+- Different output formats (text vs JSON)
+
+---
+
+## 🧪 **Lab 4**: Variable Files - Different Environments
+**Duration**: 15 minutes
+
+Learn how to manage different environments with variable files.
+
+**🎯 What You'll Learn:**
+- How to create `.tfvars` files
+- Managing different environments
+- Variable file precedence
+
+**Step 1: Create Environment-Specific Variable Files**
 
 Create `dev.tfvars`:
 ```hcl
-jamf_environment = "dev"
-extension_attribute_name = "Development"
-enable_extension_attributes = true
+# Development environment settings
+department_name      = "Dev Team"
+team_size           = 3
+is_active           = true
+environment         = "dev"
+attribute_name      = "Dev Department"
+attribute_description = "Development team assignment"
+```
 
-department_choices = [
-  "Dev Team",
-  "QA Team", 
-  "DevOps Team"
-]
-
-mobile_locations = [
-  "Dev Office",
-  "Home Office"
-]
+Create `staging.tfvars`:
+```hcl
+# Staging environment settings
+department_name      = "Staging Team"
+team_size           = 2
+is_active           = true
+environment         = "staging"
+attribute_name      = "Staging Department"
+attribute_description = "Staging environment assignment"
 ```
 
 Create `prod.tfvars`:
 ```hcl
-jamf_environment = "prod"
-extension_attribute_name = "Production"
-enable_extension_attributes = true
-
-department_choices = [
-  "Engineering",
-  "Sales",
-  "Marketing", 
-  "Support",
-  "Executive",
-  "Finance",
-  "Human Resources"
-]
-
-mobile_locations = [
-  "Corporate Headquarters",
-  "Regional Office - East",
-  "Regional Office - West",
-  "Regional Office - International",
-  "Remote Work",
-  "Client Site"
-]
+# Production environment settings
+department_name      = "Production Team"
+team_size           = 10
+is_active           = true
+environment         = "prod"
+attribute_name      = "Production Department"
+attribute_description = "Production environment assignment"
 ```
 
-**Step 5: Test Variable Validation**
+**Step 2: Test Different Environments**
 
 ```bash
-# Initialize
-terraform init
+# Clean up previous resources
+terraform destroy
 
-# Test with default values
+# Deploy to dev environment
+terraform plan -var-file="dev.tfvars"
+terraform apply -var-file="dev.tfvars"
+
+# See what dev created
+terraform output deployment_summary
+
+# Switch to staging (destroy dev first)
+terraform destroy -var-file="dev.tfvars"
+terraform apply -var-file="staging.tfvars"
+
+# Compare staging output
+terraform output deployment_summary
+
+# Switch to production
+terraform destroy -var-file="staging.tfvars"
+terraform apply -var-file="prod.tfvars"
+
+# See production output
+terraform output deployment_summary
+```
+
+**Step 3: Create a Default terraform.tfvars**
+
+Create `terraform.tfvars` (automatically loaded):
+```hcl
+# Default values - automatically loaded
+department_name      = "Default Team"
+team_size           = 5
+is_active           = true
+environment         = "default"
+attribute_name      = "Default Department"
+attribute_description = "Default department assignment"
+```
+
+**Step 4: Test Variable Precedence**
+
+```bash
+# This uses terraform.tfvars automatically
 terraform plan
 
-# Test with dev environment
+# This overrides terraform.tfvars
 terraform plan -var-file="dev.tfvars"
 
-# Test with prod environment  
-terraform plan -var-file="prod.tfvars"
-
-# Test validation - this should fail
-terraform plan -var='jamf_environment=invalid'
-
-# Test validation - this should fail
-terraform plan -var='department_choices=["Only One"]'
-
-# Apply with dev environment
-terraform apply -var-file="dev.tfvars"
+# Command line overrides everything
+terraform plan -var-file="dev.tfvars" -var="team_size=99"
 ```
+
+**🎉 You've learned:**
+- `.tfvars` files for environment-specific values
+- `terraform.tfvars` is loaded automatically
+- `-var-file` to specify which file to use
+- Variable precedence: command line > var-file > terraform.tfvars > defaults
 
 ---
 
-## 🧪 **Lab 2**: Outputs and Locals with API Integration
-**Duration**: 20 minutes
+## 🧪 **Lab 2**: Number and Boolean Variables - API Integration
+**Duration**: 15 minutes
 
-Practice using outputs and locals with API integrations and restricted software.
+Practice with number and boolean variables for API configuration.
 
 **Step 1: Create Advanced Configuration**
 
