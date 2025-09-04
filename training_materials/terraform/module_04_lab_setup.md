@@ -10,7 +10,7 @@ By completing these lab setup instructions, you will be able to:
 
 - ✅ Install and configure Terraform on your system
 - ✅ Set up VS Code with HashiCorp Terraform extensions
-- ✅ Configure cloud provider CLI tools (AWS/Azure/GCP)
+- ✅ Configure Jamf Pro API client credentials
 - ✅ Verify your development environment is ready for Terraform labs
 - ✅ Create an organized workspace for hands-on exercises
 
@@ -24,7 +24,7 @@ Before starting the Module 04 labs, you must have the following software install
 
 - [ ] **Terraform** (Latest version)
 - [ ] **VS Code** with Terraform extensions
-- [ ] **Cloud Provider CLI** (AWS CLI, Azure CLI, or GCP SDK)
+- [ ] **Jamf Pro API Client Credentials** (Client ID and Secret)
 - [ ] **Git** for version control
 - [ ] **curl/wget** for testing (usually pre-installed)
 
@@ -125,113 +125,106 @@ code --install-extension eamodio.gitlens                  # Enhanced Git feature
 code --install-extension ms-python.python                 # Python support
 ```
 
-### ☁️ Step 3: Install Cloud Provider CLI
+### 🔐 Step 3: Setup Jamf Pro API Client Credentials
 
-**You need at least ONE of the following cloud CLIs:**
+**Terraform for Jamf Pro requires API client credentials to authenticate with your Jamf Pro server.**
 
-#### 🟠 AWS CLI v2 Installation
+#### 📋 Prerequisites
 
-**macOS:**
+- Access to a Jamf Pro server (version 10.49.0 or later)
+- Administrator privileges to create API roles and clients
+- Your Jamf Pro server URL (e.g., `https://your-jamf-server.jamfcloud.com`)
+
+#### 🔧 Create API Role in Jamf Pro
+
+1. **Login to Jamf Pro** as an administrator
+2. Navigate to **Settings** → **System** → **API Roles and Clients**
+3. Click **+ New** to create a new API Role
+4. **Configure the API Role:**
+   - **Display Name**: `Terraform Management Role`
+   - **Privileges**: Select the required API endpoints for your Terraform configurations
+   - **Recommended minimum privileges** for basic operations:
+     - `Read Categories`
+     - `Create Categories` 
+     - `Update Categories`
+     - `Delete Categories`
+     - `Read Policies`
+     - `Create Policies`
+     - `Update Policies`
+     - `Delete Policies`
+     - `Read Computer Groups`
+     - `Create Computer Groups`
+     - `Update Computer Groups`
+     - `Delete Computer Groups`
+
+💡 **Pro Tip**: Start with minimal permissions and add more as needed for your specific Terraform configurations.
+
+#### 🔑 Create API Client in Jamf Pro
+
+1. In **API Roles and Clients**, click the **API Clients** tab
+2. Click **+ New** to create a new API Client
+3. **Configure the API Client:**
+   - **Display Name**: `Terraform Client`
+   - **Access Token Lifetime**: `30 minutes` (recommended)
+   - **API Roles**: Assign the `Terraform Management Role` created above
+4. **Click Create**
+5. **Important**: Copy and securely store the **Client ID** and **Client Secret** - you cannot retrieve the secret again
+
+#### 🔒 Secure Storage of Credentials
+
+**Create environment variables for your credentials:**
+
+**macOS/Linux:**
 ```bash
-curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-sudo installer -pkg AWSCLIV2.pkg -target /
+# Add to your ~/.bashrc, ~/.zshrc, or ~/.profile
+export JAMF_PRO_URL="https://your-jamf-server.jamfcloud.com"
+export JAMF_PRO_CLIENT_ID="your-client-id-here"
+export JAMF_PRO_CLIENT_SECRET="your-client-secret-here"
+
+# Reload your shell configuration
+source ~/.bashrc  # or ~/.zshrc
 ```
 
-**Windows:**
+**Windows (PowerShell):**
 ```powershell
-# Download and run the MSI installer from:
-# https://awscli.amazonaws.com/AWSCLIV2.msi
+# Set environment variables for current session
+$env:JAMF_PRO_URL = "https://your-jamf-server.jamfcloud.com"
+$env:JAMF_PRO_CLIENT_ID = "your-client-id-here"
+$env:JAMF_PRO_CLIENT_SECRET = "your-client-secret-here"
+
+# Or set permanently using System Properties > Environment Variables
+# Or add to your PowerShell profile
 ```
 
-**Linux:**
+#### ✅ Test API Access
+
+**Verify your credentials work by getting an access token:**
+
 ```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
+# Test API authentication (replace with your actual server URL)
+curl -X POST "https://your-jamf-server.jamfcloud.com/api/oauth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=${JAMF_PRO_CLIENT_ID}" \
+  -d "grant_type=client_credentials" \
+  -d "client_secret=${JAMF_PRO_CLIENT_SECRET}"
 ```
 
-**Verify AWS CLI:**
-```bash
-aws --version
+**Expected successful response:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "Bearer",
+  "expires_in": 1800
+}
 ```
 
-**Configure AWS CLI:**
-```bash
-aws configure
-# You'll need:
-# - AWS Access Key ID
-# - AWS Secret Access Key  
-# - Default region (e.g., us-west-2)
-# - Output format (json recommended)
-```
+#### 🔄 Credential Management Best Practices
 
-#### 🔵 Azure CLI Installation
-
-**macOS:**
-```bash
-brew install azure-cli
-```
-
-**Windows:**
-```powershell
-# Download and run the MSI installer from:
-# https://aka.ms/installazurecliwindows
-```
-
-**Linux:**
-```bash
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-```
-
-**Verify Azure CLI:**
-```bash
-az --version
-```
-
-**Login to Azure:**
-```bash
-az login
-```
-
-#### 🟡 Google Cloud SDK Installation
-
-**macOS:**
-```bash
-# Option 1: Using Homebrew
-brew install --cask google-cloud-sdk
-
-# Option 2: Manual installation
-curl https://sdk.cloud.google.com | bash
-exec -l $SHELL
-```
-
-**Windows:**
-```powershell
-# Download and run the installer from:
-# https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
-```
-
-**Linux:**
-```bash
-# Add Google Cloud SDK repository
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-
-# Import Google Cloud public key
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-
-# Update and install
-sudo apt-get update && sudo apt-get install google-cloud-cli
-```
-
-**Verify Google Cloud SDK:**
-```bash
-gcloud --version
-```
-
-**Initialize Google Cloud SDK:**
-```bash
-gcloud init
-```
+- **Never commit credentials** to version control
+- **Use environment variables** instead of hardcoding values
+- **Rotate client secrets** regularly
+- **Use minimum required privileges** for API roles
+- **Monitor API usage** in Jamf Pro logs
 
 ### 🔧 Step 4: Install Additional Tools
 
@@ -291,10 +284,10 @@ code --version
 # Verify Git
 git --version
 
-# Verify cloud CLI (choose the one you installed)
-aws --version          # AWS CLI
-az --version           # Azure CLI
-gcloud --version       # Google Cloud SDK
+# Verify Jamf Pro credentials are set
+echo $JAMF_PRO_URL
+echo $JAMF_PRO_CLIENT_ID
+# Note: Don't echo the client secret for security
 
 # Verify optional tools
 jq --version           # JSON processor
@@ -308,8 +301,11 @@ $ terraform --version
 Terraform v1.6.0
 on darwin_amd64
 
-$ aws --version  
-aws-cli/2.13.25 Python/3.11.5 Darwin/23.1.0 source/x86_64 prompt/off
+$ echo $JAMF_PRO_URL
+https://your-jamf-server.jamfcloud.com
+
+$ echo $JAMF_PRO_CLIENT_ID
+12345678-abcd-1234-efgh-123456789012
 
 $ code --version
 1.84.0
@@ -371,26 +367,58 @@ Let's verify everything works with a minimal Terraform configuration:
 # Navigate to test directory
 cd ~/terraform-labs/module-04/lab1-first-config
 
-# Create a simple test file
+# Create a simple test file for Jamf Pro
 cat > test.tf << 'EOF'
 terraform {
   required_version = ">= 1.0"
   
   required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
+    jamfpro = {
+      source  = "deploymenttheory/jamfpro"
+      version = "~> 0.0.50"
     }
   }
 }
 
-resource "random_integer" "test" {
-  min = 1
-  max = 100
+# Configure the Jamf Pro provider
+provider "jamfpro" {
+  jamfpro_url         = var.jamfpro_url
+  client_id           = var.client_id
+  client_secret       = var.client_secret
 }
 
-output "random_number" {
-  value = random_integer.test.result
+# Variables for configuration
+variable "jamfpro_url" {
+  description = "Jamf Pro server URL"
+  type        = string
+  default     = ""
+}
+
+variable "client_id" {
+  description = "Jamf Pro API client ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "client_secret" {
+  description = "Jamf Pro API client secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# Create a test category
+resource "jamfpro_category" "test" {
+  name     = "Terraform Test Category"
+  priority = 10
+}
+
+output "category_info" {
+  value = {
+    name = jamfpro_category.test.name
+    id   = jamfpro_category.test.id
+  }
 }
 EOF
 ```
@@ -410,14 +438,22 @@ terraform fmt
 # Create execution plan
 terraform plan
 
-# Apply the configuration (creates the random number)
-terraform apply -auto-approve
+# Apply the configuration with your Jamf Pro credentials
+terraform apply \
+  -var="jamfpro_url=$JAMF_PRO_URL" \
+  -var="client_id=$JAMF_PRO_CLIENT_ID" \
+  -var="client_secret=$JAMF_PRO_CLIENT_SECRET" \
+  -auto-approve
 
 # View outputs
 terraform output
 
-# Clean up
-terraform destroy -auto-approve
+# Clean up - destroy the test category
+terraform destroy \
+  -var="jamfpro_url=$JAMF_PRO_URL" \
+  -var="client_id=$JAMF_PRO_CLIENT_ID" \
+  -var="client_secret=$JAMF_PRO_CLIENT_SECRET" \
+  -auto-approve
 ```
 
 **Expected workflow success indicates your environment is ready!**
@@ -431,7 +467,7 @@ terraform destroy -auto-approve
 - [ ] **Run `terraform --version`** and see version 1.x.x or later
 - [ ] **Run `terraform init`** in a directory with a .tf file
 - [ ] **Open VS Code** and see Terraform syntax highlighting in .tf files
-- [ ] **Run cloud CLI commands** (aws/az/gcloud --version)
+- [ ] **Verify Jamf Pro credentials** are set in environment variables
 - [ ] **Execute the test workflow** above without errors
 - [ ] **Navigate between lab directories** you created
 - [ ] **Format Terraform code** using `terraform fmt`
@@ -445,11 +481,11 @@ terraform destroy -auto-approve
 **Problem**: VS Code doesn't highlight .tf files
 - **Solution**: Install HashiCorp Terraform extension, restart VS Code
 
-**Problem**: Cloud CLI authentication fails
-- **Solution**: Run `aws configure`, `az login`, or `gcloud auth login`
+**Problem**: Jamf Pro API authentication fails
+- **Solution**: Verify your client credentials and server URL are correct, test with curl command
 
 **Problem**: Permission denied errors
-- **Solution**: Check cloud account permissions and credentials
+- **Solution**: Check Jamf Pro API role permissions and ensure user has admin access
 
 **Problem**: Provider download fails
 - **Solution**: Check internet connection and firewall settings
