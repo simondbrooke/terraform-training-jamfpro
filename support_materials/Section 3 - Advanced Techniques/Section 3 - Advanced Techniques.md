@@ -75,23 +75,39 @@ variable "enable_self_service" {
 
 # Using primitive types with Jamf Pro
 resource "jamfpro_policy" "install_chrome" {
-  name           = "Install Google Chrome (${var.environment})"
-  enabled        = true
-  frequency      = "Once per computer"
-  retry_attempts = var.policy_retry_limit   # number
+  name     = "Install Google Chrome (${var.environment})"
+  enabled  = true
+  frequency = "Once per computer"
 
-  self_service {
-    use_for_self_service = var.enable_self_service  # bool
-    feature_on_main_page = true
-    self_service_display_name = "Install Chrome"
-  }
+  # retry_attempts must be -1 or between 1 and 10
+  retry_attempts = var.policy_retry_limit
 
+  trigger_checkin = true
+  trigger_login   = false
+
+  # Example of using boolean and string interpolation
   scope {
-    all_computers = var.environment == "production" ? true : false  # string conditional
+    all_computers = var.environment == "production" ? true : false
   }
 
-  # Example of using number/float in a description
-  # (not functional in Jamf, just showing variable use)
+  # Self Service configuration
+  self_service {
+    use_for_self_service     = var.enable_self_service
+    feature_on_main_page     = true
+    self_service_display_name = "Install Chrome"
+    install_button_text      = "Install"
+  }
+
+  # Payload block is required
+  payloads {
+    package {
+      id   = 123   # Example package ID from Jamf Pro
+      name = "GoogleChrome.pkg"
+    }
+  }
+
+  # Example of using number/float in notes
+  # (not functional in Jamf Pro, just showing expression use)
   notes = "Patch compliance threshold is ${var.patch_threshold}%"
 }
 ```
