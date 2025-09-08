@@ -75,23 +75,39 @@ variable "enable_self_service" {
 
 # Using primitive types with Jamf Pro
 resource "jamfpro_policy" "install_chrome" {
-  name           = "Install Google Chrome (${var.environment})"
-  enabled        = true
-  frequency      = "Once per computer"
-  retry_attempts = var.policy_retry_limit   # number
+  name     = "Install Google Chrome (${var.environment})"
+  enabled  = true
+  frequency = "Once per computer"
 
-  self_service {
-    use_for_self_service = var.enable_self_service  # bool
-    feature_on_main_page = true
-    self_service_display_name = "Install Chrome"
-  }
+  # retry_attempts must be -1 or between 1 and 10
+  retry_attempts = var.policy_retry_limit
 
+  trigger_checkin = true
+  trigger_login   = false
+
+  # Example of using boolean and string interpolation
   scope {
-    all_computers = var.environment == "production" ? true : false  # string conditional
+    all_computers = var.environment == "production" ? true : false
   }
 
-  # Example of using number/float in a description
-  # (not functional in Jamf, just showing variable use)
+  # Self Service configuration
+  self_service {
+    use_for_self_service     = var.enable_self_service
+    feature_on_main_page     = true
+    self_service_display_name = "Install Chrome"
+    install_button_text      = "Install"
+  }
+
+  # Payload block is required
+  payloads {
+    package {
+      id   = 123   # Example package ID from Jamf Pro
+      name = "GoogleChrome.pkg"
+    }
+  }
+
+  # Example of using number/float in notes
+  # (not functional in Jamf Pro, just showing expression use)
   notes = "Patch compliance threshold is ${var.patch_threshold}%"
 }
 ```
@@ -99,21 +115,27 @@ resource "jamfpro_policy" "install_chrome" {
 ### 📋 Collection Types
 
 ```hcl
+# ───────────────────────────────
 # List type - ordered collection
+# ───────────────────────────────
 variable "departments" {
   description = "List of departments to apply configuration to"
   type        = list(string)
   default     = ["Engineering", "Marketing", "Finance"]
 }
 
+# ───────────────────────────────
 # Set type - unordered unique collection
-variable "restricted_apps" {
-  description = "Set of restricted applications"
+# ───────────────────────────────
+variable "restricted_categories" {
+  description = "Set of Self Service categories for config profiles"
   type        = set(string)
-  default     = ["Steam", "Spotify", "Dropbox"]
+  default     = ["Networking", "Security", "Productivity"]
 }
 
+# ───────────────────────────────
 # Map type - key-value pairs
+# ───────────────────────────────
 variable "profile_metadata" {
   description = "Map of profile metadata"
   type        = map(string)
@@ -124,84 +146,126 @@ variable "profile_metadata" {
   }
 }
 
+# ───────────────────────────────
 # Using collection types with Jamf Pro
+# ───────────────────────────────
 
 # Create one configuration profile per department (list)
-resource "jamfpro_configuration_profile" "department_profiles" {
-  count  = length(var.departments)  # list length
+resource "jamfpro_macos_configuration_profile" "department_profiles" {
+  count  = length(var.departments)  # number of profiles = departments
   name   = "${var.departments[count.index]} - Screen Lock Policy"
-  payload = file("profiles/screenlock.mobileconfig")
+  description = "Screen lock enforcement for ${var.departments[count.index]}"
+
+  distribution_method = "Install Automatically"
+  level               = "System"
+  redeploy_on_update  = "All"
+
+  # Load department-specific payload file
+  payloads = file("profiles/screenlock.mobileconfig")
 
   scope {
-    department = var.departments[count.index]  # list access
+    department = var.departments[count.index]  # list access by index
   }
 
-  category = var.profile_metadata["Project"]   # map lookup
+  # Use metadata map for tagging or notes
+  category_id = 1
 }
 
-# Restrict multiple applications dynamically (set)
-resource "jamfpro_restricted_software" "restricted_apps" {
-  for_each = var.restricted_apps  # unique set iteration
+# Self Service categories applied dynamically (set)
+resource "jamfpro_macos_configuration_profile" "restricted_categories" {
+  for_each = var.restricted_categories  # iterate over unique set
 
-  name                = "Block ${each.value}"
-  process_name        = "${each.value}.app"
-  match_exact_process = true
-  send_notification   = true
-  kill_process        = true
+  name        = "Baseline Security Profile - ${each.value}"
+  description = "Baseline settings for ${each.value} category"
+
+  distribution_method = "Make Available in Self Service"
+  level               = "System"
+  redeploy_on_update  = "All"
+
+  payloads = file("profiles/baseline.mobileconfig")
+
+  scope {
+    all_computers = true
+  }
+
+  self_service {
+    self_service_display_name = "Security Profile (${each.value})"
+    feature_on_main_page      = true
+
+    self_service_category = [
+      {
+        id         = 1
+        name       = each.value  # dynamically inject category name
+        display_in = true
+        feature_in = false
+      }
+    ]
+  }
 }
+
 ```
 
 ### 🏗️ Structural Types
 
 ```hcl
+# ───────────────────────────────
 # Object type - structured data
+# ───────────────────────────────
 variable "profile_config" {
   description = "Configuration profile settings"
   type = object({
-    display_name       = string
-    category           = string
-    enabled            = bool
+    display_name        = string
+    description         = string
     distribution_method = string
-    level              = string
-    removal_disallowed = bool
-    scope_all_devices  = bool
+    level               = string
+    user_removable      = bool
+    scope_all_devices   = bool
   })
 
   default = {
     display_name        = "Screen Lock Policy"
-    category            = "Security"
-    enabled             = true
-    distribution_method = "InstallAutomatically"
-    level               = "ComputerLevel"
-    removal_disallowed  = true
+    description         = "Enforce screen lock settings across all devices"
+    distribution_method = "Install Automatically"
+    level               = "System"
+    user_removable      = false
     scope_all_devices   = true
   }
 }
 
+# ───────────────────────────────
 # Tuple type - ordered collection of different types
+# ───────────────────────────────
 variable "policy_specs" {
   description = "Policy specifications [name, retry_limit, frequency, enabled]"
   type        = tuple([string, number, string, bool])
   default     = ["Install Chrome", 3, "Once per computer", true]
 }
 
+# ───────────────────────────────
 # Using structural types
-resource "jamfpro_configuration_profile" "main" {
-  name               = var.profile_config.display_name
-  category           = var.profile_config.category
-  enabled            = var.profile_config.enabled
+# ───────────────────────────────
+
+# Configuration Profile using object
+resource "jamfpro_macos_configuration_profile" "main" {
+  name                = var.profile_config.display_name
+  description         = var.profile_config.description
   distribution_method = var.profile_config.distribution_method
-  level              = var.profile_config.level
-  removal_disallowed = var.profile_config.removal_disallowed
+  level               = var.profile_config.level
+  redeploy_on_update  = "All"
+
+  payloads = file("profiles/screenlock.mobileconfig")
 
   scope {
     all_computers = var.profile_config.scope_all_devices
   }
 
-  payload = file("profiles/screenlock.mobileconfig")
+  self_service {
+    self_service_display_name = var.profile_config.display_name
+    feature_on_main_page      = true
+  }
 }
 
-# Using tuple
+# Extract tuple values into locals for clarity
 locals {
   policy_name    = var.policy_specs[0]  # string
   retry_limit    = var.policy_specs[1]  # number
@@ -209,23 +273,32 @@ locals {
   policy_enabled = var.policy_specs[3]  # bool
 }
 
+# Policy using tuple
 resource "jamfpro_policy" "install_app" {
-  name           = local.policy_name
-  enabled        = local.policy_enabled
-  frequency      = local.frequency
-  retry_attempts = local.retry_limit
-
-  self_service {
-    use_for_self_service     = true
-    self_service_display_name = local.policy_name
-  }
+  name            = local.policy_name
+  enabled         = local.policy_enabled
+  frequency       = local.frequency
+  retry_attempts  = local.retry_limit
+  retry_event     = "check-in"
+  target_drive    = "/"
+  network_requirements = "Any"
 
   scope {
     all_computers = true
   }
 
-  package {
-    name = "GoogleChrome.pkg"
+  self_service {
+    self_service_display_name = local.policy_name
+    feature_on_main_page      = true
+  }
+
+  payloads {
+    packages = [
+      {
+        id   = 1
+        name = "GoogleChrome.pkg"
+      }
+    ]
   }
 }
 ```
@@ -239,7 +312,9 @@ String templates enable **dynamic string construction** with interpolation and c
 ### 🔗 String Interpolation
 
 ```hcl
-# Basic interpolation
+# ───────────────────────────────
+# Basic interpolation and locals
+# ───────────────────────────────
 locals {
   project_name = "jamf-demo"
   environment  = "production"
@@ -255,7 +330,9 @@ locals {
   policy_name = "${local.project_name}-${local.environment}-${formatdate("YYYY-MM-DD", timestamp())}"
 }
 
+# ───────────────────────────────
 # Multi-line string with interpolation (example config documentation file)
+# ───────────────────────────────
 resource "local_file" "config" {
   filename = "jamf-config.yaml"
   content = <<-EOT
@@ -269,26 +346,42 @@ resource "local_file" "config" {
   EOT
 }
 
+# ───────────────────────────────
 # Interpolation in resource arguments
+# ───────────────────────────────
 resource "jamfpro_policy" "install_app" {
   count = 3
 
-  name      = "${local.project_name}-Install-App-${count.index + 1}"
-  enabled   = true
-  frequency = "Once per computer"
+  name                 = "${local.project_name}-Install-App-${count.index + 1}"
+  enabled              = true
+  frequency            = "Once per computer"
+  retry_attempts       = 2
+  retry_event          = "check-in"
+  target_drive         = "/"
+  network_requirements = "Any"
 
   self_service {
-    use_for_self_service      = true
     self_service_display_name = "${local.project_name} App ${count.index + 1}"
+    feature_on_main_page      = true
   }
 
   scope {
     all_computers = false
-    computer_group = "${local.smart_group_name}-${count.index + 1}"
+    computer_groups = [
+      {
+        id   = 100 + count.index
+        name = "${local.smart_group_name}-${count.index + 1}"
+      }
+    ]
   }
 
-  package {
-    name = "App-${count.index + 1}.pkg"
+  payloads {
+    packages = [
+      {
+        id   = count.index + 1
+        name = "App-${count.index + 1}.pkg"
+      }
+    ]
   }
 
   category = "Deployment-${local.environment}"
@@ -299,7 +392,9 @@ resource "jamfpro_policy" "install_app" {
 ### 🎛️ String Directives
 
 ```hcl
-# Conditional directives
+# ───────────────────────────────
+# Conditional directives and locals
+# ───────────────────────────────
 locals {
   environment = "production"
   debug_mode  = false
@@ -316,7 +411,7 @@ locals {
       retry_limit  = 2
       self_service = true
     }
-    prod = {
+    production = {
       scope_group  = "All Computers"
       retry_limit  = 5
       self_service = false
@@ -324,15 +419,20 @@ locals {
   }
 }
 
+# ───────────────────────────────
 # Conditional directives inside a Jamf Pro policy
+# ───────────────────────────────
 resource "jamfpro_policy" "install_chrome" {
-  name     = "Install Chrome - ${local.environment}"
-  enabled  = true
-  frequency = "Once per computer"
+  name           = "Install Chrome - ${local.environment}"
+  enabled        = true
+  frequency      = "Once per computer"
+  retry_attempts = local.environments[local.environment].retry_limit
+  retry_event    = "check-in"
+  target_drive   = "/"
+  network_requirements = "Any"
 
   %{if contains(local.features, "self_service")}
   self_service {
-    use_for_self_service      = true
     self_service_display_name = "Install Chrome"
     feature_on_main_page      = true
   }
@@ -342,27 +442,41 @@ resource "jamfpro_policy" "install_chrome" {
     %{if local.environment == "production"}
     all_computers = true
     %{else}
-    computer_group = local.environments[local.environment].scope_group
+    computer_groups = [
+      {
+        id   = 200
+        name = local.environments[local.environment].scope_group
+      }
+    ]
     %{endif}
   }
 
-  retry_attempts = local.environments[local.environment].retry_limit
-
-  package {
-    name = "GoogleChrome.pkg"
+  payloads {
+    packages = [
+      {
+        id   = 1
+        name = "GoogleChrome.pkg"
+      }
+    ]
   }
 
   category = "Applications"
   notes    = "Deployed in ${local.environment} environment"
 }
 
+# ───────────────────────────────
 # For directive to generate multiple policies
+# ───────────────────────────────
 resource "jamfpro_policy" "utilities" {
   for_each = toset(["Install Zoom", "Install Slack", "Run Inventory"])
 
-  name      = "${each.value} - ${local.environment}"
-  enabled   = true
-  frequency = each.value == "Run Inventory" ? "Ongoing" : "Once per computer"
+  name           = "${each.value} - ${local.environment}"
+  enabled        = true
+  frequency      = each.value == "Run Inventory" ? "Ongoing" : "Once per computer"
+  retry_attempts = 1
+  retry_event    = "check-in"
+  target_drive   = "/"
+  network_requirements = "Any"
 
   scope {
     all_computers = local.environment == "production" ? true : false
@@ -370,7 +484,6 @@ resource "jamfpro_policy" "utilities" {
 
   %{if contains(local.features, "self_service")}
   self_service {
-    use_for_self_service      = true
     self_service_display_name = each.value
   }
   %{endif}
@@ -388,6 +501,9 @@ Terraform supports **arithmetic**, **comparison**, and **logical operators** for
 ### ➕ Arithmetic Operators
 
 ```hcl
+# ───────────────────────────────
+# Arithmetic with locals
+# ───────────────────────────────
 locals {
   # Basic arithmetic
   base_retry   = 5
@@ -413,28 +529,44 @@ locals {
   utilization_ratio = (local.total_devices / var.max_devices) * 100
 }
 
-# Using arithmetic in Jamf Pro resource configuration
+# ───────────────────────────────
+# Jamf Pro Policy with arithmetic
+# ───────────────────────────────
 resource "jamfpro_policy" "install_app" {
-  count = local.max_retries
+  count           = local.max_retries
+  name            = "Install ExampleApp - Attempt ${count.index + 1}"
+  enabled         = true
+  frequency       = "Once per computer"
+  retry_attempts  = local.min_retries
+  retry_event     = "check-in"
+  target_drive    = "/"
+  network_requirements = "Any"
 
-  name      = "Install ExampleApp - Attempt ${count.index + 1}"
-  enabled   = true
-  frequency = "Once per computer"
-
-  retry_attempts = local.min_retries
-
+  # Self Service settings (enabled conditionally via locals)
   self_service {
-    use_for_self_service      = true
     self_service_display_name = "Install ExampleApp"
+    feature_on_main_page      = true
   }
 
+  # Scope can switch between all_computers or specific groups
   scope {
     all_computers = false
-    computer_group = "Test Group ${count.index + 1}"
+    computer_groups = [
+      {
+        id   = 300
+        name = "Test Group ${count.index + 1}"
+      }
+    ]
   }
 
-  package {
-    name = "ExampleApp.pkg"
+  # Correct schema: packages go inside payloads
+  payloads {
+    packages = [
+      {
+        id   = 42
+        name = "ExampleApp.pkg"
+      }
+    ]
   }
 
   category = "Applications"
@@ -474,36 +606,55 @@ locals {
 
 # Using comparisons in conditionals
 resource "jamfpro_policy" "deploy_app" {
-  name      = "Deploy ExampleApp"
-  enabled   = true
-  frequency = local.is_production ? "Once per computer" : "Recurring"
-
+  name           = "Deploy ExampleApp"
+  enabled        = true
+  frequency      = local.is_production ? "Once per computer" : "Recurring"
   retry_attempts = local.high_retry_count ? 10 : 3
+  network_requirements = "Any"
 
-  self_service {
-    use_for_self_service      = true
-    self_service_display_name = "Install ExampleApp"
-  }
+  # Optional triggers
+  trigger_checkin               = true
+  trigger_enrollment_complete   = false
+  trigger_login                 = false
+  trigger_network_state_changed = false
+  trigger_startup               = false
+  trigger_other                 = ""
 
-  scope {
-    all_computers = local.needs_stronger_scope ? true : false
-    computer_group = local.is_enterprise_policy ? "Enterprise Group" : "Standard Group"
-  }
+  # Required payloads
+  payloads = [
+    {
+      type = "package"
+      name = "ExampleApp.pkg"
+    }
+  ]
 
-  package {
-    name = "ExampleApp.pkg"
-  }
+  # Required scope
+  scope = [
+    {
+      all_computers  = local.needs_stronger_scope
+      computer_group = local.is_enterprise_policy ? "Enterprise Group" : "Standard Group"
+    }
+  ]
 
-  category = local.is_enterprise_policy ? "Enterprise Apps" : "Applications"
+  # Optional self-service
+  self_service = [
+    {
+      use_for_self_service      = true
+      self_service_display_name = "Install ExampleApp"
+    }
+  ]
+
+  # Optional package distribution point
+  package_distribution_point = "default"
 
   notes = <<EOT
-    Environment: ${local.environment}
-    Retry Attempts: ${local.policy_attempts}
-    CPU Threshold: ${local.cpu_threshold}%
-    Memory: ${local.memory_gb} GB
-    Needs stronger scope? ${local.needs_stronger_scope}
-    Enterprise policy? ${local.is_enterprise_policy}
-  EOT
+Environment: ${local.environment}
+Retry Attempts: ${local.policy_attempts}
+CPU Threshold: ${local.cpu_threshold}%
+Memory: ${local.memory_gb} GB
+Needs stronger scope? ${local.needs_stronger_scope}
+Enterprise policy? ${local.is_enterprise_policy}
+EOT
 }
 ```
 
@@ -544,53 +695,85 @@ locals {
 
 # Using logical operators in Jamf Pro policy
 resource "jamfpro_policy" "deploy_app" {
-  name      = "Deploy ExampleApp"
-  enabled   = true
-  frequency = local.high_availability ? "Once per computer" : "Recurring"
-
+  name           = "Deploy ExampleApp"
+  enabled        = true
+  frequency      = local.high_availability ? "Once per computer" : "Recurring"
   retry_attempts = local.needs_backup ? 5 : 2
+  network_requirements = "Any"
 
-  scope {
-    all_computers  = local.fully_monitored
-    computer_group = local.production_ready ? "Production Devices" : "Standard Devices"
-  }
+  # Optional triggers
+  trigger_checkin               = true
+  trigger_enrollment_complete   = false
+  trigger_login                 = false
+  trigger_network_state_changed = false
+  trigger_startup               = false
+  trigger_other                 = ""
 
-  package {
-    name = "ExampleApp.pkg"
-  }
+  # Required payloads
+  payloads = [
+    {
+      type = "package"
+      name = "ExampleApp.pkg"
+    }
+  ]
 
-  category = local.cost_optimized ? "Cost Optimized Apps" : "General Apps"
+  # Required scope
+  scope = [
+    {
+      all_computers  = local.fully_monitored
+      computer_group = local.production_ready ? "Production Devices" : "Standard Devices"
+    }
+  ]
 
-  self_service {
-    use_for_self_service      = true
-    self_service_display_name = "Install ExampleApp"
-  }
+  # Optional self-service
+  self_service = [
+    {
+      use_for_self_service      = true
+      self_service_display_name = "Install ExampleApp"
+    }
+  ]
+
+  # Optional package distribution point
+  package_distribution_point = "default"
 
   notes = <<EOT
-    Environment: ${local.environment}
-    Device Count: ${local.device_count}
-    High Availability? ${local.high_availability}
-    Fully Monitored? ${local.fully_monitored}
-    Production Ready? ${local.production_ready}
-    Needs Backup? ${local.needs_backup}
-    Cost Optimized? ${local.cost_optimized}
-  EOT
+Environment: ${local.environment}
+Device Count: ${local.device_count}
+High Availability? ${local.high_availability}
+Fully Monitored? ${local.fully_monitored}
+Production Ready? ${local.production_ready}
+Needs Backup? ${local.needs_backup}
+Cost Optimized? ${local.cost_optimized}
+EOT
 }
 
-# Conditional role/policy creation
 resource "jamfpro_extension_attribute" "monitoring_enabled" {
   count = local.fully_monitored ? 1 : 0
 
   name        = "Monitoring Enabled"
   description = "Indicates if monitoring is enabled for high availability devices"
-  input_type  = "String"
-  value       = local.fully_monitored ? "Yes" : "No"
+  data_type   = "STRING"
+  enabled     = true
+  input_type  = "TEXT"
+
+  # If you wanted a script-based EA, you would use:
+  # input_type      = "SCRIPT"
+  # script_contents = <<EOT
+  #   #!/bin/bash
+  #   if [ ${local.fully_monitored} = true ]; then
+  #     echo "Yes"
+  #   else
+  #     echo "No"
+  #   fi
+  # EOT
+
+  inventory_display_type = "EXTENSION_ATTRIBUTES"
 }
 ```
 
 ---
 
-## ❓ Conditional Expressions
+## ❓ Conditional Expressions - Start Again from here
 
 Conditional expressions implement **if/else logic** using the ternary operator pattern.
 
@@ -1658,7 +1841,7 @@ resource "jamf_configuration_profile" "device_profiles" {
 
 **Exercises:**
 
-1. Create dynamic profiles for Dev, Staging, and Prod with different WiFi and VPN settings.
+1. Create dynamic profiles for Dev, Staging, and Prod with different Wi-Fi and VPN settings.
 2. Add dynamic restrictions that are only applied to Prod devices.
 3. Include a dynamic email configuration block that only applies if `each.value.email_config` is defined.
 
@@ -1682,7 +1865,7 @@ resource "jamf_configuration_profile" "device_profiles" {
 - Build a Jamf setup where:
   - Every environment automatically gets its device group and policies.
   - Scripts are assigned dynamically with conditional parameters.
-  - Profiles include optional WiFi, VPN, and email settings depending on environment.
+  - Profiles include optional Wi-Fi, VPN, and email settings depending on environment.
   - Tags and logging are fully automated for easy tracking.
 
 **🔍 What This Exercise Demonstrates:**
@@ -1732,7 +1915,7 @@ resource "jamf_configuration_profile" "device_profiles" {
 
 **🏗️ Technical Achievements:**
 
-- Built comprehensive multi-environment application with all expression types
+- Built comprehensive multienvironment application with all expression types
 - Implemented dynamic security groups with conditional rules based on environment
 - Created complex data transformations with nested for expressions and filtering
 - Developed template-based user data scripts with conditional feature installation
