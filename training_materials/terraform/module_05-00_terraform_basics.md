@@ -1,8 +1,7 @@
+# ⚡ Module 05: Terraform Basics
 
-# ⚡ Module 04: Terraform Basics
+## _Duration: 1 hours | Labs: 4_ | Difficulty: 🟢 Beginner\*
 
-*Duration: 3 hours | Labs: 4* | Difficulty: 🟢 Beginner*
----
 ## 🎯 Learning Objectives
 
 By the end of this module, you will be able to:
@@ -34,6 +33,7 @@ The Terraform lifecycle represents the complete process of managing infrastructu
 #### ⚡ Change Automation
 
 Terraform's change automation ensures that infrastructure changes are:
+
 - **🎯 Predictable**: Same configuration = same result
 - **📋 Planned**: Preview changes before applying
 - **🔄 Repeatable**: Consistent across environments
@@ -41,13 +41,13 @@ Terraform's change automation ensures that infrastructure changes are:
 
 **Traditional vs Terraform Change Management:**
 
-| Traditional | Terraform |
-|-------------|-----------|
-| Manual changes | Automated changes |
-| Inconsistent results | Consistent results |
-| No change preview | Plan before apply |
-| Hard to rollback | Easy rollback |
-| Documentation separate | Self-documenting |
+| Traditional            | Terraform          |
+| ---------------------- | ------------------ |
+| Manual changes         | Automated changes  |
+| Inconsistent results   | Consistent results |
+| No change preview      | Plan before apply  |
+| Hard to rollback       | Easy rollback      |
+| Documentation separate | Self-documenting   |
 
 #### 📋 Execution Plans
 
@@ -56,7 +56,7 @@ Execution plans are Terraform's way of showing you exactly what will happen befo
 **🔍 Plan Output Symbols:**
 
 - **`+`** = Resource will be **created**
-- **`-`** = Resource will be **destroyed**  
+- **`-`** = Resource will be **destroyed**
 - **`~`** = Resource will be **modified**
 - **`-/+`** = Resource will be **replaced** (destroyed then created)
 
@@ -100,6 +100,7 @@ Plan: 1 to add, 1 to change, 0 to destroy.
 Terraform builds a **dependency graph** from your configuration and uses it to determine the correct order for resource operations. You can visualize this graph using `terraform graph`.
 
 **📝 Basic Usage:**
+
 ```bash
 # Generate dependency graph
 terraform graph
@@ -117,6 +118,7 @@ xdg-open graph.svg  # Linux
 ```
 
 **🔧 Installing GraphViz:**
+
 ```bash
 # macOS
 brew install graphviz
@@ -129,12 +131,14 @@ sudo yum install graphviz
 ```
 
 **🎯 What the Graph Shows:**
+
 - **Resource dependencies**: Which resources depend on others
 - **Parallel execution**: Resources that can be created simultaneously
 - **Execution order**: The sequence Terraform will follow
 - **Data source relationships**: How data flows between resources
 
 **📈 Dependency Graph Example (Jamf Pro):**
+
 ```hcl
 # This configuration creates dependencies
 resource "jamfpro_category" "software" {
@@ -162,11 +166,13 @@ The graph shows: **Category → Computer Group → Policy** dependency chain.
 [hashi docs: terraform graph command](https://developer.hashicorp.com/terraform/cli/commands/graph)
 
 ### 💻 **Exercise 3.1**: Visualizing Dependencies with Terraform Graph
+
 **Duration**: 20 minutes
 
 Let's explore Terraform's dependency graph using Jamf Pro resources to understand how Terraform determines execution order.
 
 **Step 1: Setup Project Structure**
+
 ```bash
 # Create new project directory
 mkdir ~/terraform-graph-example
@@ -179,6 +185,7 @@ code .
 **Step 2: Create Variables File**
 
 Create `variables.tf`:
+
 ```hcl
 variable "version_number" {
   description = "The version number to include in the name and install button text."
@@ -190,10 +197,11 @@ variable "version_number" {
 **Step 3: Create Jamf Pro Configuration with Dependencies**
 
 Create `main.tf`:
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -230,7 +238,7 @@ resource "jamfpro_category" "security" {
 # 2. Smart Computer Groups (no dependencies on other resources)
 resource "jamfpro_smart_computer_group" "developer_machines" {
   name = "Developer Machines - ${var.version_number}"
-  
+
   criteria {
     name          = "Department"
     priority      = 0
@@ -244,7 +252,7 @@ resource "jamfpro_smart_computer_group" "developer_machines" {
 
 resource "jamfpro_smart_computer_group" "marketing_machines" {
   name = "Marketing Machines - ${var.version_number}"
-  
+
   criteria {
     name          = "Department"
     priority      = 0
@@ -266,12 +274,12 @@ resource "jamfpro_policy" "developer_maintenance" {
   frequency                  = "Once per computer"
   target_drive               = "/"
   category_id                = jamfpro_category.software.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.developer_machines.id]
   }
-  
+
   payloads {
     maintenance {
       recon                       = true
@@ -296,7 +304,7 @@ resource "jamfpro_policy" "security_baseline" {
   frequency                  = "Ongoing"
   target_drive               = "/"
   category_id                = jamfpro_category.security.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [
@@ -304,7 +312,7 @@ resource "jamfpro_policy" "security_baseline" {
       jamfpro_smart_computer_group.marketing_machines.id
     ]
   }
-  
+
   payloads {
     maintenance {
       recon                       = true
@@ -326,7 +334,7 @@ resource "jamfpro_macos_configuration_profile_plist" "root_ca_cert" {
   payload_validate    = true
   user_removable      = false
   category_id         = jamfpro_category.software.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.developer_machines.id]
@@ -341,7 +349,7 @@ resource "jamfpro_policy" "self_service_apps" {
   frequency             = "Ongoing"
   target_drive          = "/"
   category_id           = jamfpro_category.software.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [
@@ -349,7 +357,7 @@ resource "jamfpro_policy" "self_service_apps" {
       jamfpro_smart_computer_group.marketing_machines.id
     ]
   }
-  
+
   self_service {
     use_for_self_service            = true
     install_button_text             = "Install Apps - ${var.version_number}"
@@ -357,7 +365,7 @@ resource "jamfpro_policy" "self_service_apps" {
     force_users_to_view_description = true
     feature_on_main_page           = true
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -369,6 +377,7 @@ resource "jamfpro_policy" "self_service_apps" {
 **Step 4: Create WiFi Configuration Profile**
 
 Create `root-ca.mobileconfig`:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -458,6 +467,7 @@ Create `root-ca.mobileconfig`:
 ```
 
 **Step 5: Initialize the Project**
+
 ```bash
 # Initialize Terraform
 terraform init
@@ -467,10 +477,12 @@ terraform validate
 ```
 
 **Step 6: Generate Basic Dependency Graph**
+
 ```bash
 # Generate the dependency graph in DOT format
 terraform graph
 ```
+
 **expected output**
 
 ```bash
@@ -500,6 +512,7 @@ digraph G {
 ```
 
 **Step 7: Create Visual Graph (Optional - Requires GraphViz)**
+
 ```bash
 # Install GraphViz if not already installed
 # macOS:
@@ -511,7 +524,7 @@ brew install graphviz
 # Create SVG visualization
 terraform graph | dot -Tsvg > dependency-graph.svg
 
-# Create PNG visualization  
+# Create PNG visualization
 terraform graph | dot -Tpng > dependency-graph.png
 
 # Open the visualization
@@ -522,13 +535,15 @@ open dependency-graph.svg  # macOS
 **Step 8: Analyze the Graph Output**
 
 Look for these dependency relationships in the graph:
+
 - **Categories** have no dependencies (created first)
-- **Computer Groups** have no dependencies (created in parallel with categories)  
+- **Computer Groups** have no dependencies (created in parallel with categories)
 - **Policies** depend on both categories and computer groups
 - **Configuration Profiles** depend on both categories and computer groups
 - **Self Service Policy** depends on categories and multiple computer groups
 
 **Step 9: Create Plan to See Execution Order**
+
 ```bash
 # Generate execution plan to see the actual order
 terraform plan
@@ -540,6 +555,7 @@ terraform plan
 ```
 
 **Step 10: Understanding Graph Types**
+
 ```bash
 # Different graph types for different scenarios:
 
@@ -565,6 +581,7 @@ terraform graph -type=apply
 5. **Variable Dependencies**: All resources using `var.version_number` show implicit dependencies
 
 **💡 Key Learning Points:**
+
 - Terraform automatically determines the optimal execution order
 - Resources with no dependencies can be created in parallel
 - Complex dependency chains are resolved automatically
@@ -573,6 +590,7 @@ terraform graph -type=apply
 - The graph helps identify bottlenecks in large configurations
 
 **🧹 Clean Up (Optional)**
+
 ```bash
 # If you applied the configuration, clean up resources
 terraform destroy -auto-approve
@@ -586,12 +604,14 @@ terraform destroy -auto-approve
 The `terraform taint` command was deprecated in Terraform v0.15.2. The modern approach uses the `--replace` flag with `terraform plan` and `terraform apply`.
 
 **🎯 When to Use --replace:**
+
 - **💥 Resource corruption**: When a resource becomes damaged or degraded
 - **🔧 Configuration changes**: When certain changes require resource recreation
 - **🧪 Testing scenarios**: When you need to force resource recreation for testing
 - **📦 Image updates**: When updating AMIs, container images, or similar immutable resources
 
 **📝 Basic Usage:**
+
 ```bash
 # Plan resource replacement
 terraform plan -replace="jamfpro_policy.developer_maintenance"
@@ -604,13 +624,14 @@ terraform apply -replace="jamfpro_policy.developer_maintenance" -replace="jamfpr
 ```
 
 **🔍 Replacement vs Update:**
+
 ```hcl
 # This resource configuration
 resource "jamfpro_policy" "software_update" {
   name      = "Monthly Software Updates"
   enabled   = true
   frequency = "Once per month"  # Changing this may require replacement
-  
+
   category = {
     name = "System Maintenance"
   }
@@ -618,6 +639,7 @@ resource "jamfpro_policy" "software_update" {
 ```
 
 **Example Scenarios (Jamf Pro):**
+
 ```bash
 # Scenario 1: Force recreation of corrupted policy
 terraform apply -replace="jamfpro_policy.developer_maintenance"
@@ -640,6 +662,7 @@ terraform apply -replace="jamfpro_policy.self_service_apps" -var="version_number
 - **State consistency**: Replacement maintains state file consistency
 
 **💡 Modern Best Practices (Jamf Pro):**
+
 ```bash
 # ✅ Modern approach
 terraform plan -replace="jamfpro_policy.developer_maintenance"
@@ -652,11 +675,13 @@ terraform plan
 💡 **Pro Tip**: Always run `terraform plan -replace` first to review the replacement impact before applying!
 
 ### 💻 **Exercise 3.2**: Core Terraform Workflow
+
 **Duration**: 30 minutes
 
 Let's practice the complete Terraform workflow with Jamf Pro resources to understand the full lifecycle.
 
 **Step 1: Setup Project Structure**
+
 ```bash
 # Create new project directory
 mkdir ~/terraform-jamfpro-basics
@@ -669,11 +694,12 @@ code .
 **Step 2: Create Main Configuration**
 
 Create `main.tf`:
+
 ```hcl
 # Configure the Jamf Pro Provider
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -699,7 +725,7 @@ resource "jamfpro_category" "infrastructure" {
 # Create a Smart Computer Group for targeting
 resource "jamfpro_smart_computer_group" "test_machines" {
   name = "${var.environment} Test Machines - ${var.version_number}"
-  
+
   criteria {
     name          = "Computer Name"
     priority      = 0
@@ -720,12 +746,12 @@ resource "jamfpro_policy" "inventory_update" {
   frequency                  = "Once every day"
   target_drive               = "/"
   category_id                = jamfpro_category.infrastructure.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.test_machines.id]
   }
-  
+
   payloads {
     maintenance {
       recon                       = true
@@ -747,12 +773,13 @@ resource "jamfpro_policy" "inventory_update" {
 **Step 3: Create Variables File**
 
 Create `variables.tf`:
+
 ```hcl
 variable "environment" {
   description = "Environment name for resource naming"
   type        = string
   default     = "Learning"
-  
+
   validation {
     condition     = length(var.environment) > 0
     error_message = "Environment name cannot be empty."
@@ -763,7 +790,7 @@ variable "version_number" {
   description = "Version number for resource naming"
   type        = string
   default     = "v1.0"
-  
+
   validation {
     condition     = can(regex("^v\\d+\\.\\d+$", var.version_number))
     error_message = "Version must be in format 'vX.Y' (e.g., 'v1.0')."
@@ -774,6 +801,7 @@ variable "version_number" {
 **Step 4: Create Outputs File**
 
 Create `outputs.tf`:
+
 ```hcl
 output "category_id" {
   description = "ID of the created category"
@@ -816,6 +844,7 @@ output "resource_summary" {
 ```
 
 **Step 5: Initialize Terraform**
+
 ```bash
 # Initialize the working directory
 terraform init
@@ -826,6 +855,7 @@ ls -la
 ```
 
 **Expected Output:**
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -837,6 +867,7 @@ Terraform has been successfully initialized!
 ```
 
 **Step 6: Validate Configuration**
+
 ```bash
 # Check syntax and configuration
 terraform validate
@@ -846,11 +877,13 @@ terraform fmt
 ```
 
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
 
 **Step 7: Plan the Infrastructure**
+
 ```bash
 # Create execution plan
 terraform plan
@@ -863,6 +896,7 @@ terraform show tfplan
 ```
 
 **Expected Output Summary:**
+
 ```
 Plan: 3 to add, 0 to change, 0 to destroy.
 
@@ -881,6 +915,7 @@ Changes to Outputs:
 ```
 
 **Step 8: Apply the Configuration**
+
 ```bash
 # Apply the changes (will prompt for confirmation)
 terraform apply
@@ -890,6 +925,7 @@ terraform apply -auto-approve
 ```
 
 **Expected Output Summary:**
+
 ```
 jamfpro_category.infrastructure: Creating...
 jamfpro_smart_computer_group.test_machines: Creating...
@@ -915,6 +951,7 @@ resource_summary = {
 ```
 
 **Step 9: Explore the State**
+
 ```bash
 # View current state
 terraform show
@@ -927,6 +964,7 @@ terraform state show jamfpro_policy.inventory_update
 ```
 
 **Expected `terraform state list` Output:**
+
 ```
 jamfpro_category.infrastructure
 jamfpro_policy.inventory_update
@@ -934,6 +972,7 @@ jamfpro_smart_computer_group.test_machines
 ```
 
 **Step 10: Test Variable Changes**
+
 ```bash
 # Test with different variables
 terraform plan -var="version_number=v2.0" -var="environment=Production"
@@ -943,12 +982,14 @@ terraform apply -var="version_number=v2.0" -var="environment=Production"
 ```
 
 **Expected Output:**
+
 ```
 Plan: 0 to add, 3 to change, 0 to destroy.
 # Resources will be updated in-place to reflect new names
 ```
 
 **Step 11: Clean Up**
+
 ```bash
 # Destroy all resources
 terraform destroy
@@ -958,6 +999,7 @@ terraform show
 ```
 
 **Expected Output:**
+
 ```
 jamfpro_policy.inventory_update: Destroying... [id=789]
 jamfpro_policy.inventory_update: Destruction complete after 2s
@@ -1021,7 +1063,7 @@ Test your understanding of Terraform Basics with these questions:
 **1. What is the correct order of the core Terraform workflow?**
 
 - A) Plan → Write → Apply → Destroy
-- B) Write → Plan → Apply → Manage  
+- B) Write → Plan → Apply → Manage
 - C) Init → Write → Plan → Apply
 - D) Apply → Plan → Write → Validate
 
