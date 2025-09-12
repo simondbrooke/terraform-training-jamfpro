@@ -1,6 +1,6 @@
 # ⚡ Module 04: Terraform Basics - Lab Setup
 
-*Duration: 3 hours | Labs: 4 | Difficulty: 🟢 Beginner*
+_Duration: 3 hours | Labs: 4 | Difficulty: 🟢 Beginner_
 
 ---
 
@@ -22,10 +22,11 @@ By completing these lab setup instructions, you will be able to:
 
 Before starting the Module 04 labs, you must have the following software installed:
 
+- [ ] **Brew** (Latest version)
 - [ ] **Terraform** (Latest version)
 - [ ] **VS Code** with Terraform extensions
 - [ ] **Jamf Pro API Client Credentials** (Client ID and Secret)
-- [ ] **Git** for version control
+- [ ] **Git** for version control (Not required until later lessons)
 - [ ] **curl/wget** for testing (usually pre-installed)
 
 ### 🔷 Step 1: Install Terraform
@@ -34,12 +35,53 @@ Before starting the Module 04 labs, you must have the following software install
 
 #### 🍎 macOS Installation
 
+**Option 1: Using Brew (Recommended)**
+
 ```bash
-# Option 1: Using Homebrew (Recommended)
+# Install Brew first if not installed
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Expected Output
+==> Checking for `sudo` access (which may request your password)...
+Password:
+==> This script will install:
+/opt/homebrew/bin/brew
+/opt/homebrew/share/doc/homebrew
+/opt/homebrew/share/man/man1/brew.1
+/opt/homebrew/share/zsh/site-functions/_brew
+/opt/homebrew/etc/bash_completion.d/brew
+/opt/homebrew
+/etc/paths.d/homebrew
+
+Press RETURN/ENTER to continue or any other key to abort:
+
+# Press Enter
+
+# Install will run
+
+==> Next steps:
+- Run brew help to get started
+- Further documentation:
+    https://docs.brew.sh
+
+# Verify install
+brew help
+```
+
+```bash
+# Now install Terraform using Brew
+
 brew tap hashicorp/tap
 brew install hashicorp/tap/terraform
 
-# Option 2: Using MacPorts
+# Verify installation
+terraform --version
+```
+
+**Option 1: Using MacPorts**
+
+```bash
+# May need to install port first
 sudo port install terraform
 
 # Verify installation
@@ -49,6 +91,7 @@ terraform --version
 #### 🪟 Windows Installation
 
 **Option 1: Using Chocolatey (Recommended)**
+
 ```powershell
 # Install Chocolatey first if not installed
 # Run as Administrator in PowerShell
@@ -62,6 +105,7 @@ terraform --version
 ```
 
 **Option 2: Manual Installation**
+
 1. Download Terraform from [https://www.terraform.io/downloads.html](https://www.terraform.io/downloads.html)
 2. Extract the binary to a folder (e.g., `C:\terraform`)
 3. Add the folder to your system PATH
@@ -93,20 +137,21 @@ terraform --version
 
 #### Install VS Code
 
-**Download and install VS Code from:** [https://code.visualstudio.com/](https://code.visualstudio.com/)
+**Download and install VS Code (if not already done so from previous lessons) from:** [https://code.visualstudio.com/](https://code.visualstudio.com/)
 
 #### Required VS Code Extensions
 
 After installing VS Code, install these **required** extensions:
 
 ```bash
-# Install extensions via command line
+# Install extensions via command line (this will require you to have VS Code in your $PATH)
 code --install-extension HashiCorp.terraform
 code --install-extension ms-vscode.vscode-json
 code --install-extension redhat.vscode-yaml
 ```
 
 **Or install via VS Code GUI:**
+
 1. Open VS Code
 2. Click Extensions icon (Ctrl+Shift+X)
 3. Search and install:
@@ -119,7 +164,7 @@ code --install-extension redhat.vscode-yaml
 ```bash
 # Enhanced development experience
 code --install-extension GitHub.copilot                   # AI assistance
-code --install-extension ms-vscode.powershell             # PowerShell support  
+code --install-extension ms-vscode.powershell             # PowerShell support
 code --install-extension ms-vscode-remote.remote-ssh      # Remote development
 code --install-extension eamodio.gitlens                  # Enhanced Git features
 code --install-extension ms-python.python                 # Python support
@@ -137,6 +182,8 @@ code --install-extension ms-python.python                 # Python support
 
 #### 🔧 Create API Role in Jamf Pro
 
+**This step may have already been done for you by the instructor to fit the requirements of the course**
+
 1. **Login to Jamf Pro** as an administrator
 2. Navigate to **Settings** → **System** → **API Roles and Clients**
 3. Click **+ New** to create a new API Role
@@ -145,7 +192,7 @@ code --install-extension ms-python.python                 # Python support
    - **Privileges**: Select the required API endpoints for your Terraform configurations
    - **Recommended minimum privileges** for basic operations:
      - `Read Categories`
-     - `Create Categories` 
+     - `Create Categories`
      - `Update Categories`
      - `Delete Categories`
      - `Read Policies`
@@ -157,14 +204,14 @@ code --install-extension ms-python.python                 # Python support
      - `Update Computer Groups`
      - `Delete Computer Groups`
 
-💡 **Pro Tip**: Start with minimal permissions and add more as needed for your specific Terraform configurations.
+💡 **Pro Tip**: In production, start with minimal permissions and add more as needed for your specific Terraform configurations.
 
 #### 🔑 Create API Client in Jamf Pro
 
 1. In **API Roles and Clients**, click the **API Clients** tab
 2. Click **+ New** to create a new API Client
 3. **Configure the API Client:**
-   - **Display Name**: `Terraform Client`
+   - **Display Name**: `Terraform Training Client + {Student Initials}`
    - **Access Token Lifetime**: `30 minutes` (recommended)
    - **API Roles**: Assign the `Terraform Management Role` created above
 4. **Click Create**
@@ -175,8 +222,13 @@ code --install-extension ms-python.python                 # Python support
 **Create environment variables for your credentials:**
 
 **macOS/Linux:**
+
 ```bash
 # Add to your ~/.bashrc, ~/.zshrc, or ~/.profile
+# If you have added code to your PATH use the following to edit the file
+code ~/.zshrc # Or change to correct file
+
+# Add these into the file:
 export JAMF_PRO_URL="https://your-jamf-server.jamfcloud.com"
 export JAMF_PRO_CLIENT_ID="your-client-id-here"
 export JAMF_PRO_CLIENT_SECRET="your-client-secret-here"
@@ -186,6 +238,7 @@ source ~/.bashrc  # or ~/.zshrc
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 # Set environment variables for current session
 $env:JAMF_PRO_URL = "https://your-jamf-server.jamfcloud.com"
@@ -210,6 +263,7 @@ curl -X POST "https://your-jamf-server.jamfcloud.com/api/oauth/token" \
 ```
 
 **Expected successful response:**
+
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -231,12 +285,14 @@ curl -X POST "https://your-jamf-server.jamfcloud.com/api/oauth/token" \
 #### Git Installation
 
 **macOS:**
+
 ```bash
 # Git is usually pre-installed, but you can update it
 brew install git
 ```
 
 **Windows:**
+
 ```powershell
 # Download from https://git-scm.com/download/win
 # Or use Chocolatey
@@ -244,6 +300,7 @@ choco install git
 ```
 
 **Linux:**
+
 ```bash
 sudo apt-get install git
 ```
@@ -251,16 +308,19 @@ sudo apt-get install git
 #### JSON Processor (jq) - Optional but Helpful
 
 **macOS:**
+
 ```bash
 brew install jq
 ```
 
 **Windows:**
+
 ```powershell
 choco install jq
 ```
 
 **Linux:**
+
 ```bash
 sudo apt-get install jq
 ```
@@ -320,12 +380,14 @@ x64
 ### 🔧 Configure VS Code for Terraform
 
 1. **Open your workspace in VS Code:**
+
 ```bash
 cd ~/terraform-labs/module-04
 code .
 ```
 
 2. **Configure Terraform settings in VS Code:**
+
    - Open VS Code Settings (Ctrl+,)
    - Search for "terraform"
    - Enable these settings:
@@ -334,9 +396,10 @@ code .
      - ✅ `Terraform: Language server`
 
 3. **Create a VS Code workspace file (optional):**
-```bash
+
+```json
 # In ~/terraform-labs/module-04/
-cat > terraform-labs.code-workspace << EOF
+# Create a file in the VS Code GUI named terraform-labs.code-workspace:
 {
   "folders": [
     {
@@ -352,7 +415,6 @@ cat > terraform-labs.code-workspace << EOF
     }
   }
 }
-EOF
 ```
 
 ---
@@ -363,15 +425,14 @@ EOF
 
 Let's verify everything works with a minimal Terraform configuration:
 
-```bash
-# Navigate to test directory
-cd ~/terraform-labs/module-04/lab1-first-config
+```hcl
+# Navigate or create the follow directory structure in your VS Code workspace:
+~/terraform-labs/module-04/lab1-first-config
 
-# Create a simple test file for Jamf Pro
-cat > test.tf << 'EOF'
+# Create a simple test file for Jamf Pro named test.tf:
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -420,7 +481,6 @@ output "category_info" {
     id   = jamfpro_category.test.id
   }
 }
-EOF
 ```
 
 ### Test Terraform Workflow
@@ -476,18 +536,23 @@ terraform destroy \
 ### 🚨 Troubleshooting Common Issues
 
 **Problem**: "terraform: command not found"
+
 - **Solution**: Ensure Terraform is in your system PATH, restart terminal
 
 **Problem**: VS Code doesn't highlight .tf files
+
 - **Solution**: Install HashiCorp Terraform extension, restart VS Code
 
 **Problem**: Jamf Pro API authentication fails
+
 - **Solution**: Verify your client credentials and server URL are correct, test with curl command
 
 **Problem**: Permission denied errors
+
 - **Solution**: Check Jamf Pro API role permissions and ensure user has admin access
 
 **Problem**: Provider download fails
+
 - **Solution**: Check internet connection and firewall settings
 
 ---
@@ -496,8 +561,8 @@ terraform destroy \
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 5: Terraform Basics](./module_05_terraform_basics.md)**
+**➡️ [Module 4: Hashicorp Introduction](./module_04_hashicorp_introduction.md)**
 
-Dive deep into the core Terraform workflow and commands - where you'll master the essential operations for managing infrastructure.
+Dive into the Hashicorp Language and start to understand how resources are structured.
 
 ---
