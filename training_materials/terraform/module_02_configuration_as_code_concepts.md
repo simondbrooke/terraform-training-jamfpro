@@ -1,7 +1,7 @@
 # 🔧 Module 02: Configuration as Code Concepts
 
-*Duration: 1.5 hours | Labs: 0 | 🟢 Beginner*
----
+## _Duration: 1.5 hours | Labs: 0 | 🟢 Beginner_
+
 ## 🎯 Learning Objectives
 
 By the end of this module, you will be able to:
@@ -25,14 +25,14 @@ By the end of this module, you will be able to:
 
 **🔑 The Fundamental Distinction:**
 
-| Aspect | Infrastructure as Code | Configuration as Code |
-|--------|----------------------|----------------------|
-| **Scope** | Physical/Virtual Infrastructure | SaaS Service Settings & Resources |
-| **Examples** | EC2 instances, VPCs, Load Balancers | User accounts, Security policies, Device configurations, Certificates |
-| **APIs** | Cloud Provider APIs (AWS, Azure, GCP) | SaaS Platform APIs (Microsoft 365, Jamf Pro, Okta) |
-| **Resources** | Compute, Network, Storage | Users, Groups, Policies, Applications |
-| **Lifecycle** | Provision → Configure → Terminate | Configure → Deploy → Update → Delete |
-| **Drift** | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions, integrations) |
+| Aspect        | Infrastructure as Code                                   | Configuration as Code                                                   |
+| ------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Scope**     | Physical/Virtual Infrastructure                          | SaaS Service Settings & Resources                                       |
+| **Examples**  | EC2 instances, VPCs, Load Balancers                      | User accounts, Security policies, Device configurations, Certificates   |
+| **APIs**      | Cloud Provider APIs (AWS, Azure, GCP)                    | SaaS Platform APIs (Microsoft 365, Jamf Pro, Okta)                      |
+| **Resources** | Compute, Network, Storage                                | Users, Groups, Policies, Applications                                   |
+| **Lifecycle** | Provision → Configure → Terminate                        | Configure → Deploy → Update → Delete                                    |
+| **Drift**     | Infrastructure changes (instance types, security groups) | Configuration changes (policy settings, user permissions, integrations) |
 
 **🎯 SaaS API and Configuration Management EvolutionTimeline:**
 
@@ -47,7 +47,7 @@ The fundamental shift occurred as these traditional on-premises solutions **migr
 ```mermaid
 timeline
     title SaaS API and Configuration Management Evolution
-    
+
     section Early SaaS Era (2000-2005)
         First Web APIs : Salesforce.com first web API (Feb 7, 2000)
                        : eBay API launch (Nov 20, 2000)
@@ -56,7 +56,7 @@ timeline
                        : XML-based integration dominant
                        : SOAP protocol standard
                        : Manual GUI administration primary
-        
+
     section REST Adoption (2005-2010)
         REST Standardization : Roy Fielding's REST dissertation (2000) gains adoption
                              : Twitter API launch (2006)
@@ -65,7 +65,7 @@ timeline
                              : JSON emerges as preferred format
                              : Early PowerShell/Bash API automation
                              : Custom scripting solutions proliferate
-        
+
     section API Maturation (2010-2015)
         Modern API Patterns : REST becomes industry standard
                             : OAuth 2.0 authentication (2012)
@@ -74,7 +74,7 @@ timeline
                             : Postman founded (2012) - API testing
                             : Swagger/OpenAPI specification (2011)
                             : Mobile-first API design principles
-        
+
     section Infrastructure as Code Era (2015-2020)
         IaC Tool Emergence : Terraform open-sourced (2014)
                            : AWS CloudFormation maturation
@@ -84,7 +84,7 @@ timeline
                            : CI/CD pipeline automation
                            : Infrastructure drift detection concepts
                            : Script-based API management via pipelines
-        
+
     section Configuration as Code Era (2020+)
         Declarative SaaS Management : Terraform providers for major SaaS platforms
                                     : Microsoft 365 Terraform provider (2024)
@@ -98,9 +98,9 @@ timeline
 ```
 
 **📚 Research References:**
+
 - [Salesforce API History - First Web API (2000)](https://www.twinword.com/blog/who-launched-the-first-api-in-history/)
 - [API Evolution Timeline - Postman](https://blog.postman.com/intro-to-apis-history-of-apis/)
-
 
 #### 😫 Current State: How Organizations Manage SaaS Configuration Today
 
@@ -111,6 +111,7 @@ Understanding the current landscape of SaaS configuration management approaches 
 This is the **most common approach** where IT administrators manage SaaS platforms through web-based administrative consoles.
 
 **Characteristics:**
+
 - Point-and-click configuration through web interfaces (Jamf Pro, Microsoft 365, Okta, etc.)
 - Manual navigation through multiple screens and settings pages
 - Copy-paste configurations between environments
@@ -124,6 +125,7 @@ This is the **most common approach** where IT administrators manage SaaS platfor
 Organizations recognizing GUI limitations often develop **custom automation scripts** that interact directly with SaaS APIs.
 
 **Characteristics:**
+
 - PowerShell, Python, Bash scripts making HTTP API calls
 - CI/CD pipelines (Jenkins, GitHub Actions, Azure DevOps) orchestrating script execution
 - Custom authentication and error handling in each script. This can vary between teams and individuals too. each script requires the logic to be present.
@@ -137,6 +139,7 @@ Organizations recognizing GUI limitations often develop **custom automation scri
 Some organizations attempt to use traditional **configuration management tools** for SaaS API management, typically through generic HTTP modules.
 
 **Characteristics:**
+
 - Ansible playbooks using `uri` module for API calls
 - Chef recipes with HTTP resources for SaaS configuration
 - Puppet manifests with REST API providers
@@ -151,18 +154,18 @@ Regardless of the approach used (manual GUI, scripts, or automation tools), ever
 
 ```mermaid
 flowchart LR
-    CREATE[🔨 Create a Resource] 
+    CREATE[🔨 Create a Resource]
     TEST[🧪 Test the Resource]
     DEPLOY[🚀 Deploy to Production]
     UPDATE[📝 Update the Resource]
     DELETE[🗑️ Delete the Resource]
-    
+
     CREATE --> TEST
     TEST --> DEPLOY
     DEPLOY --> UPDATE
     UPDATE --> TEST
     DEPLOY --> DELETE
-    
+
     style CREATE fill:#e8f5e8
     style TEST fill:#fff3e0
     style DEPLOY fill:#e3f2fd
@@ -180,19 +183,18 @@ Scaling presents another significant barrier, as these approaches simply don't s
 
 Knowledge silos compound these challenges, as implementation details and tribal knowledge often remain concentrated with single individuals, creating organizational risk and limiting collaboration effectiveness. Finally, the constant evolution of SaaS platform APIs requires manual updates across all custom implementations, creating an ongoing maintenance burden that diverts resources from strategic initiatives to keeping basic automation functional.
 
-
 **🔄 The Manual GUI Administration Lifecycle:**
 
 ```mermaid
 flowchart TB
     START([Configuration Change Request])
-    
+
     subgraph DECISION ["🤔 Change Type Decision"]
         CHANGETYPE{Change Type?}
         GLOBAL[🌐 Global Settings<br/>Affects ALL users/devices<br/>Examples: Password policy,<br/>Security baselines, API settings]
         SCOPED[🎯 Scoped Changes<br/>Targets specific groups<br/>Examples: App deployments,<br/>Device policies, User groups]
     end
-    
+
     subgraph DEV ["🔓 Development Environment"]
         DEV1[Admin logs into Dev GUI]
         DEV2[Navigate through multiple screens]
@@ -201,10 +203,10 @@ flowchart TB
         DEV5[🧪 Test manually<br/>Limited dev data/users<br/>May not reveal all issues]
         DEV6[📝 Document changes<br/>Quality varies by person<br/>May skip if simple change]
         DEV7[👥 Request peer review<br/>Email/Slack screenshots<br/>Schedule review meeting]
-        
+
         DEV1 --> DEV2 --> DEV3 --> DEV4 --> DEV5 --> DEV6 --> DEV7
     end
-    
+
     subgraph STAGE ["🔒 Staging Environment"]
         STAGE1[Admin logs into Staging GUI]
         STAGE2[Try to remember dev changes]
@@ -215,13 +217,13 @@ flowchart TB
         STAGE7[👥 Second peer review<br/>Compare with dev screenshots<br/>Manual verification]
         STAGEFAIL{🚨 Testing reveals issues?}
         STAGEFIX[🔧 Debug and fix issues<br/>Update documentation<br/>Start over in staging]
-        
+
         STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5 --> STAGE6 --> STAGEFAIL
         STAGEFAIL -->|Issues Found| STAGEFIX
         STAGEFAIL -->|Looks Good| STAGE7
         STAGEFIX --> STAGE2
     end
-    
+
     subgraph PROD ["🚨 Production Environment"]
         PROD1[👥 Final approval meeting<br/>Review change documentation<br/>Sign-off from stakeholders]
         PROD2[Admin logs into Prod GUI]
@@ -233,7 +235,7 @@ flowchart TB
         PRODFAIL{🚨 Production issues discovered?}
         PRODFIX[🔥 Emergency response<br/>Rollback if possible<br/>All hands on deck]
         PRODDOC[📝 Post-change documentation<br/>Update if remembered<br/>Often skipped under pressure]
-        
+
         PROD1 --> PROD2 --> PROD3 --> PROD4
         PROD4 --> PROD5G
         PROD4 --> PROD5S
@@ -244,7 +246,7 @@ flowchart TB
         PRODFAIL -->|Success| PRODDOC
         PRODFIX --> PRODDOC
     end
-    
+
     subgraph FAIL ["💥 Common Failure Points"]
         FAIL1[🖱️ Manual GUI Errors<br/>Wrong setting clicked<br/>Typo in configuration<br/>Missed a screen/option]
         FAIL4[Environment differences]
@@ -255,7 +257,7 @@ flowchart TB
         FAIL8[🧪 Testing inadequacy<br/>Config valid but unintended consequences<br/>Rinse & repeat cycle begins]
         FAIL9[📝 Documentation inconsistency<br/>Quality varies by person<br/>Skipped under pressure/time constraints]
     end
-    
+
     subgraph DRIFT ["🔍 Post-Change Reality"]
         DRIFT1[Environments now different]
         DRIFT2[No change audit trail]
@@ -263,12 +265,12 @@ flowchart TB
         DRIFT4[Issues discovered weeks later]
         DRIFT5G[🌐 Global issues = Major incident<br/>All hands on deck]
         DRIFT5S[🎯 Scoped issues = Targeted fix<br/>Manageable scope]
-        
+
         DRIFT1 --> DRIFT2 --> DRIFT3 --> DRIFT4
         DRIFT4 --> DRIFT5G
         DRIFT4 --> DRIFT5S
     end
-    
+
     START --> CHANGETYPE
     CHANGETYPE --> GLOBAL
     CHANGETYPE --> SCOPED
@@ -277,7 +279,7 @@ flowchart TB
     DEV7 --> STAGE1
     STAGE7 --> PROD1
     PRODDOC --> DRIFT1
-    
+
     DEV3 -.->|Human Error| FAIL1
     DEV4 -.->|Human Error| FAIL1
     DEV5 -.->|Inadequate Testing| FAIL8
@@ -294,7 +296,7 @@ flowchart TB
     PROD5S -.->|Scoped Failure| FAIL7S
     PRODFIX -.->|Emergency Pressure| FAIL9
     PRODDOC -.->|Documentation Neglect| FAIL9
-    
+
     FAIL1 -.->|Recovery| START
     FAIL4 -.->|Recovery| START
     FAIL5 -.->|Recovery| START
@@ -303,7 +305,7 @@ flowchart TB
     FAIL7S -.->|🔄 Easier Recovery| START
     FAIL8 -.->|🔄 Back to Development| DEV1
     FAIL9 -.->|📝 Knowledge Loss| DRIFT1
-    
+
     style START fill:#e3f2fd
     style GLOBAL fill:#ffcdd2
     style SCOPED fill:#c8e6c9
@@ -336,7 +338,6 @@ Auditability suffers severely under manual GUI administration because most SaaS 
 
 Finally, manual GUI administration makes testing nearly impossible because there's no systematic way to validate configuration changes before applying them to production environments. Administrators typically test changes by manually clicking through applications and hoping nothing breaks, but this approach cannot comprehensively test all edge cases or interactions between different configuration elements. Complex configurations involving multiple interconnected policies, groups, and applications are particularly problematic because the combinatorial complexity makes manual testing incomplete and unreliable, leading to production surprises when subtle configuration interactions cause unexpected behavior.
 
-
 #### 🚫 Why Traditional Approaches Fall Short for SaaS Configuration Management
 
 **The Evolution Challenge:**
@@ -364,12 +365,14 @@ Custom scripting seems like the obvious first step beyond GUI administration, bu
 Traditional configuration management tools were **architecturally designed** for a different problem space, creating fundamental impedance mismatches when applied to SaaS APIs:
 
 **Architectural Mismatch:**
+
 - **File-Based Assumptions**: Tools assume managing files, packages, and services on servers
 - **Agent/SSH Model**: Designed for connecting to servers, not making HTTP API calls
 - **Convergence Model**: Built for eventual consistency, not immediate API state synchronization
 - **Resource Abstraction**: HTTP modules are generic and don't understand SaaS resource semantics
 
 **Specific SaaS API Challenges:**
+
 - **No Native Idempotency**: HTTP modules don't understand when a POST creates vs. updates a resource
 - **Manual State Checking**: Must implement custom logic to determine if resources exist
 - **Resource Relationships**: Cannot automatically handle dependencies between SaaS resources
@@ -381,7 +384,7 @@ Traditional configuration management tools were **architecturally designed** for
 ```yaml
 # Just to create ONE script in Jamf Pro requires:
 - name: "Check if script exists" (30 lines of YAML)
-- name: "Get authentication token" (15 lines of YAML)  
+- name: "Get authentication token" (15 lines of YAML)
 - name: "Create script if missing" (25 lines of YAML)
 - name: "Update script if exists" (25 lines of YAML)
 - name: "Verify operation" (15 lines of YAML)
@@ -390,6 +393,7 @@ Traditional configuration management tools were **architecturally designed** for
 ```
 
 **Compared to Terraform:**
+
 ```hcl
 resource "jamfpro_script" "security_check" {
   name            = "Security Compliance Check"
@@ -406,6 +410,7 @@ resource "jamfpro_script" "security_check" {
 Many organizations try to solve scripting limitations by adding CI/CD orchestration, but this **compounds rather than solves** the core problems:
 
 **Additional Complexity Layers:**
+
 - **Pipeline Configuration**: Complex YAML/JSON pipeline definitions with custom logic for each SaaS platform
 - **Secret Management**: Securing and rotating API credentials across multiple pipeline environments and stages
 - **Environment Coordination**: Orchestrating deployment sequences and dependencies between dev/staging/prod environments
@@ -418,13 +423,14 @@ Many organizations try to solve scripting limitations by adding CI/CD orchestrat
 
 **🎯 The Fundamental Problem: Imperative vs. Declarative**
 
-All traditional approaches share the same core limitation: they are **imperative** (telling the system *how* to do something) rather than **declarative** (describing *what* you want the end result to be).
+All traditional approaches share the same core limitation: they are **imperative** (telling the system _how_ to do something) rather than **declarative** (describing _what_ you want the end result to be).
 
 **Imperative Approach Problems:**
+
 ```bash
 # Traditional approach - imperative steps
 1. Authenticate to API
-2. Check if resource exists  
+2. Check if resource exists
 3. If exists, GET current configuration
 4. Compare with desired configuration
 5. If different, PUT updated configuration
@@ -436,6 +442,7 @@ All traditional approaches share the same core limitation: they are **imperative
 ```
 
 **Declarative Approach Solution:**
+
 ```hcl
 # Terraform approach - declarative desired state
 resource "jamfpro_script" "security_check" {
@@ -453,12 +460,13 @@ resource "jamfpro_script" "security_check" {
 Organizations using traditional approaches typically end up with:
 
 - **10,000+ lines** of custom script code to maintain
-- **50+ API endpoints** to handle individually  
+- **50+ API endpoints** to handle individually
 - **3-5 different authentication methods** across SaaS platforms
 - **Hundreds of hours annually** spent on maintenance and updates
 - **Multiple single points of failure** when key script maintainers leave
 
 **Configuration as Code Approach:**
+
 - **100 lines** of declarative configuration
 - **Single provider interface** handling all API complexity
 - **Unified authentication** through provider configuration
@@ -508,34 +516,34 @@ token_expiration = 0
 def get_oauth_token():
     """Get OAuth access token from Jamf Pro API"""
     global access_token, token_expiration
-    
+
     print("🔐 Requesting OAuth token...")
-    
+
     url = f"{JAMF_URL}/api/oauth/token"
     data = urllib.parse.urlencode({
         "client_id": CLIENT_ID,
         "grant_type": "client_credentials",
         "client_secret": CLIENT_SECRET
     }).encode('utf-8')
-    
+
     req = urllib.request.Request(
         url,
         data=data,
         headers={"Content-Type": "application/x-www-form-urlencoded"}
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             response_data = response.read().decode('utf-8')
             token_data = json.loads(response_data)
-            
+
             access_token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 1800)
             token_expiration = int(time.time()) + expires_in - 60
-            
+
             print(f"✅ OAuth token acquired")
             return True
-        
+
     except Exception as e:
         print(f"❌ Authentication failed: {e}")
         return False
@@ -543,25 +551,25 @@ def get_oauth_token():
 def invalidate_token():
     """Invalidate the current OAuth token"""
     global access_token
-    
+
     if not access_token:
         return
-    
+
     print("🧹 Invalidating token...")
-    
+
     url = f"{JAMF_URL}/api/v1/auth/invalidate-token"
     req = urllib.request.Request(
         url,
         method='POST',
         headers={"Authorization": f"Bearer {access_token}"}
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             print("✅ Token invalidated")
     except:
         print("⚠️ Token cleanup failed")
-    
+
     access_token = None
 
 #==============================================================================
@@ -573,15 +581,15 @@ def get_paginated_results(endpoint, page_size=100, max_pages=50):
     Helper function to handle pagination for Jamf Pro API endpoints
     Demonstrates the complexity of manual pagination handling
     """
-    
+
     print(f"📄 Starting paginated retrieval from {endpoint}")
     all_results = []
     current_page = 0
     total_count = None
-    
+
     while current_page < max_pages:  # Safety limit to prevent infinite loops
         print(f"🔄 Fetching page {current_page + 1}...")
-        
+
         # Construct paginated URL
         url = f"{JAMF_URL}{endpoint}?page={current_page}&page-size={page_size}&sort=name%3Aasc"
         req = urllib.request.Request(
@@ -591,33 +599,33 @@ def get_paginated_results(endpoint, page_size=100, max_pages=50):
                 "Authorization": f"Bearer {access_token}"
             }
         )
-        
+
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
                 response_data = response.read().decode('utf-8')
                 data = json.loads(response_data)
-                
+
                 # Extract pagination info
                 page_results = data.get("results", [])
                 current_total = data.get("totalCount", 0)
-                
+
                 if total_count is None:
                     total_count = current_total
                     print(f"📊 Total resources available: {total_count}")
-                
+
                 # Add results to our collection
                 all_results.extend(page_results)
-                
+
                 print(f"✅ Page {current_page + 1}: Retrieved {len(page_results)} items")
                 print(f"📈 Progress: {len(all_results)}/{total_count} items collected")
-                
+
                 # Check if we've retrieved all results
                 if len(page_results) < page_size or len(all_results) >= total_count:
                     print(f"🎉 Pagination complete: {len(all_results)} total items retrieved")
                     break
-                
+
                 current_page += 1
-                
+
         except urllib.error.HTTPError as e:
             error_data = e.read().decode('utf-8')
             print(f"❌ HTTP error on page {current_page + 1}: {e.code}")
@@ -626,11 +634,11 @@ def get_paginated_results(endpoint, page_size=100, max_pages=50):
         except Exception as e:
             print(f"❌ Pagination error on page {current_page + 1}: {e}")
             break
-    
+
     if current_page >= max_pages:
         print(f"⚠️ Hit pagination safety limit ({max_pages} pages)")
         print(f"📊 Retrieved {len(all_results)} items before stopping")
-    
+
     return all_results
 
 #==============================================================================
@@ -639,20 +647,20 @@ def get_paginated_results(endpoint, page_size=100, max_pages=50):
 
 def get_resource_list():
     """Get list of all scripts from Jamf Pro API with pagination handling"""
-    
+
     print("🔍 Getting complete script list with pagination...")
-    
+
     try:
         # Use pagination helper to get all scripts
         all_scripts = get_paginated_results("/api/v1/scripts")
-        
+
         if all_scripts is not None:
             print(f"📊 Successfully retrieved {len(all_scripts)} total scripts")
             return all_scripts
         else:
             print("❌ Failed to retrieve scripts via pagination")
             return None
-            
+
     except Exception as e:
         print(f"❌ Failed to get script list: {e}")
         return None
@@ -663,9 +671,9 @@ def get_resource_list():
 
 def get_by_id(script_id):
     """Get script details by ID"""
-    
+
     print(f"🔍 Getting script details for ID: {script_id}")
-    
+
     url = f"{JAMF_URL}/api/v1/scripts/{script_id}"
     req = urllib.request.Request(
         url,
@@ -674,16 +682,16 @@ def get_by_id(script_id):
             "Authorization": f"Bearer {access_token}"
         }
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             response_data = response.read().decode('utf-8')
             script_data = json.loads(response_data)
-            
+
             script_name = script_data.get("name", "Unknown")
             print(f"✅ Retrieved script: {script_name}")
             return script_data
-        
+
     except Exception as e:
         print(f"❌ Failed to get script: {e}")
         return None
@@ -694,7 +702,7 @@ def get_by_id(script_id):
 
 def build_script_payload(operation):
     """Build JSON payload for script operations"""
-    
+
     script_content = '''#!/bin/bash
 echo "🔍 Starting security compliance check..."
 
@@ -714,7 +722,7 @@ if [[ "$FIREWALL_STATUS" == "1" ]]; then
     echo "✅ Firewall: Enabled"
     FIREWALL_OK=1
 else
-    echo "❌ Firewall: Disabled"  
+    echo "❌ Firewall: Disabled"
     FIREWALL_OK=0
 fi
 
@@ -731,9 +739,9 @@ else
     echo "❌ Device requires remediation"
     exit 1
 fi'''
-    
+
     info_suffix = " - UPDATED" if operation == "UPDATE" else ""
-    
+
     return {
         "name": SCRIPT_NAME,
         "info": f"Security compliance validation script{info_suffix}",
@@ -752,13 +760,13 @@ fi'''
 
 def create_script():
     """Create new script in Jamf Pro"""
-    
+
     print("🔄 Creating new script...")
-    
+
     url = f"{JAMF_URL}/api/v1/scripts"
     payload = build_script_payload("CREATE")
     data = json.dumps(payload).encode('utf-8')
-    
+
     req = urllib.request.Request(
         url,
         data=data,
@@ -768,7 +776,7 @@ def create_script():
             "Authorization": f"Bearer {access_token}"
         }
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             if response.status == 201:
@@ -780,7 +788,7 @@ def create_script():
             else:
                 print(f"❌ Create failed: HTTP {response.status}")
                 return None
-                
+
     except urllib.error.HTTPError as e:
         error_data = e.read().decode('utf-8')
         print(f"❌ Script creation failed with HTTP {e.code}")
@@ -796,13 +804,13 @@ def create_script():
 
 def update_script(script_id):
     """Update existing script in Jamf Pro"""
-    
+
     print(f"🔄 Updating script ID: {script_id}...")
-    
+
     url = f"{JAMF_URL}/api/v1/scripts/{script_id}"
     payload = build_script_payload("UPDATE")
     data = json.dumps(payload).encode('utf-8')
-    
+
     req = urllib.request.Request(
         url,
         data=data,
@@ -813,7 +821,7 @@ def update_script(script_id):
             "Authorization": f"Bearer {access_token}"
         }
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             if response.status == 200:
@@ -822,7 +830,7 @@ def update_script(script_id):
             else:
                 print(f"❌ Update failed: HTTP {response.status}")
                 return False
-                
+
     except urllib.error.HTTPError as e:
         error_data = e.read().decode('utf-8')
         print(f"❌ Script update failed with HTTP {e.code}")
@@ -838,42 +846,42 @@ def update_script(script_id):
 
 def find_script_by_name(script_name):
     """Find script ID by name - Manual state checking"""
-    
+
     print(f"🔍 Looking for script: '{script_name}'")
-    
+
     scripts = get_resource_list()
     if not scripts:
         return None
-    
+
     # Manual iteration through all scripts
     for script in scripts:
         if script.get("name") == script_name:
             script_id = str(script.get("id"))
             print(f"✅ Found existing script with ID: {script_id}")
             return script_id
-    
+
     print("📋 No existing script found")
     return None
 
 def main():
     """Main execution function"""
-    
+
     print("🚀 Starting Jamf Pro Script Lifecycle Management...")
     print(f"📋 Script: {SCRIPT_NAME}")
     print(f"🌐 Instance: {JAMF_URL}")
     print("🐍 Python Implementation")
     print("")
-    
+
     try:
         # Step 1: Authentication
         print("🔐 Authenticating with Jamf Pro API...")
         if not get_oauth_token():
             return 1
-        
+
         # Step 2: Manual state checking - determine operation
         print("🔧 Determining operation type...")
         existing_script_id = find_script_by_name(SCRIPT_NAME)
-        
+
         # Step 3: Execute operation based on manual state check
         if existing_script_id:
             print(f"📋 Found existing script, will update ID: {existing_script_id}")
@@ -882,20 +890,20 @@ def main():
         else:
             print("📋 No existing script found, will create new one")
             result_script_id = create_script()
-        
+
         if not result_script_id:
             print("💥 Operation failed")
             return 1
-        
+
         # Step 4: Verify operation
         print("🔍 Verifying operation...")
         script_data = get_by_id(result_script_id)
         if script_data:
             print("✅ Verification successful")
-        
+
         print("")
         print("🎉 Script lifecycle management complete!")
-        
+
     except KeyboardInterrupt:
         print("\n⚠️ Operation interrupted")
         return 1
@@ -920,8 +928,8 @@ if __name__ == "__main__":
 
 - Repeated Error Handling: Each script needs to handle HTTP errors, JSON errors, network timeouts. duplicating logic.
 - Token Management Overhead: Each script Must handle OAuth lifecycle manually. duplicating logic
-- Custom Retry Logic: Each script Must implement exponential backoff for failed API calls. duplicating logic 
-- Pagination Complexity: Each script needs to implement it's own pagiantion logic. 
+- Custom Retry Logic: Each script Must implement exponential backoff for failed API calls. duplicating logic
+- Pagination Complexity: Each script needs to implement it's own pagiantion logic.
 - No Automatic Rollback: Failed operations leave inconsistent resource state behind.
 - Race Conditions: Multiple runs can conflict with each other
 - No Drift Detection: Cannot detect manual GUI changes between runs
@@ -945,6 +953,7 @@ However, the **fundamental challenges remain substantial**. You've eliminated ma
 Recognizing these limitations, many organizations turn to **configuration management tools** like Ansible, which provide more structured approaches to API automation. Ansible offers several advantages over custom scripts:
 
 **✅ Ansible Advantages over Custom Scripts:**
+
 - **Structured YAML**: More readable than procedural Python/PowerShell code
 - **Built-in Error Handling**: Automatic retry logic and failure handling
 - **Task Orchestration**: Better organization of complex multi-step operations
@@ -985,7 +994,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
     jamf_user: "{{ jamf_pro_username }}"
     jamf_password: "{{ jamf_pro_password }}"
     script_name: "Security Compliance Check"
-    
+
   tasks:
     # Step 1: Authenticate and get Bearer token
     - name: "Get Bearer Token from Jamf Pro"
@@ -998,7 +1007,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
         status_code: 200
         validate_certs: yes
       register: auth_response
-      
+
     - name: "Set authentication token"
       ansible.builtin.set_fact:
         auth_token: "{{ auth_response.json.token }}"
@@ -1013,13 +1022,13 @@ To illustrate these limitations, here's how organizations typically implement Sa
         status_code: 200
         validate_certs: yes
       register: existing_scripts
-      
+
     - name: "Find existing script ID"
       ansible.builtin.set_fact:
         existing_script_id: "{{ item.id }}"
       loop: "{{ existing_scripts.json.results }}"
       when: item.name == script_name
-      
+
     # Step 3: Create script if it doesn't exist
     - name: "Create new script in Jamf Pro"
       ansible.builtin.uri:
@@ -1042,7 +1051,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
             #!/bin/bash
             # Security Compliance Check Script
             echo "Starting security compliance check..."
-            
+
             # FileVault check
             FILEVAULT_STATUS=$(fdesetup status | head -1)
             if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
@@ -1052,7 +1061,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
                 echo "❌ FileVault: Disabled"
                 FILEVAULT_OK=0
             fi
-            
+
             # Firewall check
             FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate)
             if [[ "$FIREWALL_STATUS" == "1" ]]; then
@@ -1062,14 +1071,14 @@ To illustrate these limitations, here's how organizations typically implement Sa
                 echo "❌ Firewall: Disabled"
                 FIREWALL_OK=0
             fi
-            
+
             # Calculate compliance
             TOTAL_CHECKS=2
             PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK))
             COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-            
+
             echo "Compliance Score: ${COMPLIANCE_PCT}%"
-            
+
             if [[ $COMPLIANCE_PCT -ge 80 ]]; then
                 exit 0
             else
@@ -1079,7 +1088,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
         validate_certs: yes
       register: create_result
       when: existing_script_id is not defined
-      
+
     # Step 4: Update script if it exists
     - name: "Update existing script in Jamf Pro"
       ansible.builtin.uri:
@@ -1102,7 +1111,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
             #!/bin/bash
             # Security Compliance Check Script - UPDATED VERSION
             echo "Starting enhanced security compliance check..."
-            
+
             # Enhanced FileVault check
             FILEVAULT_STATUS=$(fdesetup status | head -1)
             if [[ "$FILEVAULT_STATUS" == "FileVault is On." ]]; then
@@ -1112,7 +1121,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
                 echo "❌ FileVault: Disabled"
                 FILEVAULT_OK=0
             fi
-            
+
             # Enhanced Firewall check with stealth mode
             FIREWALL_STATUS=$(defaults read /Library/Preferences/com.apple.alf globalstate)
             STEALTH_MODE=$(defaults read /Library/Preferences/com.apple.alf stealthenabled)
@@ -1123,7 +1132,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
                 echo "❌ Firewall: Needs configuration"
                 FIREWALL_OK=0
             fi
-            
+
             # NEW: Password policy check
             PWD_LENGTH=$(pwpolicy -n /Local/Default -getglobalpolicy | grep minChars | cut -d'=' -f2)
             if [[ $PWD_LENGTH -ge 8 ]]; then
@@ -1133,14 +1142,14 @@ To illustrate these limitations, here's how organizations typically implement Sa
                 echo "❌ Password Policy: Non-compliant"
                 PASSWORD_OK=0
             fi
-            
+
             # Calculate enhanced compliance
             TOTAL_CHECKS=3
             PASSED_CHECKS=$((FILEVAULT_OK + FIREWALL_OK + PASSWORD_OK))
             COMPLIANCE_PCT=$(((PASSED_CHECKS * 100) / TOTAL_CHECKS))
-            
+
             echo "Enhanced Compliance Score: ${COMPLIANCE_PCT}%"
-            
+
             if [[ $COMPLIANCE_PCT -ge 90 ]]; then
                 exit 0
             else
@@ -1150,7 +1159,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
         validate_certs: yes
       register: update_result
       when: existing_script_id is defined
-      
+
     # Step 5: Verify the operation
     - name: "Get updated script details"
       ansible.builtin.uri:
@@ -1161,7 +1170,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
         status_code: 200
         validate_certs: yes
       register: script_details
-      
+
     - name: "Display script information"
       ansible.builtin.debug:
         msg: |
@@ -1169,7 +1178,7 @@ To illustrate these limitations, here's how organizations typically implement Sa
           Script ID: {{ script_details.json.id }}
           Script Name: {{ script_details.json.name }}
           Last Modified: {{ script_details.json.lastModified }}
-          
+
     # Step 6: Cleanup - invalidate token
     - name: "Invalidate authentication token"
       ansible.builtin.uri:
@@ -1179,10 +1188,9 @@ To illustrate these limitations, here's how organizations typically implement Sa
           Authorization: "Bearer {{ auth_token }}"
         status_code: 204
         validate_certs: yes
-
 # PROBLEMS WITH THIS ANSIBLE APPROACH:
 # 1. ❌ No Native Idempotency: Must manually check for existing resources
-# 2. ❌ Complex State Management: Manual tracking of IDs and relationships  
+# 2. ❌ Complex State Management: Manual tracking of IDs and relationships
 # 3. ❌ No Drift Detection: Cannot detect manual changes between runs
 # 4. ❌ Fragile Error Handling: Must handle each HTTP status code manually
 # 5. ❌ No Rollback Capability: Failed operations leave inconsistent state
@@ -1199,9 +1207,9 @@ To illustrate these limitations, here's how organizations typically implement Sa
 
 To be fair, this Ansible approach **is a significant improvement** over manual GUI administration. It provides **version control**, **repeatability**, and **automation** that completely eliminates the human errors, time consumption, and inconsistencies of clicking through web interfaces. Organizations using this method can deploy the same configuration across multiple environments, track changes through Git, and integrate with CI/CD pipelines for automated deployments.
 
-However, the **fundamental limitations remain substantial**. While you've eliminated the manual GUI problems, you've **traded them for a different set of  challenges**: building and maintaining extensive custom automation, managing state manually, handling API changes, and creating robust error recovery mechanisms. The result is often **hundreds or thousands of lines of playbook code** that must be developed, tested, debugged, and maintained by your team - essentially **building your own configuration management system** on top of generic HTTP modules.
+However, the **fundamental limitations remain substantial**. While you've eliminated the manual GUI problems, you've **traded them for a different set of challenges**: building and maintaining extensive custom automation, managing state manually, handling API changes, and creating robust error recovery mechanisms. The result is often **hundreds or thousands of lines of playbook code** that must be developed, tested, debugged, and maintained by your team - essentially **building your own configuration management system** on top of generic HTTP modules.
 
-**The core issue**: You're still working **imperatively** (telling the system *how* to do things step-by-step) rather than **declaratively** (describing *what* you want the end result to be). This fundamental difference becomes critical as your SaaS configuration complexity grows beyond simple script management to include policies, groups, applications, certificates, and their interdependencies.
+**The core issue**: You're still working **imperatively** (telling the system _how_ to do things step-by-step) rather than **declaratively** (describing _what_ you want the end result to be). This fundamental difference becomes critical as your SaaS configuration complexity grows beyond simple script management to include policies, groups, applications, certificates, and their interdependencies.
 
 **🔄 The Evolution Pattern: Each Step Forward, Persistent Core Challenges**
 
@@ -1212,23 +1220,23 @@ graph LR
     subgraph "🖱️ Stage 1: Manual GUI"
         GUI[Manual Administration<br/>• Point & click<br/>• Screenshots<br/>• Email approvals<br/>• Manual verification]
     end
-    
-    subgraph "🔧 Stage 2: Custom Scripts"  
+
+    subgraph "🔧 Stage 2: Custom Scripts"
         SCRIPTS[Custom API Scripts<br/>• Python/PowerShell<br/>• HTTP requests<br/>• Custom error handling<br/>• Manual state checking]
     end
-    
+
     subgraph "🤖 Stage 3: Config Management"
         ANSIBLE[Ansible/Chef/Puppet<br/>• YAML/DSL syntax<br/>• Task orchestration<br/>• Generic HTTP modules<br/>• Manual state logic]
     end
-    
+
     subgraph "🎯 Stage 4: Configuration as Code"
         TERRAFORM[Terraform/Pulumi<br/>• Declarative resources<br/>• Native state management<br/>• Automatic dependencies<br/>• Built-in drift detection]
     end
-    
+
     GUI -->|"❌ Too manual<br/>❌ Error-prone<br/>❌ Not scalable"| SCRIPTS
-    SCRIPTS -->|"❌ Complex development<br/>❌ Maintenance burden<br/>❌ No idempotency"| ANSIBLE  
+    SCRIPTS -->|"❌ Complex development<br/>❌ Maintenance burden<br/>❌ No idempotency"| ANSIBLE
     ANSIBLE -->|"❌ Verbose config<br/>❌ Manual state mgmt<br/>❌ Generic HTTP only"| TERRAFORM
-    
+
     style GUI fill:#ffebee
     style SCRIPTS fill:#fff3e0
     style ANSIBLE fill:#e8f5e8
@@ -1239,21 +1247,21 @@ graph LR
 
 However, **stages 1-3 all share fundamental architectural limitations** when applied to SaaS API management:
 
-| **Core Limitation** | **GUI Impact** | **Scripts Impact** | **Ansible Impact** |
-|---------------------|----------------|-------------------|-------------------|
-| **Imperative Approach** | Manual steps | Custom CRUD logic | Task-based operations |
-| **State Management** | None | Custom tracking | Manual implementation |
-| **Drift Detection** | Manual checking | Custom monitoring | Custom validation |
-| **Resource Dependencies** | Manual coordination | Custom orchestration | Manual task ordering |
-| **API Evolution** | GUI updates | Script maintenance | Playbook updates |
-| **Idempotency** | None | Custom logic | Framework-assisted |
+| **Core Limitation**       | **GUI Impact**      | **Scripts Impact**   | **Ansible Impact**    |
+| ------------------------- | ------------------- | -------------------- | --------------------- |
+| **Imperative Approach**   | Manual steps        | Custom CRUD logic    | Task-based operations |
+| **State Management**      | None                | Custom tracking      | Manual implementation |
+| **Drift Detection**       | Manual checking     | Custom monitoring    | Custom validation     |
+| **Resource Dependencies** | Manual coordination | Custom orchestration | Manual task ordering  |
+| **API Evolution**         | GUI updates         | Script maintenance   | Playbook updates      |
+| **Idempotency**           | None                | Custom logic         | Framework-assisted    |
 
 **📈 The Improvement Pattern:**
 
 Each evolution **genuinely improves** upon the previous approach:
 
 1. **GUI → Scripts**: Adds automation, repeatability, version control
-2. **Scripts → Ansible**: Adds structure, error handling, task orchestration  
+2. **Scripts → Ansible**: Adds structure, error handling, task orchestration
 3. **Ansible → Terraform**: Adds declarative syntax, native state management, idempotency
 
 **🎯 The Paradigm Shift: Declarative Configuration as Code**
@@ -1261,55 +1269,59 @@ Each evolution **genuinely improves** upon the previous approach:
 The industry recognized these **persistent patterns** and developed a fundamentally different approach. Instead of **incrementally improving imperative methods**, Configuration as Code tools like Terraform represent a **paradigm shift**:
 
 **From Imperative ("How")** → **To Declarative ("What")**
+
 - ❌ "Execute these 10 API calls in sequence"
 - ✅ "Ensure this resource exists with these properties"
 
-**From Custom Development** → **To Provider Abstraction**  
+**From Custom Development** → **To Provider Abstraction**
+
 - ❌ "Build HTTP client, handle auth, parse JSON"
 - ✅ "Use provider that handles all API interactions"
 
 **From Manual State** → **To Automatic State Management**
-- ❌ "Track resource IDs in files/databases"  
+
+- ❌ "Track resource IDs in files/databases"
 - ✅ "Terraform automatically tracks all resource state"
 
 **From Custom Drift Detection** → **To Built-in Comparison**
+
 - ❌ "Build monitoring to detect manual changes"
 - ✅ "`terraform plan` shows any configuration drift"
 
 This is why **Configuration as Code** with tools like Terraform represents such a significant leap forward - it doesn't just improve the existing approach, it **fundamentally changes the approach**.
 
-
 **📊 Comparison: SaaS Configuration Management Approaches**
 
-| **Aspect** | **🖱️ Manual GUI** | **🔧 Custom Scripts/Pipelines** | **🤖 Ansible/Chef/Puppet** | **🎯 Terraform (CaC)** |
-|------------|-------------------|--------------------------------|----------------------------|------------------------|
-| **Learning Curve** | Low - point & click | Medium - scripting knowledge | Medium - tool-specific DSL | Medium - HCL syntax |
-| **Initial Setup Time** | Minutes | Hours/Days | Hours/Days | Hours |
-| **Scalability** | Poor - manual effort | Good - automated execution | Good - orchestrated tasks | Excellent - declarative |
-| **Idempotency** | None - always manual | Manual implementation | Manual implementation | Built-in |
-| **State Management** | None | Custom file/database | Custom implementation | Native state tracking |
-| **Drift Detection** | Manual verification | Custom monitoring | Custom monitoring | Built-in (`terraform plan`) |
-| **Error Recovery** | Manual rollback | Custom rollback logic | Custom rollback logic | State-aware recovery* |
-| **Multi-Environment** | Manual replication | Script parameterization | Playbook variables | Workspace/variables |
-| **Dependency Management** | Manual coordination | Manual orchestration | Manual orchestration | Automatic tf graph resolution |
-| **Version Control** | Screenshots/docs only | Git + script versioning | Git + playbook versioning | Git + module versioning + state versioning |
-| **Collaboration** | Email/meetings | Code reviews | Code reviews | Code reviews + tf plan review |
-| **Audit Trail** | Platform logs only | Custom logging + Git history | Built-in logging + Git history | State versioning + Git history* |
-| **API Changes** | Manual GUI updates | Script maintenance | Playbook maintenance | Provider updates |
-| **Testing** | Manual validation | Custom test scripts | Built-in test modules | Plan validation + testing frameworks |
-| **Resource Relationships** | Manual tracking | Custom logic | Custom logic | Automatic references |
-| **Rollback Capability** | Manual reversal | Custom implementation | Custom implementation | Built-in state management |
-| **Time to Deploy** | Hours/Days | Minutes/Hours | Minutes/Hours | Minutes |
-| **Maintenance Overhead** | High - manual effort | High - custom code | Medium - tool maintenance | Low - provider updates |
-| **Risk of Human Error** | Very High | Medium | Low | Very Low |
-| **Peer Review** | Only if saas tools offers this feature | Code reviews (GitOps) | Code reviews (GitOps) | Code reviews (GitOps)|
-| **Compliance/Governance** | Manual processes | Custom validation | Custom validation | Policy as Code integration |
-| **Documentation** | Screenshots/docs | Script documentation | playbook documentation | hcl is self-documenting |
+| **Aspect**                 | **🖱️ Manual GUI**                      | **🔧 Custom Scripts/Pipelines** | **🤖 Ansible/Chef/Puppet**     | **🎯 Terraform (CaC)**                     |
+| -------------------------- | -------------------------------------- | ------------------------------- | ------------------------------ | ------------------------------------------ |
+| **Learning Curve**         | Low - point & click                    | Medium - scripting knowledge    | Medium - tool-specific DSL     | Medium - HCL syntax                        |
+| **Initial Setup Time**     | Minutes                                | Hours/Days                      | Hours/Days                     | Hours                                      |
+| **Scalability**            | Poor - manual effort                   | Good - automated execution      | Good - orchestrated tasks      | Excellent - declarative                    |
+| **Idempotency**            | None - always manual                   | Manual implementation           | Manual implementation          | Built-in                                   |
+| **State Management**       | None                                   | Custom file/database            | Custom implementation          | Native state tracking                      |
+| **Drift Detection**        | Manual verification                    | Custom monitoring               | Custom monitoring              | Built-in (`terraform plan`)                |
+| **Error Recovery**         | Manual rollback                        | Custom rollback logic           | Custom rollback logic          | State-aware recovery\*                     |
+| **Multi-Environment**      | Manual replication                     | Script parameterization         | Playbook variables             | Workspace/variables                        |
+| **Dependency Management**  | Manual coordination                    | Manual orchestration            | Manual orchestration           | Automatic tf graph resolution              |
+| **Version Control**        | Screenshots/docs only                  | Git + script versioning         | Git + playbook versioning      | Git + module versioning + state versioning |
+| **Collaboration**          | Email/meetings                         | Code reviews                    | Code reviews                   | Code reviews + tf plan review              |
+| **Audit Trail**            | Platform logs only                     | Custom logging + Git history    | Built-in logging + Git history | State versioning + Git history\*           |
+| **API Changes**            | Manual GUI updates                     | Script maintenance              | Playbook maintenance           | Provider updates                           |
+| **Testing**                | Manual validation                      | Custom test scripts             | Built-in test modules          | Plan validation + testing frameworks       |
+| **Resource Relationships** | Manual tracking                        | Custom logic                    | Custom logic                   | Automatic references                       |
+| **Rollback Capability**    | Manual reversal                        | Custom implementation           | Custom implementation          | Built-in state management                  |
+| **Time to Deploy**         | Hours/Days                             | Minutes/Hours                   | Minutes/Hours                  | Minutes                                    |
+| **Maintenance Overhead**   | High - manual effort                   | High - custom code              | Medium - tool maintenance      | Low - provider updates                     |
+| **Risk of Human Error**    | Very High                              | Medium                          | Low                            | Very Low                                   |
+| **Peer Review**            | Only if saas tools offers this feature | Code reviews (GitOps)           | Code reviews (GitOps)          | Code reviews (GitOps)                      |
+| **Compliance/Governance**  | Manual processes                       | Custom validation               | Custom validation              | Policy as Code integration                 |
+| **Documentation**          | Screenshots/docs                       | Script documentation            | playbook documentation         | hcl is self-documenting                    |
 
-***Terraform Nuances:** 
+**\*Terraform Nuances:**
+
 - **Audit Trail**: Complete state history requires specific backend configurations (S3 with versioning, Terraform Cloud/Enterprise) or external tooling. Open-source Terraform with local state provides limited historical tracking without additional setup.
 - **Error Recovery**: Terraform does not automatically rollback on failure. Instead, it maintains state awareness of partially completed operations, allowing for informed manual recovery using `terraform plan` and `terraform apply` to reach desired state.
-- **Version Control**: Terraform provides multiple layers of versioning: Git for configuration files, semantic versioning for modules (e.g., `version = "~> 1.0"`), provider version constraints, and state file versioning with compatible backends. This enables precise dependency management and reproducible deployments across environments.*
+- **Version Control**: Terraform provides multiple layers of versioning: Git for configuration files, semantic versioning for modules (e.g., `version = "~> 1.0"`), provider version constraints, and state file versioning with compatible backends. This enables precise dependency management and reproducible deployments across environments.\*
 
 #### 🎯 The Terraform Advantage for SaaS Configuration
 
@@ -1331,35 +1343,35 @@ graph TB
     subgraph "🎯 Configuration Layer"
         CONFIG["Terraform Configuration<br/>• Resources (jamfpro_script)<br/>• Variables & validation<br/>• Dependencies & references"]
     end
-    
+
     subgraph "⚙️ Terraform Core Engine"
         CORE["Terraform Core<br/>• Configuration parsing<br/>• Dependency graph<br/>• Plan generation<br/>• Operation orchestration"]
     end
-    
+
     subgraph "🔌 Provider Layer"
         PROVIDER["Jamf Pro Provider<br/>• API authentication<br/>• HTTP calls & JSON parsing<br/>• CRUD operations<br/>• Error handling & retries<br/>• State mapping"]
     end
-    
+
     subgraph "🌐 SaaS Platform"
         API["Jamf Pro REST API<br/>• /api/oauth/token<br/>• /api/v1/resource_type<br/>• Authentication & endpoints"]
         PLATFORM["Jamf Pro Platform<br/>• Actual resources<br/>• Policies & groups<br/>• Configuration profiles"]
     end
-    
+
     subgraph "📊 State Management"
         STATE["Terraform State File<br/>• Resource attributes<br/>• Resource relationships<br/>• Provider metadata<br/>• Dependency tracking"]
     end
-    
+
     CONFIG --> CORE
     CORE --> PROVIDER
     PROVIDER --> API
     API --> PLATFORM
-    
+
     PROVIDER <--> STATE
     CORE --> STATE
-    
+
     CORE -.->|"terraform plan<br/>drift detection"| CONFIG
     PLATFORM -.->|"current state<br/>comparison"| STATE
-    
+
     style CONFIG fill:#e3f2fd
     style CORE fill:#e8f5e8
     style PROVIDER fill:#fff3e0
@@ -1402,7 +1414,7 @@ resource "jamfpro_script" "security_compliance_check" {
   parameter4      = "environment_type"
   parameter5      = "compliance_threshold"
   os_requirements = "13"
-  
+
   # Embedded script contents - same as Python/Ansible examples
   script_contents = <<-EOF
     #!/bin/bash
@@ -1424,7 +1436,7 @@ resource "jamfpro_script" "security_compliance_check" {
         echo "✅ Firewall: Enabled"
         FIREWALL_OK=1
     else
-        echo "❌ Firewall: Disabled"  
+        echo "❌ Firewall: Disabled"
         FIREWALL_OK=0
     fi
 
@@ -1456,7 +1468,6 @@ The built-in idempotency guarantee eliminates the entire class of problems that 
 
 Perhaps most powerfully, Terraform's sophisticated state management provides automatic drift detection that would be nearly impossible to implement reliably with custom scripts. Running `terraform plan` instantly shows you exactly what has changed in your Jamf Pro environment since your last deployment, whether those changes were made through Terraform or manually through the GUI. This visibility into configuration drift, combined with the ability to remediate it simply by running `terraform apply`, transforms how organizations maintain consistency across their SaaS platforms and provides the foundation for truly reliable configuration management at scale.
 
-
 #### 🎯 Configuration as Code: Use Cases and Benefits
 
 **1. 🏢 SaaS Configuration Management**
@@ -1464,14 +1475,15 @@ Perhaps most powerfully, Terraform's sophisticated state management provides aut
 **Statement**: Manage SaaS platform configurations (users, groups, policies, device settings) as version-controlled code instead of manual GUI administration.
 
 **Example**: Instead of manually clicking through Jamf Pro's web interface to create 50 computer policies across development, staging, and production environments, you define them once in Terraform:
+
 ```hcl
 resource "jamfpro_policy" "security_baseline" {
   for_each = var.environments
-  
+
   name     = "Security Baseline - ${each.key}"
   enabled  = true
   frequency = "Once per day"
-  
+
   payloads {
     scripts {
       id = jamfpro_script.security_check.id
@@ -1505,10 +1517,11 @@ resource "jamfpro_script" "remove_group_membership" {
 **Statement**: Use Git-based workflows to preview, approve, and track every SaaS configuration change with full audit trails.
 
 **Example**: Security team needs to update password policies across Microsoft 365. Instead of direct admin portal changes, they create a pull request:
+
 ```hcl
 resource "azuread_group_policy" "password_policy" {
   display_name = "Corporate Password Policy"
-  
+
   password_rule_settings {
     minimum_length = 12  # Changed from 8
     maximum_age_days = 90  # Changed from 180
@@ -1526,6 +1539,7 @@ resource "azuread_group_policy" "password_policy" {
 **Statement**: Reproduce identical SaaS configurations across multiple environments and automatically detect when manual changes create drift.
 
 **Example**: Your Jamf Pro development environment should mirror production security policies. Terraform detects when someone manually disables FileVault requirements in dev:
+
 ```bash
 $ terraform plan
 # jamfpro_configuration_profile.filevault will be updated in-place
@@ -1546,6 +1560,7 @@ $ terraform plan
 **Statement**: Store complete SaaS platform configurations in code for instant recovery from accidental deletions, corrupted settings, or tenant migration needs.
 
 **Example**: Jamf Pro admin accidentally deletes 200 computer groups. Instead of manual recreation taking weeks:
+
 ```bash
 $ terraform apply
 # Recreates all 200 groups in 10 minutes with exact settings
@@ -1563,6 +1578,7 @@ jamfpro_computer_group.marketing_team: Creating...
 **Statement**: Enable multiple teams to safely collaborate on SaaS configurations through code reviews and automated testing, without requiring full admin access.
 
 **Example**: Marketing team needs new Jamf Pro policies for their devices. Instead of IT bottleneck, they submit self-service changes:
+
 ```hcl
 # marketing-team/policies.tf
 resource "jamfpro_policy" "marketing_app_installs" {
@@ -1570,7 +1586,7 @@ resource "jamfpro_policy" "marketing_app_installs" {
   scope {
     computer_group_ids = [data.jamfpro_computer_group.marketing.id]
   }
-  
+
   payloads {
     packages {
       id = data.jamfpro_package.creative_suite.id
@@ -1588,17 +1604,18 @@ resource "jamfpro_policy" "marketing_app_installs" {
 **Statement**: Apply security, compliance, and operational policies consistently across thousands of resources, eliminating manual configuration errors.
 
 **Example**: Apply new security baselines to 5,000 managed devices across 50 locations. Traditional approach: months of manual work. Configuration as Code approach:
+
 ```hcl
 resource "jamfpro_configuration_profile" "security_baseline" {
   for_each = var.locations
-  
+
   name = "Security Baseline - ${each.value.name}"
   scope {
     computer_group_ids = [
       for group in each.value.computer_groups : group.id
     ]
   }
-  
+
   # 47 security settings applied consistently
   payloads {
     filevault_enabled = true
@@ -1618,18 +1635,19 @@ resource "jamfpro_configuration_profile" "security_baseline" {
 **Statement**: Create reusable modules that let teams provision SaaS resources independently while maintaining organizational standards.
 
 **Example**: Engineering teams need standardized Okta application configurations. IT creates a reusable module:
+
 ```hcl
 # Call the module
 module "engineering_app" {
   source = "./modules/okta-saml-app"
-  
+
   app_name = "Engineering Portal"
   team_name = "platform-engineering"
   sso_url = "https://portal.engineering.company.com"
-  
+
   # Standards automatically applied:
   # - Security groups
-  # - Lifecycle policies  
+  # - Lifecycle policies
   # - Audit logging
   # - Multi-factor authentication
 }
@@ -1644,15 +1662,16 @@ module "engineering_app" {
 **Statement**: Enforce organizational standards and compliance requirements automatically before any SaaS configuration changes are applied.
 
 **Example**: Prevent deployment of Jamf Pro policies that don't meet security standards:
+
 ```bash
 # policy-validation.rego (Open Policy Agent)
 deny[msg] {
   resource := input.resource_changes[_]
   resource.type == "jamfpro_policy"
-  
+
   # Require all policies to have FileVault enabled
   not resource.change.after.payloads.filevault_enabled
-  
+
   msg := "Policy must enforce FileVault encryption"
 }
 
@@ -1669,13 +1688,14 @@ FAIL - Policy must enforce FileVault encryption
 **Statement**: Implement automated safety checks that prevent dangerous misconfigurations and enforce operational best practices.
 
 **Example**: Prevent accidental deletion of production Jamf Pro policies and require approval for high-risk changes:
+
 ```hcl
 resource "jamfpro_policy" "critical_security" {
   name = "Critical Security Policy"
-  
+
   lifecycle {
     prevent_destroy = true  # Cannot be deleted
-    
+
     # Require manual approval for changes
     precondition {
       condition = var.approved_by_security_team == true
@@ -1687,8 +1707,8 @@ resource "jamfpro_policy" "critical_security" {
 
 **Benefit**: **Zero accidental deletions** of critical configurations, **99% reduction** in security incidents from misconfigurations, and **compliance with change management** processes (ITIL, SOX).
 
-
 **📚 Research References:**
+
 - [Salesforce API History - First Web API (2000)](https://www.twinword.com/blog/who-launched-the-first-api-in-history/)
 - [API Evolution Timeline - Postman](https://blog.postman.com/intro-to-apis-history-of-apis/)
 - [Jamf Pro API Documentation](https://developer.jamf.com/jamf-pro/reference/jamf-pro-api)
@@ -1721,7 +1741,7 @@ Ansible was designed for file-based server management, not API-driven resources.
 <details>
 <summary>🔍 Click to reveal answer</summary>
 
-**Imperative** tells the system *how* to do something step-by-step: "First authenticate, check if resource exists, then create or update." **Declarative** describes *what* you want the end result to be: "Ensure this script exists with these properties." Terraform handles all the "how" automatically through its providers.
+**Imperative** tells the system _how_ to do something step-by-step: "First authenticate, check if resource exists, then create or update." **Declarative** describes _what_ you want the end result to be: "Ensure this script exists with these properties." Terraform handles all the "how" automatically through its providers.
 
 </details>
 
@@ -1775,13 +1795,15 @@ Focus on cultural change management (shifting from GUI to code workflows), skill
 ## ✅ Module 2 Summary
 
 ### 🎯 Key Takeaways
+
 - **🔧 Configuration as Code** manages SaaS service configurations through declarative code instead of manual GUI administration
-- **📈 SaaS Evolution**: Traditional on-premises tools migrated to cloud-based APIs, enabling programmable configuration management  
+- **📈 SaaS Evolution**: Traditional on-premises tools migrated to cloud-based APIs, enabling programmable configuration management
 - **🚫 Manual GUI Limitations**: Point-and-click administration fails at scale due to human error, time consumption, and inability to track changes
 - **⚙️ Traditional Automation Challenges**: Custom scripts and Ansible require extensive imperative logic for basic SaaS resource management
 - **📊 Terraform's Paradigm Shift**: Declarative resource definitions with built-in state management, idempotency, and drift detection
 
 ### 🔑 Essential Concepts Learned
+
 - **Infrastructure vs Configuration as Code**: IaC manages infrastructure (servers, networks), CaC manages service settings (policies, users)
 - **Imperative vs Declarative**: Imperative tells "how" step-by-step, declarative describes "what" the end result should be
 - **SaaS Resource Lifecycle**: Universal CREATE → TEST → DEPLOY → UPDATE → DELETE pattern across all platforms
@@ -1789,6 +1811,7 @@ Focus on cultural change management (shifting from GUI to code workflows), skill
 - **Drift Detection**: Built-in comparison of desired configuration vs actual SaaS platform state
 
 ### 🛠️ Practical Skills Developed
+
 - **API Evolution Understanding**: How SaaS platforms evolved from on-premises GUI tools to API-driven cloud services
 - **Complexity Analysis**: Comparing 400+ line Python scripts vs 50-line Terraform configurations for identical outcomes
 - **Traditional Tool Limitations**: Why Ansible's generic HTTP modules struggle with SaaS-specific resource semantics
@@ -1796,6 +1819,7 @@ Focus on cultural change management (shifting from GUI to code workflows), skill
 - **Use Case Identification**: When Configuration as Code provides maximum organizational benefit
 
 ### 💡 Pro Tips Recap
+
 - Configuration as Code is most valuable for API-driven SaaS platforms with complex interdependent resources
 - Manual GUI administration becomes exponentially problematic as organizations scale beyond dozens of resources
 - Custom scripting trades GUI problems for development/maintenance burdens without solving core architectural issues
@@ -1810,7 +1834,7 @@ Focus on cultural change management (shifting from GUI to code workflows), skill
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 3: HashiCorp Introduction](./module_03_hashicorp_introduction.md)**
+**➡️ [Module 3: Lab Setup](./module_03_lab_setup.md)**
 
 where we'll explore the broader HashiCorp ecosystem and Terraform's role within it.
 

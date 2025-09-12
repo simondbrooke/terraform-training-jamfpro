@@ -182,19 +182,7 @@ cd ~/terraform-graph-example
 code .
 ```
 
-**Step 2: Create Variables File**
-
-Create `variables.tf`:
-
-```hcl
-variable "version_number" {
-  description = "The version number to include in the name and install button text."
-  type        = string
-  default     = "v1.0"
-}
-```
-
-**Step 3: Create Jamf Pro Configuration with Dependencies**
+**Step 2: Create Jamf Pro Configuration with Dependencies**
 
 Create `main.tf`:
 
@@ -374,7 +362,7 @@ resource "jamfpro_policy" "self_service_apps" {
 }
 ```
 
-**Step 4: Create WiFi Configuration Profile**
+**Step 3: Create WiFi Configuration Profile**
 
 Create `root-ca.mobileconfig`:
 
@@ -466,7 +454,7 @@ Create `root-ca.mobileconfig`:
 </plist>
 ```
 
-**Step 5: Initialize the Project**
+**Step 4: Initialize the Project**
 
 ```bash
 # Initialize Terraform
@@ -476,7 +464,7 @@ terraform init
 terraform validate
 ```
 
-**Step 6: Generate Basic Dependency Graph**
+**Step 5: Generate Basic Dependency Graph**
 
 ```bash
 # Generate the dependency graph in DOT format
@@ -511,7 +499,7 @@ digraph G {
 }
 ```
 
-**Step 7: Create Visual Graph (Optional - Requires GraphViz)**
+**Step 6: Create Visual Graph (Optional - Requires GraphViz)**
 
 ```bash
 # Install GraphViz if not already installed
@@ -532,7 +520,7 @@ open dependency-graph.svg  # macOS
 # xdg-open dependency-graph.svg  # Linux
 ```
 
-**Step 8: Analyze the Graph Output**
+**Step 7: Analyze the Graph Output**
 
 Look for these dependency relationships in the graph:
 
@@ -542,7 +530,7 @@ Look for these dependency relationships in the graph:
 - **Configuration Profiles** depend on both categories and computer groups
 - **Self Service Policy** depends on categories and multiple computer groups
 
-**Step 9: Create Plan to See Execution Order**
+**Step 8: Create Plan to See Execution Order**
 
 ```bash
 # Generate execution plan to see the actual order
@@ -554,7 +542,7 @@ terraform plan
 # 3. Complex policies with multiple dependencies created last
 ```
 
-**Step 10: Understanding Graph Types**
+**Step 9: Understanding Graph Types**
 
 ```bash
 # Different graph types for different scenarios:
@@ -1176,7 +1164,7 @@ Test your understanding of Terraform Basics with these questions:
 
 **🎉 Congratulations!** You've completed Module 3 and now understand the core Terraform workflow, variables, outputs, and data sources. You've built real AWS infrastructure and learned to make it flexible and maintainable!
 
-**➡️ Ready for Module 5?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
+**➡️ Ready for Module 5-01?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
 
 ---
 
@@ -1186,7 +1174,7 @@ Test your understanding of Terraform Basics with these questions:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 5: Configuration Management and Provisioners](./module_05_configuration_management_and_provisioners.md)**
+**➡️ [Module 5-01: Configuration Management and Provisioners](./module_05-01_jamf_terraform_basics.md)**
 
 Learn advanced configuration management techniques and provisioner usage.
 

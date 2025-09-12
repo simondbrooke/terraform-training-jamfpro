@@ -444,7 +444,7 @@ terraform state list    # List managed resources
 
 ---
 
-**🎉 Congratulations!** You've completed Module 3 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
+**🎉 Congratulations!** You've completed Module 4 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
 
 ---
 
