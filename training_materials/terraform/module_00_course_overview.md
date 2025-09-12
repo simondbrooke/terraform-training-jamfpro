@@ -5,8 +5,8 @@
 01. [Infrastructure as Code Concepts](./module_01_infrastructure_as_code_concepts.md)
 02. [Configuration as Code Concepts](./module_02_configuration_as_code_concepts.md)
 03. [HashiCorp Introduction](./module_03_hashicorp_introduction.md)  
-04. [Terraform Basics](./module_04_terraform_basics.md)
-05. [Configuration Management and Provisioners](./module_05_configuration_management_and_provisioners.md)
+04. [Lab Setup](./module_04_lab_setup.md)
+05. [Terraform Basics](./module_05_terraform_basics.md)
 06. [Terraform Providers](./module_06_terraform_providers.md)
 07. [Terraform Language and HashiCorp Language](./module_07_terraform_language_and_hashicorp_language.md)
 08. [HCL Style Guide](./module_08_hcl_style_guide.md)
@@ -188,12 +188,12 @@ This course follows the official HashiCorp Terraform Associate exam objectives a
 | 01 | 🏗️ Infrastructure as Code Concepts | 1.5 hours | 🟢 Beginner | 0 labs |
 | 02 | 🔧 Configuration as Code Concepts | 1.5 hours | 🟢 Beginner | 0 lab |
 | 03 | 🔷 HashiCorp Introduction | 1 hour | 🟢 Beginner | 1 lab |
-| 04 | ⚡ Terraform Basics | 3 hours | 🟢 Beginner | 4 labs |
-| 05 | 🛠️ Terraform Provisioners & Modern Infrastructure Configuration | 3 hours | 🟢 Beginner | 5 labs |
+| 04 | 🛠️ Lab Setup | 1 hour | 🟢 Beginner | 1 lab |
+| 05 | ⚡ Terraform Basics | 3 hours | 🟢 Beginner | 4 labs |
 | 06 | 🔌 Terraform Providers | 2 hours | 🟢 Beginner| 2 labs |
 | 07 | 📝 Terraform Language and HashiCorp Configuration Language | 1.5 hours | 🟢 Beginner | 2 labs |
 | 08 | 🎨 HCL Style Guide | 1 hour | 🟢 Beginner | 1 lab |
-| 09 | 📊 Variables and Data | 2.5 hours | 🟡 Intermediate | 3 labs |
+| 09 | 📊 Variables and Data | 2.5 hours | 🟢🟡 Beginner - Intermediate | 3 labs |
 | 10 | 🎯 Meta Arguments | 2 hours | 🟡 Intermediate | 3 labs | 
 | 11 | 🔧 Expressions | 2 hours | 🟡 Intermediate | 3 labs |
 | 12 | 📁 Terraform State | 2.5 hours | 🟡 Intermediate | 3 labs |
