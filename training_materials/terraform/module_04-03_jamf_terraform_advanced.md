@@ -877,34 +877,105 @@ locals {
 # Using nested conditionals in Jamf Pro resources
 
 resource "jamf_policy" "patch_management" {
-  name        = "Patch Management"
-  enabled     = true
-  frequency   = local.patch_frequency
-  target_scope = local.policy_scope
+  name      = "Patch Management"
+  enabled   = true
 
-  notifications = local.monitoring_level == "Comprehensive" ? true : false
-  reboot_required = var.environment == "prod" ? true : false
+  # Triggers
+  trigger_checkin                  = true
+  trigger_enrollment_complete      = false
+  trigger_login                     = false
+  trigger_network_state_changed    = false
+  trigger_startup                  = false
+  trigger_other                    = ""
 
-  tags = {
-    Environment     = var.environment
-    MonitoringLevel = local.monitoring_level
-  }
+  # Execution frequency & retry
+  frequency        = local.patch_frequency
+  retry_event      = "trigger"
+  retry_attempts   = local.notify_on_retry ? 3 : -1
+  notify_on_each_failed_retry = local.notify_on_retry
+
+  # Target drive & offline availability
+  target_drive = "/"
+  offline      = false
+
+  # Network requirements
+  network_requirements = "Any"
+
+  # Payloads (example for patch management)
+  payloads = [
+    {
+      name        = "Patch Management Payload"
+      description = "Installs all critical patches"
+      type        = "patch"
+    }
+  ]
+
+  # Scope (mapped from local.policy_scope_name)
+  scope = [
+    {
+      all_computers = local.policy_scope_name == "All Computers" ? true : false
+      smart_groups  = local.policy_scope_name != "All Computers" ? [local.policy_scope_name] : []
+      computers     = []
+      limitations   = {}
+    }
+  ]
+
+  # Self-service (optional)
+  self_service = [
+    {
+      enabled        = false
+      description    = "Patch management self-service"
+      name           = "Patch Management"
+      show_in_self_service = false
+    }
+  ]
+
+  # Site & category IDs (example placeholders)
+  site_id     = 0
+  category_id = 0
+
+  # Package distribution
+  package_distribution_point = "default"
 }
 
 resource "jamf_configuration_profile" "security" {
-  name        = "Security Profile"
-  description = "Configuration profile applied based on environment"
-  payload     = local.security_profile
-  scope       = local.policy_scope
+  name        = "Security Profile - ${var.environment}"
+  description = "Configuration profile applied based on ${var.environment} environment"
+  payloads    = local.security_profile           # Should point to a .mobileconfig file or plist string
+  redeploy_on_update = "Newly Assigned"
 
-  # Conditional enforcement
-  enforced = var.environment == "prod" ? true : false
-  remediation_action = local.monitoring_level == "Minimal" ? "Notify Only" : "Enforce"
+  level       = var.environment == "prod" ? "System" : "User"
+  distribution_method = "Install Automatically"
+  user_removable      = false
+  payload_validate    = true
+
+  scope {
+    all_computers = var.environment == "prod" || var.environment == "staging" ? true : false
+    smart_groups  = local.team_size > 10 ? ["IT Team", "Admin Group"] : ["IT Team"]
+  }
+
+  self_service {
+    self_service_display_name = local.monitoring_level != "Minimal" ? "Install Security Profile" : ""
+    install_button_text       = local.monitoring_level != "Minimal" ? "Install Now" : null
+    self_service_description  = local.monitoring_level != "Minimal" ? "Self-service installation for ${var.environment}" : null
+    feature_on_main_page      = local.monitoring_level != "Minimal"
+  }
 }
 
 resource "jamf_smart_group" "team_groups" {
   name = "Team Smart Group"
-  criteria = local.smart_group_membership
+
+  criteria = [
+    for member in local.smart_group_membership : {
+      name          = "Department"        # Name of the smart group criteria
+      priority      = 0             # Default priority
+      and_or        = "and"         # Default logical operator
+      search_type   = "is"          # Default search type
+      value         = member        # Matching value in for loop
+      opening_paren = false
+      closing_paren = false
+    }
+  ]
 }
 ```
 
@@ -953,25 +1024,60 @@ locals {
 resource "jamf_policy" "services" {
   for_each = toset(local.active_policies)
 
-  name        = "${each.key}-policy"
-  enabled     = true
-  target_scope = each.key == "web" ? local.policy_scope : ["Staging Computers"]
+  name    = each.key
+  enabled = true
 
-  # Conditional enforcement based on policy type
-  frequency = each.key == "backup-policy" ? "Daily" : "Weekly"
-  notifications = contains(local.features, "monitoring") && each.key == "monitoring-policy" ? true : false
+  # Required fields
+  payloads = [
+    {
+      name    = "${each.key}-payload"
+      type    = "configuration"  # adjust as needed
+      content = {}               # replace with actual payload content
+    }
+  ]
 
-  # Assign dynamic tags / metadata
+  scope = [
+    {
+      all_computers = each.key == "web" ? true : false
+      # Example: you can also define static groups or custom logic here
+      groups = each.key == "web" ? local.policy_scope : ["Staging Computers"]
+    }
+  ]
+
+  # Triggers (defaults for schema)
+  trigger_checkin               = true
+  trigger_enrollment_complete   = false
+  trigger_login                 = false
+  trigger_network_state_changed = false
+  trigger_startup               = false
+  trigger_other                 = ""
+
+  # Conditional frequency / notifications
+  frequency = each.key == "backup-policy" ? "Once every day" : "Once every week"
+  retry_event                 = "none"
+  retry_attempts              = -1
+  notify_on_each_failed_retry = false
+  target_drive                = "/"
+  offline                     = false
+  network_requirements        = "Any"
+
+  # Metadata / tags
   tags = merge(local.policy_tags, {
     Service = each.key
   })
 
-  # Example: dynamic scripts (like user_data in AWS)
+  # Example dynamic scripts
   script_path = templatefile("${path.module}/scripts/${each.key}.sh", {
     environment = var.environment
     service     = each.key
     features    = join(",", local.features)
   })
+
+  # Optional: category, site, self-service
+  category_id               = var.category_id
+  site_id                   = var.site_id
+  self_service              = []
+  package_distribution_point = "default"
 }
 ```
 
@@ -1025,21 +1131,45 @@ locals {
 
 # Using transformed lists to create Jamf policies
 resource "jamf_policy" "environment_policies" {
-  for_each = toset(local.environment_policies)
+  for_each = toset(local.active_policies)
 
-  name        = each.key
-  enabled     = true
-  target_scope = ["All Computers"]
+  name    = each.key
+  enabled = true
 
-  # Example: policy script path based on environment
-  script_path = templatefile("${path.module}/scripts/${each.key}.sh", {
-    environment = regex("-(\\w+)-policy$", each.key)[0]
-  })
+  # Required fields
+  payloads = [local.policy_payload]
+  scope    = local.policy_scope
 
+  # Optional: triggers
+  trigger_checkin               = true
+  trigger_enrollment_complete   = false
+  trigger_login                 = false
+  trigger_network_state_changed = false
+  trigger_startup               = false
+  trigger_other                 = ""
+
+  # Optional: frequency / retry
+  frequency                  = "Once per computer"
+  retry_event                 = "none"
+  retry_attempts              = -1
+  notify_on_each_failed_retry = false
+  target_drive                = "/"
+  offline                     = false
+  network_requirements        = "Any"
+
+  # Optional metadata
+  category_id = var.category_id
+  site_id     = var.site_id
+
+  # Example dynamic tags
   tags = {
     Environment = regex("-(\\w+)-policy$", each.key)[0]
     Purpose     = "environment-management"
   }
+
+  # Optional: self-service and package distribution
+  self_service                 = []
+  package_distribution_point   = "default"
 }
 
 # Using complex user_configs to create Jamf users
@@ -1048,15 +1178,30 @@ resource "jamf_user" "managed_users" {
     for config in local.user_configs : config.username => config
   }
 
-  username = each.value.username
-  email    = each.value.email
-  user_id  = each.value.user_id
-  home_dir = each.value.home_dir
+  name        = each.value.username
+  email       = each.value.email
+  email_address = each.value.email
+  enabled     = "Enabled"               # Default to Enabled, can customize per user
+  access_level = "Full Access"          # Default, adjust if needed
+  directory_user = false
+  full_name   = each.value.username
+  user_id     = each.value.user_id
+  home_dir    = each.value.home_dir
+  force_password_change = false
 
-  # Assign groups based on conditional logic
+  # Assign groups
   groups = each.value.groups
 
-  # Example tags for tracking
+  # Optional privileges (examples)
+  jss_objects_privileges   = []
+  jss_settings_privileges  = []
+  jss_actions_privileges   = []
+  casper_admin_privileges  = []
+  casper_remote_privileges = []
+  casper_imaging_privileges = []
+  recon_privileges         = []
+
+  # Tags for tracking
   tags = {
     Email  = each.value.email
     UserID = each.value.user_id
@@ -1137,21 +1282,50 @@ locals {
 resource "jamf_policy" "environment_policies" {
   for_each = local.detailed_configs
 
-  name        = "${each.key}-policy"
-  enabled     = true
-  target_scope = ["All Computers"]
+  name    = "${each.key}-policy"
+  enabled = true
 
-  # Conditional script assignment
-  script_path = each.value.policy_type == "script" ? "/scripts/${each.key}.sh" : null
+  # Scope is required, must be a single-item list
+  scope = [
+    {
+      all_computers = true
+      computers     = []
+      groups        = []
+      buildings     = []
+      departments   = []
+    }
+  ]
 
-  monitoring_enabled = each.value.features.monitoring
-  backup_enabled     = each.value.features.backup
+  # Frequency
+  frequency = "Once per computer"
 
-  tags = {
-    Environment     = each.key
-    EstimatedEffort = "${each.value.estimated_effort} hours"
-    Encryption      = each.value.features.encryption ? "enabled" : "disabled"
-  }
+  # Triggers / script payloads
+  trigger_checkin              = each.value.features.monitoring ? true : false
+  trigger_startup              = each.value.policy_type == "script" ? true : false
+
+  # Payloads are required
+  payloads = [
+    for s in each.value.scripts : {
+      script_path = "/scripts/${s}.sh"
+      name        = s
+    }
+  ]
+
+  # Retry & offline settings (example defaults)
+  retry_event                  = "none"
+  retry_attempts               = -1
+  notify_on_each_failed_retry  = false
+  offline                       = false
+
+  # Network requirements
+  network_requirements = "Any"
+
+  # Optional: Self-service (leave empty if not used)
+  self_service = []
+
+  # Optional: Category and site
+  category_id = null
+  site_id     = null
 }
 ```
 
@@ -1222,21 +1396,47 @@ locals {
 resource "jamf_policy" "app_instances" {
   for_each = local.app_instances_map
 
-  name        = "${each.value.key}-policy"
-  enabled     = true
-  target_scope = ["All Computers"]
+  name    = "${each.value.key}-policy"
+  enabled = true
 
-  # Conditional scripts
-  script_path = length(each.value.scripts) > 0 ? each.value.scripts[0] : null
+  # Scope is required; using a simple "All Computers" example
+  scope = [
+    {
+      all_computers = true
+      computers     = []
+      groups        = []
+      buildings     = []
+      departments   = []
+    }
+  ]
 
-  # Example of conditional deployment logic
-  target_count = each.value.targets
+  # Frequency defaults to Once per computer
+  frequency = "Once per computer"
 
-  tags = {
-    Application = each.value.app
-    Environment = each.value.environment
-    Targets     = each.value.targets
-  }
+  # Payloads / scripts
+  payloads = length(each.value.scripts) > 0 ? [
+    for s in each.value.scripts : {
+      script_path = "/scripts/${s}"
+      name        = s
+    }
+  ] : []
+
+  # Triggers based on scripts
+  trigger_checkin = length(each.value.scripts) > 0 ? true : false
+
+  # Retry & offline settings (defaults)
+  retry_event                 = "none"
+  retry_attempts              = -1
+  notify_on_each_failed_retry = false
+  offline                     = false
+  network_requirements        = "Any"
+
+  # Optional: Self-service
+  self_service = []
+
+  # Optional: Category / site (not used here)
+  category_id = null
+  site_id     = null
 }
 
 # Outputs for summaries
@@ -1286,20 +1486,47 @@ resource "jamf_policy" "deploy_scripts" {
     for comp in local.computers : comp.name => comp
   }
 
-  name        = "${each.value.name}-policy"
-  enabled     = true
-  target_scope = [each.value.name]  # assign policy to specific computer
+  name    = "${each.value.name}-policy"
+  enabled = true
 
-  # Conditional script assignment
-  script_path = each.value.type == "mac" ? "deploy_mac.sh" : "deploy_phone.sh"
+  # Scope assigned to specific computer
+  scope = [
+    {
+      all_computers = false
+      computers     = [each.value.name]
+      groups        = []
+      buildings     = []
+      departments   = []
+    }
+  ]
 
-  tags = {
-    ComputerName = each.value.name
-    Type         = each.value.type
-    IPAddress    = each.value.ip
-  }
+  # Frequency defaults to Once per computer
+  frequency = "Once per computer"
+
+  # Conditional payloads based on computer type
+  payloads = [
+    {
+      script_path = each.value.type == "mac" ? "deploy_mac.sh" : "deploy_phone.sh"
+      name        = each.value.type == "mac" ? "deploy_mac.sh" : "deploy_phone.sh"
+    }
+  ]
+
+  # Optional triggers (check-in)
+  trigger_checkin = true
+
+  # Retry & offline defaults
+  retry_event                 = "none"
+  retry_attempts              = -1
+  notify_on_each_failed_retry = false
+  offline                     = false
+  network_requirements        = "Any"
+
+  # Self-service (empty)
+  self_service = []
+
+  category_id = null
+  site_id     = null
 }
-
 # Splat with resource references
 output "policy_ids" {
   description = "All Jamf policy IDs"
@@ -1431,7 +1658,7 @@ locals {
   ios_device_names   = local.devices_by_type["ios"][*].name
 }
 
-# Example: Create Jamf Pro device records (conceptual)
+# Example: Create Jamf Pro device records (conceptual resource, does not exist in terraform provider)
 resource "jamf_computer" "devices" {
   for_each = local.devices_by_type
 
@@ -1473,21 +1700,40 @@ Dynamic blocks enable **programmatic generation** of nested configuration blocks
 ```hcl
 # Traditional static configuration (repetitive)
 resource "jamf_policy" "dev_static" {
-  name        = "dev-static-policy"
-  target_type = "computers"
+  name    = "dev-static-policy"
+  enabled = true
 
-  # Static scope assignments
+  # Scope assignments
   scope = [
-    "dev-laptop-01",
-    "dev-laptop-02"
+    {
+      all_computers = false
+      computers     = ["dev-laptop-01", "dev-laptop-02"]
+      groups        = []
+      buildings     = []
+      departments   = []
+    }
   ]
 
-  # Static configuration: repetitive
-  scripts = [
-    { name = "Install Xcode", priority = "high" },
-    { name = "Install Homebrew", priority = "medium" },
-    { name = "Enable FileVault", priority = "high" }
+  # Frequency defaults
+  frequency = "Once per computer"
+
+  # Static scripts (payloads)
+  payloads = [
+    { script_path = "Install_Xcode.sh", name = "Install Xcode" },
+    { script_path = "Install_Homebrew.sh", name = "Install Homebrew" },
+    { script_path = "Enable_FileVault.sh", name = "Enable FileVault" }
   ]
+
+  trigger_checkin               = true
+  retry_event                   = "none"
+  retry_attempts                = -1
+  notify_on_each_failed_retry   = false
+  offline                       = false
+  network_requirements          = "Any"
+
+  self_service = []
+  category_id  = null
+  site_id      = null
 }
 
 # Dynamic configuration (flexible)
@@ -1505,27 +1751,42 @@ locals {
 }
 
 resource "jamf_policy" "dev_dynamic" {
-  name        = "dev-dynamic-policy"
-  target_type = "computers"
+  name    = "dev-dynamic-policy"
+  enabled = true
 
-  # Assign dynamically to all target devices
-  scope = local.target_devices
-
-  # Use dynamic block to iterate over scripts
-  dynamic "script" {
-    for_each = local.policy_rules
-    content {
-      name     = script.value.script_name
-      priority = script.value.priority
-      note     = script.value.description
+  # Scope assignments
+  scope = [
+    {
+      all_computers = false
+      computers     = local.target_devices
+      groups        = []
+      buildings     = []
+      departments   = []
     }
-  }
+  ]
 
-  # Tags / metadata
-  tags = {
-    Name      = "dev-dynamic-policy"
-    ScriptCount = length(local.policy_rules)
-  }
+  # Frequency defaults
+  frequency = "Once per computer"
+
+  # Dynamic scripts / payloads
+  payloads = [
+    for script_rule in local.policy_rules : {
+      script_path = "${replace(script_rule.script_name, " ", "_")}.sh"
+      name        = script_rule.script_name
+      note        = script_rule.description
+    }
+  ]
+
+  trigger_checkin               = true
+  retry_event                   = "none"
+  retry_attempts                = -1
+  notify_on_each_failed_retry   = false
+  offline                       = false
+  network_requirements          = "Any"
+
+  self_service = []
+  category_id  = null
+  site_id      = null
 }
 ```
 
@@ -1566,28 +1827,43 @@ locals {
 resource "jamf_policy" "env_policies" {
   for_each = local.environments
 
-  name        = "${each.key}-policy"
-  target_type = "computers"
+  name    = "${each.key}-policy"
+  enabled = true
 
-  # Assign scripts dynamically
-  dynamic "script" {
-    for_each = each.value.scripts
-    content {
-      name     = script.value.name
-      priority = script.value.priority
-      note     = script.value.description
+  # Assign to all computers in scope
+  scope = [
+    {
+      all_computers = true
+      computers     = []
+      groups        = []
+      buildings     = []
+      departments   = []
     }
-  }
+  ]
 
-  # Optional monitoring assignment
-  monitoring_enabled = each.value.monitoring_enabled
+  # Scripts as payloads
+  payloads = [
+    for script_rule in each.value.scripts : {
+      script_path = "${replace(script_rule.name, " ", "_")}.sh"
+      name        = script_rule.name
+      note        = script_rule.description
+      # Optional: store priority if needed for reference
+      extra_metadata = { priority = script_rule.priority }
+    }
+  ]
 
-  # Tags / metadata
-  tags = {
-    Name          = "${each.key}-policy"
-    ScriptCount   = length(each.value.scripts)
-    Monitoring    = each.value.monitoring_enabled ? "enabled" : "disabled"
-  }
+  # Monitoring flag stored in a schema-compatible way
+  trigger_checkin = each.value.monitoring_enabled
+
+  frequency                    = "Once per computer"
+  retry_event                   = "none"
+  retry_attempts                = -1
+  notify_on_each_failed_retry   = false
+  offline                       = false
+  network_requirements          = "Any"
+  self_service                  = []
+  category_id                   = null
+  site_id                       = null
 }
 
 # Output summary using splat expressions
@@ -1603,6 +1879,8 @@ output "environment_policies_summary" {
 ```
 
 ### 🔄 Nested Dynamic Blocks
+
+This is also conceptual and the resources do not reflect what it would be in the working provider. This is just for an example.
 
 ```hcl
 locals {
@@ -1627,12 +1905,42 @@ locals {
   }
 }
 
+# Smart Computer Groups per application/environment
+resource "jamfpro_smart_computer_group" "app_env_group" {
+  for_each = {
+    for app_name, app in local.applications :
+    app_name => app.environments
+  }
+
+  name        = "${each.key}-devices"
+  description = "Devices for ${each.key} application"
+
+  dynamic "criteria" {
+    for_each = each.value
+    content {
+      name     = "Environment"
+      operator = "is"
+      value    = each.value
+    }
+  }
+
+  tags = {
+    Application = each.key
+    Environments = join(",", each.value)
+  }
+}
+
 # Jamf policies for each application
 resource "jamf_policy" "app" {
   for_each = local.applications
 
   name        = "${each.key}-policy"
   target_type = "computers"
+
+  # Assign to smart computer groups directly
+  smart_computer_groups = [
+    for env in each.value.environments : jamfpro_smart_computer_group.app_env_group[each.key].id
+  ]
 
   # Dynamic assignment of scripts/policies
   dynamic "script" {
@@ -1644,49 +1952,14 @@ resource "jamf_policy" "app" {
     }
   }
 
-  # Monitoring assignment
   monitoring_enabled = each.value.monitoring_enabled
 
-  # Tags / metadata
   tags = {
     Name        = "${each.key}-policy"
     Environment = join(",", each.value.environments)
     PolicyCount = length(each.value.policies)
     Monitoring  = each.value.monitoring_enabled ? "enabled" : "disabled"
   }
-}
-
-# Device groups per environment (simulating target groups / ASG)
-resource "jamf_device_group" "app_env_group" {
-  for_each = {
-    for app_name, app in local.applications :
-    app_name => app.environments
-  }
-
-  name        = "${each.key}-devices"
-  description = "Devices for ${each.key} application"
-
-  # Assign devices dynamically (simulated)
-  dynamic "device" {
-    for_each = each.value
-    content {
-      name = "device-in-${device.value}"
-    }
-  }
-
-  # Tags
-  tags = {
-    Application = each.key
-    Environments = join(",", each.value)
-  }
-}
-
-# Assign policies to device groups dynamically
-resource "jamf_policy_assignment" "app_to_group" {
-  for_each = local.applications
-
-  policy_id       = jamf_policy.app[each.key].id
-  device_group_id = jamf_device_group.app_env_group[each.key].
 }
 ```
 
