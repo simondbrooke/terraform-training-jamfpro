@@ -1132,7 +1132,11 @@ Test your understanding of Terraform Basics with these questions:
 
 ---
 
-**🎉 Congratulations!** You've completed Module 3 and now understand the core Terraform workflow, variables, outputs, and data sources. You've built real Jamf Pro resources and learned to make it flexible and maintainable!
+**🎉 Congratulations!** You've completed Module 3 and now understand the core Terraform workflow, variables, outputs, and data sources. You've built real AWS infrastructure and learned to make it flexible and maintainable!
+
+**➡️ Ready for Module 5?** Let me know when you'd like to continue with Terraform Provisioners - where we'll learn how to configure resources after they're created!
+
+---
 
 ---
 
@@ -1140,8 +1144,8 @@ Test your understanding of Terraform Basics with these questions:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 6: Terraform Providers](./module_06_terraform_providers.md)**
+**➡️ [Module 5: Configuration Management and Provisioners](./module_05_configuration_management_and_provisioners.md)**
 
-Learn how to use Terraform providers, the provider registry, and how to configure multiple providers in a single configuration.
+Learn advanced configuration management techniques and provisioner usage.
 
 ---
