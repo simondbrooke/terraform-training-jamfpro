@@ -1,6 +1,6 @@
 # ⚡ Module 04: Terraform Basics - Lab Setup
 
-_Duration: 3 hours | Labs: 4 | Difficulty: 🟢 Beginner_
+_Duration: 1-1.5 hours | Labs: 4 | Difficulty: 🟢 Beginner_
 
 ---
 
