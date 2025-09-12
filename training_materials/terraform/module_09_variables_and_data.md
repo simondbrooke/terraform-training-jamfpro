@@ -1,5 +1,5 @@
 # 📊 Module 09: Variables and Data
-*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
+*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟢🟡 Beginner - Intermediate*
 ---
 
 ### 🎯 Learning Objectives
