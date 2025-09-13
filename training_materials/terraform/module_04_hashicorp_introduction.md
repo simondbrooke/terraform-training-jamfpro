@@ -1,9 +1,11 @@
+# 🔷 Module 04: HashiCorp Introduction
 
-# 🔷 Module 03: HashiCorp Introduction
-*Duration: 1 hour | Labs: 1* | Difficulty: 🟢 Beginner*
----
+## _Duration: 1 hour | Labs: 1_ | Difficulty: 🟢 Beginner\*
+
 ### 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Understand HashiCorp's role in the DevOps ecosystem
 - ✅ Explain what Terraform is and its core purpose
 - ✅ Distinguish between Terraform OSS and Terraform Cloud/Enterprise
@@ -17,20 +19,21 @@ By the end of this module, you will be able to:
 
 HashiCorp is a company focused on **infrastructure automation** and **security**. Founded in 2012, they've built a suite of tools that work together to solve modern infrastructure challenges.
 
-**🔑 HashiCorp's Mission**: 
-> *"To enable organizations to provision, secure, and run any infrastructure for any application"*
+**🔑 HashiCorp's Mission**:
+
+> _"To enable organizations to provision, secure, and run any infrastructure for any application"_
 
 #### 🛠️ HashiCorp Product Suite
 
-| Product | Purpose | Category | Open Source |
-|---------|---------|----------|-------------|
-| **🔷 Terraform** | Infrastructure provisioning | Infrastructure | ✅ Yes |
-| **🔒 Vault** | Secrets management | Security | ✅ Yes |
-| **🌐 Consul** | Service discovery & mesh | Networking | ✅ Yes |
-| **🚀 Nomad** | Workload orchestration | Runtime | ✅ Yes |
-| **📦 Packer** | Image building | Infrastructure | ✅ Yes |
-| **🛡️ Boundary** | Secure remote access | Security | ✅ Yes |
-| **🚢 Waypoint** | Application deployment | Application | ✅ Yes |
+| Product          | Purpose                     | Category       | Open Source |
+| ---------------- | --------------------------- | -------------- | ----------- |
+| **🔷 Terraform** | Infrastructure provisioning | Infrastructure | ✅ Yes      |
+| **🔒 Vault**     | Secrets management          | Security       | ✅ Yes      |
+| **🌐 Consul**    | Service discovery & mesh    | Networking     | ✅ Yes      |
+| **🚀 Nomad**     | Workload orchestration      | Runtime        | ✅ Yes      |
+| **📦 Packer**    | Image building              | Infrastructure | ✅ Yes      |
+| **🛡️ Boundary**  | Secure remote access        | Security       | ✅ Yes      |
+| **🚢 Waypoint**  | Application deployment      | Application    | ✅ Yes      |
 
 💡 **Pro Tip**: All HashiCorp tools follow similar principles - they're declarative, use HCL (HashiCorp Configuration Language), and integrate seamlessly!
 
@@ -41,6 +44,7 @@ HashiCorp is a company focused on **infrastructure automation** and **security**
 **Terraform** is an **Infrastructure as Code (IaC)** tool that allows you to **build, change, and version infrastructure** safely and efficiently.
 
 **🎯 Core Purpose:**
+
 - **Provision** infrastructure resources across multiple providers
 - **Manage** the complete lifecycle of infrastructure
 - **Version control** infrastructure changes
@@ -57,6 +61,7 @@ HashiCorp is a company focused on **infrastructure automation** and **security**
 #### 🔄 Terraform vs Traditional Infrastructure Management
 
 **❌ Traditional Approach:**
+
 ```bash
 # Manual AWS Console clicks or CLI commands
 aws ec2 run-instances --image-id ami-12345 --instance-type t2.micro
@@ -67,14 +72,15 @@ aws ec2 authorize-security-group-ingress --group-name web-sg --protocol tcp --po
 ```
 
 **✅ Terraform Approach:**
+
 ```hcl
 # Single configuration file describes entire infrastructure
 resource "aws_instance" "web" {
   ami           = "ami-12345"
   instance_type = "t2.micro"
-  
+
   vpc_security_group_ids = [aws_security_group.web.id]
-  
+
   tags = {
     Name = "WebServer"
   }
@@ -82,7 +88,7 @@ resource "aws_instance" "web" {
 
 resource "aws_security_group" "web" {
   name = "web-sg"
-  
+
   ingress {
     from_port   = 80
     to_port     = 80
@@ -95,12 +101,14 @@ resource "aws_security_group" "web" {
 #### ☁️ Terraform Deployment Options
 
 **🆓 Terraform Open Source (OSS)**
+
 - Free to use
 - Run locally or in CI/CD with runners like GitHub Actions or GitLab CI
 - Manual state management
 - Individual or small team usage
 
 **☁️ Terraform Cloud**
+
 - SaaS offering by HashiCorp
 - Remote state management
 - Team collaboration features
@@ -108,6 +116,7 @@ resource "aws_security_group" "web" {
 - Private module registry
 
 **🏢 Terraform Enterprise**
+
 - Self-hosted version of Terraform Cloud
 - Enterprise security and compliance
 - Air-gapped environments
@@ -116,6 +125,7 @@ resource "aws_security_group" "web" {
 #### 🌍 Multi-Cloud Capabilities
 
 **🎯 Why Multi-Cloud Matters:**
+
 - **🛡️ Avoid vendor lock-in**: Don't put all eggs in one basket
 - **🌐 Geographic distribution**: Use best regions from different providers
 - **💰 Cost optimization**: Leverage competitive pricing
@@ -123,13 +133,14 @@ resource "aws_security_group" "web" {
 - **🎯 Best-of-breed**: Use each provider's strongest services
 
 **Example Multi-Cloud Setup:**
+
 ```hcl
 # AWS Provider for compute
 provider "aws" {
   region = "us-west-2"
 }
 
-# Azure Provider for databases  
+# Azure Provider for databases
 provider "azurerm" {
   features {}
 }
@@ -160,11 +171,13 @@ resource "google_ml_engine_model" "ml_model" {
 ```
 
 ### 💻 **Exercise 2.1**: Terraform Installation Verification
+
 **Duration**: 15 minutes
 
 Let's verify your Terraform installation and explore basic commands.
 
 **Step 1: Verify Installation**
+
 ```bash
 # Open VS Code terminal (Ctrl+` or Cmd+`)
 terraform version
@@ -175,6 +188,7 @@ terraform version
 ```
 
 **Step 2: Explore Help System**
+
 ```bash
 # Get general help
 terraform --help
@@ -186,6 +200,7 @@ terraform destroy --help
 ```
 
 **Step 3: Create Your First Terraform Directory**
+
 ```bash
 # Create project directory
 mkdir ~/terraform-learning
@@ -198,11 +213,12 @@ code .
 **Step 4: Create a Simple Configuration**
 
 Create a file called `main.tf` in VS Code:
+
 ```hcl
 # This is a comment in HCL
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     local = {
       source  = "hashicorp/local"
@@ -225,7 +241,7 @@ output "file_content" {
 
 **Step 5: Initialize and Apply**
 
-Within your vs code terminal, run the following commands:
+Within your VS Code terminal, run the following commands:
 
 ```bash
 # Initialize Terraform (downloads providers)
@@ -291,7 +307,6 @@ Changes to Outputs:
   + file_content = "Hello from Terraform! 🚀"
 ```
 
-
 ```bash
 # Apply the changes
 terraform apply
@@ -318,6 +333,7 @@ cat hello.txt
 ```
 
 **Step 6: Explore State**
+
 ```bash
 # View current state
 terraform show
@@ -359,6 +375,7 @@ local_file.hello
 ```
 
 **Step 7: Clean Up**
+
 ```bash
 # Destroy resources
 terraform destroy
@@ -374,7 +391,7 @@ Do you really want to destroy all resources?
   Terraform will destroy all your managed infrastructure, as shown above.
   There is no undo. Only 'yes' will be accepted to confirm.
 
-  Enter a value: 
+  Enter a value:
 ```
 
 Type 'yes' when prompted
@@ -427,7 +444,7 @@ terraform state list    # List managed resources
 
 ---
 
-**🎉 Congratulations!** You've completed Module 3 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
+**🎉 Congratulations!** You've completed Module 4 and now understand HashiCorp's ecosystem and Terraform's role within it. You've also created your first Terraform configuration!
 
 ---
 
@@ -435,8 +452,8 @@ terraform state list    # List managed resources
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 4: Lab Setup](./module_04_lab_setup.md)**
+**➡️ [Module 5: Terraform Basics](./module_05-00_terraform_basics.md)**
 
-Setup your Terraform development environment and get ready for the hands-on labs.
+Start to learn the basics of Terraform and the HCL language.
 
 ---

@@ -1,4 +1,6 @@
-# Section 1 - Configuration
+# Module 5-01 - Jamf Pro Configuration
+
+## _Duration: 1 hours | Labs: 3_ | Difficulty: 🟢 Beginner\*
 
 This guide presumes that you have basic knowledge of Terraform, understand the structure of a Terraform resource and already have the Terraform provider installed and integrated to a Jamf Pro tenant.
 
