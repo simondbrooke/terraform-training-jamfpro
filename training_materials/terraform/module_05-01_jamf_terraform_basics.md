@@ -519,3 +519,23 @@ Follow these steps:
 4. Run your terraform and create the User-Initiated Enrolment configuration by running the `terraform plan` & `terraform apply` commands in the terminal in the working directory
 5. Verify that the changes have been successful
 6. **Optional - If working in a team** Clean up the configuration by running the `terraform destroy` command
+
+---
+
+**🎉 Congratulations!** You've completed Module 5-01 and now understand the basic Jamf Pro Terraform configurations. You've built real Jamf Pro configuration and deployed some resources.
+
+**➡️ Ready for Module 5-02?** Let me know when you'd like to continue with Jamf Pro Terraform Resources - where we'll learn how to configure more resources that you use for everyday management of macOS devices!
+
+---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 5-02: Jamf Terraform Intermediate](./module_05-02_jamf_terraform_intermediate.md)**
+
+Learn intermediate Jamf Pro resource configuration.
+
+---
