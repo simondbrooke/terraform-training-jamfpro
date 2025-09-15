@@ -1,20 +1,30 @@
 # Module 5-01 - Jamf Pro Configuration
 
-## _Duration: 1 hours | Labs: 3_ | Difficulty: 🟢 Beginner\*
+## _Duration: 1 hour | Labs: 3_ | Difficulty: 🟢 Beginner\*
 
-This guide presumes that you have basic knowledge of Terraform, understand the structure of a Terraform resource and already have the Terraform provider installed and integrated to a Jamf Pro tenant.
+## 🎯 Learning Objectives
 
-How you set up your environment and utilise the Terraform provider will not be covered in this guide. This guide will focus on learning how to use the Jamf Pro Terraform Provider by giving examples and exercises to build your knowledge on the specific Jamf Pro resources.
+By the end of this module, you will be able to:
 
-In this section, you will complete the following lessons:
+- ✅ Configure infrastructure resources in Jamf Pro such as Sites, Network Segments, Self Service and Developing a basic Script/Policy
+- ✅ Configure API Roles & Clients for API Usage
+- ✅ Configure Enrolment Settings such as LAPS and User-initiated Enrolment
 
-1. [Lesson 1 - Infrastructure](#lesson-1---infrastructure)
-2. [Lesson 2 - API Roles & Clients](#lesson-2---api-roles--clients)
-3. [Lesson 3 - Enrolment](#lesson-3---enrolment)
+### 📚 Topics Covered
 
-## Lesson 1 - Infrastructure
+This guide presumes that you have completed the previous exercises on Terraform and HashiCorp Language, you understand the structure of a Terraform resource and already have the Terraform provider installed and integrated to a Jamf Pro tenant from the lab setup module.
 
-In this lesson we are going to discuss basic configuration of a Jamf Pro server. The Jamf Pro Terraform Provider can configure all parts of the Jamf Pro tenant, in this section we are going to cover the following objects:
+How you set up your environment and utilise the Terraform provider will not be covered in this module, but should have been covered in a previous module. This guide will focus on learning how to use the Jamf Pro Terraform Provider by giving examples and exercises to build your knowledge on the specific Jamf Pro resources.
+
+In this module, you will complete the following exercises:
+
+1. [Exercise 1 - Infrastructure](#exercise-1---infrastructure)
+2. [Exercise 2 - API Roles & Clients](#exercise-2---api-roles--clients)
+3. [Exercise 3 - Enrolment](#exercise-3---enrolment)
+
+## Exercise 1 - Infrastructure
+
+In this exercise we are going to discuss basic configurations of a Jamf Pro server. The Jamf Pro Terraform Provider can configure all parts of the Jamf Pro tenant, in this section we are going to cover the following objects:
 
 - [Sites](#sites)
 - [Network Segments](#network-segments)
@@ -25,33 +35,34 @@ For more information on any of the resources we are going to create today, you c
 
 ### Sites
 
-Sites are used in Jamf Pro to organise and separate object functionality into specific areas for easier management.
+Sites are an easy resource to configure as all it requires is a name of the site. Sites can also then be used in reference later in other Terraform resources.
+
 A site can be created in Terraform using the following resource:
 
 ```
-resource "jamfpro_site" "jamf_pro_site_1" {
-    name = "gd-training-london"
+resource "jamfpro_site" "jamf_pro_site_leeds" {
+    name = "gd-training-leeds"
 }
 ```
 
-This resource will create a 'jamfpro_site' with the unique identifier 'jamf_pro_site_1'. As a site in Jamf only requires one attribute, a name. The only attribute we are required to enter here is the name, which in this case is 'gd-training-london'.
+This resource will create a 'jamfpro_site' resource with the unique identifier 'jamf_pro_site_1'. As a site in Jamf only requires one attribute, a name. The only attribute we are required to enter here is the name, which in this case is 'gd-training-london'.
 
 Once you apply this run, the site will be created in the linked Jamf Pro tenant.
 
 You can see more about Sites on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/site) webpage.
 
-#### Sites - Exercise 1 - Creating a Site
+#### Sites - Exercise 1.1 - Creating a Site
 
 In this exercise, you will create the above site within your terraform project and push the change to your Jamf Pro instance.
 
 Follow these steps:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `sites.tf`
-2. Add in the site resource mentioned above and create a site. You can change the name attribute to anything you would like.
+1. Create a new file in your Terraform project in the working directory and name it `sites.tf`
+2. Add in the site resource mentioned above and create a site. You can change the name attribute to anything you would like. **(Ensure that the identifier is unique for every site that you create)**
 3. Save the file
-4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+4. Create the site by running the `terraform plan` & `terraform apply` commands in the terminal in the working directory
 
-#### Sites - Exercise 2 - Creating more Sites
+#### Sites - Exercise 1.2 - Creating more Sites
 
 In this exercise, you are going to create more sites without instruction. It is worth noting here, you do not need to create a file for each site, you can create multiple resources in one terraform file. Following the steps above (excluding the file creation) and the resources provided, create 4 more sites as follows:
 
@@ -59,13 +70,14 @@ In this exercise, you are going to create more sites without instruction. It is 
 2. Create a site for Glasgow
 3. Create a site for California
 4. Create a site for Texas
+5. Now that you have created all of your sites, verify that the sites have been created in your Jamf Pro instance.
 
 ### Network Segments
 
-Network Segments in Jamf are used to limit scoping to a specific subnet of a network. A network segment resource can be created using the following format:
+The next resource that we are going to look at is Network Segments. Network Segment resources require a lot more configuration than the Sites. An example of a Network Segment is the following:
 
 ```
-resource "jamfpro_network_segment" "jamfpro_network_segment_001" {
+resource "jamfpro_network_segment" "jamfpro_network_segment_example" {
   name                 = "Example Network Segment"
   starting_address     = "10.16.123.0"
   ending_address       = "10.16.123.254"
@@ -80,26 +92,25 @@ resource "jamfpro_network_segment" "jamfpro_network_segment_001" {
 }
 ```
 
-This resource will create a 'jamfpro_network_segment' with the unique identifier 'jamfpro_network_segment_001'. The network segment has multiple attributes that require configuring. You can see more details on the full requirements on the registry page below. The main requirements are name, starting address and ending address.
-
-Once you apply this run, the network segment will be created in the linked Jamf Pro tenant.
+This resource will create a 'jamfpro_network_segment' with the unique identifier 'jamfpro_network_segment_example'. The network segment has multiple attributes that require configuring. You can see more details on the full requirements on the registry page below. The main requirements are name, starting address and ending address.
 
 You can see more about network segments on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/network_segment) webpage.
 
-#### Network Segments - Exercise 1 - Creating a Network Segment
+#### Network Segments - Exercise 1.3 - Creating a Network Segment
 
 In this exercise, you will create a network segment and push the change to your Jamf Pro server.
 
 Follow these steps to create the network segment:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `network_segments.tf`
-2. Add in the network segment resource mentioned above and create a network segment. You can fill in the attributes with any IP range and give it a name. Following the schema, the only required fields are name, starting address and ending address, only use these fields.
+1. Create a new file in your project in your working directory and name it `network_segments.tf`
+2. Add in the network segment resource mentioned above and create a network segment. You can fill in the attributes with any IP range and give it a name. Following the schema, the only required fields are name, starting address and ending address, only use these fields
 3. Save the file
-4. Run your terraform and create the network segment by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+4. Run your terraform and create the network segment by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+5. Verify that the network segment has been created in your Jamf Pro tenant
 
 ### Configuring Self Service
 
-Self Service Customisation in Jamf will allow you to modify how your Self Service application looks and feels. The Self Service Application can be customised using the following resource:
+Configuring the Self Service Application is a setting that can only be configured one time. It cannot have multiple configurations. So when configuring this resource, you need to ensure that it is not configured elsewhere. It can be customised using the following resource:
 
 ```
 resource "jamfpro_self_service_settings" "example" {
@@ -119,20 +130,22 @@ resource "jamfpro_self_service_settings" "example" {
 
 This resource will create a 'jamfpro_self_service_settings' with the unique identifier 'example'. The Self Service Configuration has multiple attributes that are required. You can see more details on the full requirements on the registry page below. All the attributes written above are required, but there are additional optional attributes which can be found in the Terraform Registry link below.
 
-Once you apply this run, the Self Service Configurations will be configured in the linked Jamf Pro tenant.
-
 You can see more about network segments on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/self_service_settings) webpage.
 
-#### Configuring Self Service - Exercise 1 - Customising Self Service
+#### Configuring Self Service - Exercise 1.4 - Customising Self Service
 
 In this exercise, you will customise the Self Service application to your liking for your organisation.
 
+**Before configuring the Self Service Settings - If you are completing this training in a team, ensure that no-one else is running their `terraform apply` at the same time, as this could cause a conflict**
+
 Follow the steps below to customise the Self Service Application:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `self_service_customisation.tf`
+1. Create a new file in your project in the working directory and name it `self_service_customisation.tf`
 2. Add in the Self Service Configuration resource mentioned above and customise the Self Service application to meet the requirements of your organisation. Following the schema, you can adapt the customisation as you see fit
 3. Save the file
-4. Run your terraform and customise self service by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+4. Run your terraform and customise self-service by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+5. Verify that the configuration has taken effect
+6. **(Optional) If working in a team -** Tidy up your configuration by running the `terraform destroy` command. This will destroy all of your resources that you have created and allow others to run their `terraform apply`
 
 ### Deploying a Health Check Policy
 
@@ -239,7 +252,7 @@ Once you apply this run, the policy will be created in the linked Jamf Pro tenan
 
 You can see more about policies on the policy [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/policy) webpage.
 
-#### Deploying a Health Check Policy - Exercise 1
+#### Deploying a Health Check Policy - Exercise 1.5
 
 In this exercise, you will create the resources above and deploy the script to Self Service.
 
@@ -259,9 +272,9 @@ Follow the steps below to create the Self Service Health Check:
 
 ---
 
-## Lesson 2 - API Roles & Clients
+## Exercise 2 - API Roles & Clients
 
-In this lesson, we are going to look at the basics of creating an API Role and Client. This is useful when working on automation and wanting to create scripts that use the Jamf Pro API endpoints. This lesson will cover the following topics:
+In this exercise, we are going to look at the basics of creating an API Role and Client. This is useful when working on automation and wanting to create scripts that use the Jamf Pro API endpoints. This Exercise will cover the following topics:
 
 - [API Roles](#api-roles)
 - [API Clients](#api-clients)
@@ -303,7 +316,7 @@ This resource block brings up an important feature of Terraform which makes it e
 
 You can see more about API Clients on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/api_integration) webpage.
 
-#### API Roles - Exercise 1 - Creating API Roles
+#### API Roles - Exercise 2.1 - Creating API Roles
 
 In this exercise, you will create the above Jamf Pro API Role within your terraform project and push the change to your Jamf Pro instance.
 
@@ -315,7 +328,7 @@ Follow these steps:
 4. Save the file
 5. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
 
-#### API Clients - Exercise 2 - Creating an API Client
+#### API Clients - Exercise 2.2 - Creating an API Client
 
 In this exercise, you will create the above Jamf Pro API Client while pointing to the API Role that you created in the last exercise.
 
@@ -323,15 +336,15 @@ Follow these steps:
 
 1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `jamfpro_api_integration.tf`
 2. Add in the API integration resource mentioned above and create the API Client. You can change the name attribute to anything you would like.
-3. Point the `authorization_scopes` attribute to your API role that was created in Exercise 1. This is done by pointing having the value of {name of file}.{unique name of resource}.display_name
+3. Point the `authorization_scopes` attribute to your API role that was created in exercise 1. This is done by pointing having the value of {name of file}.{unique name of resource}.display_name
 4. Save the file
 5. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
 
 ---
 
-## Lesson 3 - Enrolment
+## Exercise 3 - Enrolment
 
-In this lesson, we are going to look at some Jamf Pro settings that are configured to allow users to enroll. The point of this lesson is to show how Terraform can be used to modify the Jamf Pro settings. This lesson will cover the following topics:
+In this exercise, we are going to look at some Jamf Pro settings that are configured to allow users to enroll. The point of this exercise is to show how Terraform can be used to modify the Jamf Pro settings. This exercise will cover the following topics:
 
 - [Configuring LAPS](#configuring-laps)
 - [Configuring User-initiated Enrolment](#configuring-user-initiated-enrolment)
@@ -474,9 +487,9 @@ There are no required attributes in this resource, but many of them are required
 
 You can see more about API Roles on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/user_initiated_enrollment_settings) webpage.
 
-#### Enrolment - Exercise 1 - Configuring LAPS
+#### Enrolment - Exercise 3.1 - Configuring LAPS
 
-In this exercise, you will use what you learned in the first section of this lesson and implement the LAPS configuration.
+In this exercise, you will use what you learned in the first section of this exercise and implement the LAPS configuration.
 
 Follow these steps:
 
@@ -485,7 +498,7 @@ Follow these steps:
 3. Save the file
 4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
 
-#### Enrolment - Exercise 2 - Configuring User-Initiated Enrolment
+#### Enrolment - Exercise 3.2 - Configuring User-Initiated Enrolment
 
 In this exercise, you can customise the User-initiated enrolment as you like. There are a lot of attributes and settings in this payload, so play around with the settings and find what works best for your organisation.
 
