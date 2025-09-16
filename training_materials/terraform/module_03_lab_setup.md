@@ -188,7 +188,7 @@ code --install-extension ms-python.python                 # Python support
 2. Navigate to **Settings** → **System** → **API Roles and Clients**
 3. Click **+ New** to create a new API Role
 4. **Configure the API Role:**
-   - **Display Name**: `Terraform Management Role`
+   - **Display Name**: `Insert Unique Name Here`
    - **Privileges**: Select the required API endpoints for your Terraform configurations
    - **Recommended minimum privileges** for basic operations:
      - `Read Categories`
@@ -215,7 +215,7 @@ code --install-extension ms-python.python                 # Python support
    - **Access Token Lifetime**: `30 minutes` (recommended)
    - **API Roles**: Assign the `Terraform Management Role` created above
 4. **Click Create**
-5. **Important**: Copy and securely store the **Client ID** and **Client Secret** - you cannot retrieve the secret again
+5. **Important**: Copy and securely store the **Client ID** and **Client Secret** - you cannot retrieve the secret again unless you rotate it
 
 #### 🔒 Secure Storage of Credentials
 
@@ -375,7 +375,7 @@ x64
 
 ---
 
-## 📂 Step 6: Create Lab Workspace
+## 📂 Step 6: Create Lab Workspace (Optional)
 
 ### 🔧 Configure VS Code for Terraform
 
@@ -388,7 +388,7 @@ code .
 
 2. **Configure Terraform settings in VS Code:**
 
-   - Open VS Code Settings (Ctrl+,)
+   - Open VS Code Settings (Ctrl+.)
    - Search for "terraform"
    - Enable these settings:
      - ✅ `Terraform: Validate on save`
@@ -425,11 +425,12 @@ code .
 
 Let's verify everything works with a minimal Terraform configuration:
 
-```hcl
-# Navigate or create the follow directory structure in your VS Code workspace:
-~/terraform-labs/module-04/lab1-first-config
+**Navigate or create the follow directory structure in your VS Code workspace:**
+`~/terraform-labs/module-04/lab1-first-config`
 
-# Create a simple test file for Jamf Pro named test.tf:
+**Create a simple test file for Jamf Pro named `test.tf`:**
+
+```hcl
 terraform {
   required_version = ">= 1.0"
 

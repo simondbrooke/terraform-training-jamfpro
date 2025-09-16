@@ -539,3 +539,19 @@ Ready to continue your Terraform journey? Proceed to the next module:
 Learn intermediate Jamf Pro resource configuration.
 
 ---
+
+**🎉 Congratulations!** You've completed Module 5-02 and now understand the intermediate Jamf Pro Terraform configurations. You've built real Jamf Pro configuration and deployed some resources.
+
+**➡️ Ready for Module 5-03?** Let me know when you'd like to continue with Jamf Pro Terraform Resources - where we'll learn how to configure more resources that you use for everyday management of macOS devices!
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 5-03: Jamf Terraform Advanced](./module_05-03_jamf_terraform_advanced.md)**
+
+Learn advanced Jamf Pro resource configuration by using expressions.
+
+---
