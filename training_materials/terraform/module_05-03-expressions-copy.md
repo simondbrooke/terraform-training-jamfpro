@@ -67,36 +67,36 @@ Understanding types and values is key to writing clean, reusable modules — and
 
 Terraform has several **primitive types**:
 
-**string** – text values
-Example: `"Hello world"`
+- **string** – text values
+  Example: `"Hello world"`
 
-**number** – integers or decimals
-Example: `42`, `3.14`
+- **number** – integers or decimals
+  Example: `42`, `3.14`
 
-**bool** – true or false
-Example: `true`, `false`
+- **bool** – true or false
+  Example: `true`, `false`
 
 And several **complex types**:
 
-**list(<TYPE>)** – an ordered sequence
-Example: `["macOS", "iOS", "tvOS"]`
+- **list(<TYPE>)** – an ordered sequence
+  Example: `["macOS", "iOS", "tvOS"]`
 
-**map(<TYPE>)** – key/value pairs
-Example: `{ "admin" = "Alice", "viewer" = "Bob" }`
+- **map(<TYPE>)** – key/value pairs
+  Example: `{ "admin" = "Alice", "viewer" = "Bob" }`
 
-**set(<TYPE>)** – an unordered collection of unique values
-Example: `["alpha", "beta", "gamma"]`
+- **set(<TYPE>)** – an unordered collection of unique values
+  Example: `["alpha", "beta", "gamma"]`
 
-**object({ … })** – a collection of named attributes with specified types
-Example:
+- **object({ … })** – a collection of named attributes with specified types
+  Example:
 
-```bash
-{
+  ```bash
+  {
   username = "jamf-admin"
   enabled  = true
   roles    = ["read", "write"]
-}
-```
+  }
+  ```
 
-**tuple([ … ])** – a fixed-length ordered collection of potentially different types
-Example: `[ "macOS", 14, true ]`
+- **tuple([ … ])** – a fixed-length ordered collection of potentially different types
+  Example: `[ "macOS", 14, true ]`
