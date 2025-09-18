@@ -68,27 +68,34 @@ Understanding types and values is key to writing clean, reusable modules — and
 Terraform has several **primitive types**:
 
 - **string** – text values
+
   Example: `"Hello world"`
 
 - **number** – integers or decimals
+
   Example: `42`, `3.14`
 
 - **bool** – true or false
+
   Example: `true`, `false`
 
 And several **complex types**:
 
 - **list(<TYPE>)** – an ordered sequence
+
   Example: `["macOS", "iOS", "tvOS"]`
 
 - **map(<TYPE>)** – key/value pairs
+
   Example: `{ "admin" = "Alice", "viewer" = "Bob" }`
 
 - **set(<TYPE>)** – an unordered collection of unique values
+
   Example: `["alpha", "beta", "gamma"]`
 
 - **object({ … })** – a collection of named attributes with specified types
-  Example:
+  E
+  xample:
 
   ```bash
   {
@@ -99,4 +106,5 @@ And several **complex types**:
   ```
 
 - **tuple([ … ])** – a fixed-length ordered collection of potentially different types
+
   Example: `[ "macOS", 14, true ]`
