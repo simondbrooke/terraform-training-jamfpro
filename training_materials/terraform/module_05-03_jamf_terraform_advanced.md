@@ -1,4 +1,21 @@
-# Section 3 - Advanced Techniques
+# Module 5-03 - Advanced Jamf Pro Configuration
+
+## _Duration: 2 hour | Labs: 7_ | Difficulty: 🟡 Intermediate\*
+
+## 🎯 Learning Objectives
+
+By the end of this module, you will be able to:
+
+- ✅ Use expressions in the context of Jamf Pro resources
+- ✅ Create Types and Values - Using data type handling
+- ✅ Create String Templates - Using dynamic string construction
+- ✅ Use Operators - Using mathematical and logic operations
+- ✅ Create Conditional Expressions - Using If/else statements
+- ✅ Use For Expressions - Developing Data transformation loops
+- ✅ Create Splat Expressions - Collecting element extraction
+- ✅ Use Dynamic Blocks - Creating Dynamic resource configuration
+
+### 📚 Topics Covered
 
 Now that you have had time to play around with the most common resources that will be used in the day to day of managing Jamf. This section will take you through some of the more advanced techniques that you can use in Terraform to make the code as dynamic as possible and allow you to do some pretty clever things with the management of your Jamf instance.
 
@@ -15,6 +32,8 @@ In this section, you will cover the following topics:
 - [**For Expressions** - Data transformation loops](#-for-expressions)
 - [**Splat Expressions** - Collection element extraction](#-splat-expressions)
 - [**Dynamic Blocks** - Dynamic resource configuration](#-dynamic-blocks)
+
+**Many of the resources used in this module have either been condensed or not representative of a true Terraform resource, they are used to provide examples**
 
 ```hcl
 # Expression examples
@@ -85,7 +104,7 @@ resource "jamfpro_policy" "install_chrome" {
   trigger_checkin = true
   trigger_login   = false
 
-  # Example of using boolean and string interpolation
+  # Example of using boolean and string interpolation as well as a conditional statement
   scope {
     all_computers = var.environment == "production" ? true : false
   }
@@ -93,17 +112,23 @@ resource "jamfpro_policy" "install_chrome" {
   # Self Service configuration
   self_service {
     use_for_self_service     = var.enable_self_service
-    feature_on_main_page     = true
-    self_service_display_name = "Install Chrome"
-    install_button_text      = "Install"
+    self_service_display_name       = "Chrome Installation"
+    install_button_text             = "Install"
+    reinstall_button_text           = "Reinstall"
+    self_service_description        = ""
+    force_users_to_view_description = false
+    feature_on_main_page            = false
   }
 
-  # Payload block is required
   payloads {
-    package {
-      id   = 123   # Example package ID from Jamf Pro
-      name = "GoogleChrome.pkg"
-    }
+    packages {
+      distribution_point = "default" // Set the appropriate distribution point
+      package {
+        id                          = 123
+        action                      = "Install"
+        fill_user_template          = false
+        fill_existing_user_template = false
+      }
   }
 
   # Example of using number/float in notes
@@ -150,37 +175,40 @@ variable "profile_metadata" {
 # Using collection types with Jamf Pro
 # ───────────────────────────────
 
-# Create one configuration profile per department (list)
+# One configuration profile per department
 resource "jamfpro_macos_configuration_profile" "department_profiles" {
-  count  = length(var.departments)  # number of profiles = departments
-  name   = "${var.departments[count.index]} - Screen Lock Policy"
-  description = "Screen lock enforcement for ${var.departments[count.index]}"
+  for_each = toset(var.departments)
+
+  name        = "${each.key} - Screen Lock Policy"
+  description = "Screen lock enforcement for ${each.key}"
 
   distribution_method = "Install Automatically"
   level               = "System"
+  user_removable      = false
   redeploy_on_update  = "All"
+  payload_validate    = true
 
-  # Load department-specific payload file
   payloads = file("profiles/screenlock.mobileconfig")
 
   scope {
-    department = var.departments[count.index]  # list access by index
+    department = each.key
   }
 
-  # Use metadata map for tagging or notes
   category_id = 1
 }
 
-# Self Service categories applied dynamically (set)
+# Self Service categories (requires distribution_method = "Make Available in Self Service")
 resource "jamfpro_macos_configuration_profile" "restricted_categories" {
-  for_each = var.restricted_categories  # iterate over unique set
+  for_each = var.restricted_categories
 
   name        = "Baseline Security Profile - ${each.value}"
   description = "Baseline settings for ${each.value} category"
 
   distribution_method = "Make Available in Self Service"
   level               = "System"
+  user_removable      = false
   redeploy_on_update  = "All"
+  payload_validate    = true
 
   payloads = file("profiles/baseline.mobileconfig")
 
@@ -195,7 +223,6 @@ resource "jamfpro_macos_configuration_profile" "restricted_categories" {
     self_service_category = [
       {
         id         = 1
-        name       = each.value  # dynamically inject category name
         display_in = true
         feature_in = false
       }
@@ -245,13 +272,15 @@ variable "policy_specs" {
 # Using structural types
 # ───────────────────────────────
 
-# Configuration Profile using object
+# Object-based configuration profile
 resource "jamfpro_macos_configuration_profile" "main" {
   name                = var.profile_config.display_name
   description         = var.profile_config.description
   distribution_method = var.profile_config.distribution_method
   level               = var.profile_config.level
+  user_removable      = var.profile_config.user_removable
   redeploy_on_update  = "All"
+  payload_validate    = true
 
   payloads = file("profiles/screenlock.mobileconfig")
 
@@ -2089,26 +2118,34 @@ locals {
   }
 }
 
-resource "jamf_configuration_profile" "device_profiles" {
+resource "jamfpro_macos_configuration_profile" "device_profiles" {
   for_each = local.profiles
 
-  name  = "${each.key}-profile"
+  name                = "${each.key}-profile"
+  description         = "Configuration profile for ${each.key}"
+  distribution_method = "Install Automatically"
+  level               = "System"
+  user_removable      = false
+  redeploy_on_update  = "All"
+  payload_validate    = true
 
-  dynamic "wifi_settings" {
-    for_each = each.value.wifi != null ? [each.value.wifi] : []
-    content {
-      ssid = wifi_settings.value
-      security_type = "WPA2"
-    }
+  # Generate a profile payload dynamically
+  payloads = templatefile("${path.module}/profiles/${each.key}.mobileconfig", {
+    wifi_ssid       = try(each.value.wifi, null)
+    wifi_security   = each.value.wifi != null ? "WPA2" : null
+    vpn_name        = try(each.value.vpn, null)
+    vpn_type        = each.value.vpn != null ? "IKEv2" : null
+  })
+
+  scope {
+    all_computers = true
   }
 
-  dynamic "vpn_settings" {
-    for_each = each.value.vpn != null ? [each.value.vpn] : []
-    content {
-      vpn_name = vpn_settings.value
-      type     = "IKEv2"
-    }
-  }
+  # Optional: only if distribution_method = "Make Available in Self Service"
+  # self_service {
+  #   self_service_display_name = "${each.key} Profile"
+  #   feature_on_main_page      = true
+  # }
 }
 ```
 
