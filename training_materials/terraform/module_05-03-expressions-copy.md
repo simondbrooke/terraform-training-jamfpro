@@ -344,3 +344,267 @@ Values are the actual data.
 Terraform validates that values match expected types, preventing errors.
 
 Mastering this helps when defining reusable modules and provider configurations (e.g., Jamf Pro).
+
+## String Templates
+
+String templates let you insert values into strings dynamically using the syntax:
+
+```hcl
+"Hello, ${var.name}"
+```
+
+This is especially useful in Jamf Pro Terraform configurations where you need to build policy names, group names, or labels that include variables, for example, using naming conventions.
+
+### Basic String Templates
+
+This would be how you can use basic string templates by creating a variable of a device name and then outputting it in a sentence:
+
+```hcl
+# Create the variable
+variable "device_name" {
+  default = "MacBook"
+}
+
+# Use the Terraform output to display the sentence including the variable
+output "greeting" {
+  value = "Hello, ${var.device_name}"
+}
+```
+
+**Result:**
+
+```hcl
+Hello, MacBook
+```
+
+### Using Multiple Expressions
+
+You can also do this with using multiple expressions:
+
+```hcl
+variable "os" {
+  default = "macOS"
+}
+
+variable "version" {
+  default = "14.2"
+}
+
+output "full_os_name" {
+  value = "${var.os} Version ${var.version}"
+}
+```
+
+**Result:**
+
+```hcl
+macOS Version 14.2
+```
+
+### String Templates with Jamf Pro Resources
+
+Imagine you want to name a **Jamf Pro Policy** based on the application it installs and the target OS:
+
+```hcl
+variable "app_name" {
+  default = "Google Chrome"
+}
+
+variable "os" {
+  default = "macOS"
+}
+
+resource "jamfpro_policy" "chrome_install" {
+  name = "Install ${var.app_name} on ${var.os}"
+
+  # ... other Jamf Pro policy arguments ...
+}
+```
+
+**Resulting policy name in Jamf Pro:**
+
+```hcl
+Install Google Chrom on macOS
+```
+
+### Interpolation with Functions
+
+String templates can use Terraform functions too. This example uses the lower() function to take an uppercase string and make it lowercase:
+
+```hcl
+variable "department" {
+  default = "IT"
+}
+
+output "lowercase_dept" {
+  value = "Department: ${lower(var.department)}"
+}
+```
+
+**Result:**
+
+```hcl
+Department: it
+```
+
+### Heredoc Strings (Multiline Templates)
+
+If you need multi-line scrips or messages in Jamf Pro (e.g., a custom script for a policy), use a heredoc:
+
+```hcl
+# Using the heredoc syntax of EOT to encapsulate the inline script:
+resource "jamfpro_script" "inline_script" {
+  name            = "tf-example-script-inline"
+  script_contents = <<EOT
+#!/bin/bash
+echo "Welcome to ${var.department} Department!"
+echo "This Mac is managed by Jamf Pro."
+EOT
+  os_requirements = "13.1"
+  priority        = "BEFORE"
+  info            = "Your script info here."
+  notes           = ""
+
+}
+```
+
+### Exercises
+
+Now that you have had some examples of String Templates, here are some exercises to concrete the knowledge.
+
+#### Exercise 1 - Simple Template
+
+Write a String Template that outputs `Installing Zoom on macOS` (using variables `app_name = "Zoom"` and `os = "macOS"`)
+
+**Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "app_name" {
+  default = "Zoom"
+}
+
+variable "os" {
+  default = "macOS"
+}
+
+output "full_os_name" {
+  value = "Installing ${var.app_name} on ${var.os}"
+}
+```
+
+</details>
+
+#### Exercise 2 - Creating a Policy using Strings
+
+Using what you learned in the previous modules, create a Jamf Pro policy, with a payload that performs a recon and with a resource named. Don't scope it to anyone for now:
+
+```hcl
+Update Inventory for Marketing
+```
+
+(using variables `policy_type = "Update Inventory"` and `department = "Marketing"`)
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "policy_type" {
+  default = "Update Inventory"
+}
+
+variable "department" {
+  default = "Marketing"
+}
+
+resource "jamfpro_policy" "jamfpro_policy_001" {
+  name                          = "${var.policy_type} for ${var.department}"
+  enabled                       = false
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+}
+
+
+```
+
+</details>
+
+#### Exercise 3 - Create a Multiline Script
+
+Write a heredoc string in an inline Jamf Pro Script that outputs the following when run:
+
+```hcl
+Hello, Alice!
+Your Mac is enrolled in Jamf Pro.
+```
+
+(Use a variable `username = "Alice"` in the template)
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "username" {
+  default = "Alice"
+}
+
+resource "jamfpro_script" "inline_script" {
+  name            = "tf-example-script-inline"
+  script_contents = <<EOT
+#!/bin/bash
+echo "Hello, ${var.username}"
+echo "Your Mac is enrolled in Jamf Pro."
+EOT
+  priority        = "BEFORE"
+}
+```
+
+</details>
+
+### Wrap-Up
+
+String templates = dynamic text building.
+
+Syntax: `${expression}` inside quotes.
+
+Useful in Jamf Pro for policy names, group names, labels, and scripts.
+
+Works with variables and functions.
+
+Multiline templates (heredocs) are perfect for Jamf Pro scripts.
+
+## Operators
+
+## Conditional Expressions
+
+## For Expressions
+
+## Splat Expressions
+
+## Dynamic Blocks
