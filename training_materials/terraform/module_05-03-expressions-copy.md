@@ -233,7 +233,7 @@ false
 [ "Mac", 14, true ]
 ```
 
-Answer:
+**Answer:**
 
 <details>
   <summary>Click to reveal</summary>
@@ -250,13 +250,13 @@ Answer:
 
 Write a variable that defines a list of device models (strings), with a default of at least 3 models.
 
-Answer:
+**Answer:**
 
 <details>
 
   <summary>Click to reveal</summary>
 
-```
+```hcl
 variable "macos_versions" {
   description = "List of supported macOS versions"
   type        = list(string)
@@ -280,13 +280,13 @@ Define a variable admin_user as an object with:
 
 Set the default to `"jamf-admin"`, `true`, and `["read", "write"]`.
 
-Answer:
+**Answer:**
 
 <details>
 
   <summary>Click to reveal</summary>
 
-```
+```hcl
   variable "admin_user" {
     type = object({
       username    = string
@@ -302,3 +302,45 @@ Answer:
 ```
 
 </details>
+
+#### Exercise 4 - Bonus (Maps)
+
+Create a map of department names to the number of devices they manage.
+
+Example:
+
+```hcl
+it = 120
+hr = 30
+marketing = 45
+```
+
+**Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+  variable "department_devices" {
+    type = map(number)
+    description = "A map of departments and devices they manage"
+    default = {
+      it        = 120
+      hr        = 30
+      marketing = 45
+    }
+  }
+```
+
+</details>
+
+### Wrap-Up
+
+Types define the shape of values.
+
+Values are the actual data.
+
+Terraform validates that values match expected types, preventing errors.
+
+Mastering this helps when defining reusable modules and provider configurations (e.g., Jamf Pro).
