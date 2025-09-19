@@ -253,18 +253,21 @@ Write a variable that defines a list of device models (strings), with a default 
 Answer:
 
 <details>
+
   <summary>Click to reveal</summary>
-  ```
-  variable "macos_versions" {
-    description = "List of supported macOS versions"
-    type        = list(string)
-    default = [
-      "13.6",  # Ventura
-      "14.5",  # Sonoma
-      "15.0",  # Sequoia (example future release)
-    ]
-  }
-  ```
+
+```
+variable "macos_versions" {
+  description = "List of supported macOS versions"
+  type        = list(string)
+  default = [
+    "13.6",  # Ventura
+    "14.5",  # Sonoma
+    "15.0",  # Sequoia (example future release)
+  ]
+}
+```
+
 </details>
 
 #### Exercise 3 - Object Practice
@@ -280,8 +283,10 @@ Set the default to `"jamf-admin"`, `true`, and `["read", "write"]`.
 Answer:
 
 <details>
+
   <summary>Click to reveal</summary>
-  ```
+
+```
   variable "admin_user" {
     type = object({
       username    = string
@@ -294,5 +299,6 @@ Answer:
       tags    = ["read", "write"]
     }
   }
-  ```
+```
+
 </details>
