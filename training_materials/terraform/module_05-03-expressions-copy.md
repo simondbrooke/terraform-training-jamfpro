@@ -158,3 +158,141 @@ device_info = {
 # tuple
 mixed_values = ["Mac", 14, true]
 ```
+
+#### Type Conversion
+
+Terraform will try to convert values when possible:
+
+```hcl
+# number can be used where string is expected
+title = "Version ${1.0}"   # becomes "Version 1"
+```
+
+But not all conversions are allowed — e.g., `"abc"` cannot convert to a number.
+
+#### Practical Examples
+
+**Example 1:** Variable with a simple type:
+
+```hcl
+# Number type
+variable "device_limit" {
+  type    = number
+  default = 10
+}
+
+# String type
+variable "device_name" {
+  type    = string
+  default = "MacBook Pro"
+}
+```
+
+**Example 2:** Variable with a complex type:
+
+```hcl
+# Object type
+variable "device_info" {
+  type = object({
+    name    = string
+    enabled = bool
+    tags    = list(string)
+  })
+  default = {
+    name    = "Jamf-managed Mac"
+    enabled = true
+    tags    = ["macOS", "laptop"]
+  }
+}
+
+# List type
+variable "macos_versions" {
+  description = "List of supported macOS versions"
+  type        = list(string)
+  default = [
+    "13.6",  # Ventura
+    "14.5",  # Sonoma
+    "15.0",  # Sequoia (example future release)
+  ]
+}
+```
+
+### Exercises
+
+Now that we have covered some types and values, we will go over some exercises to develop the knowledge in practical examples.
+
+#### Exercises 1 - Identify Types
+
+Look at the following values. What type is each?
+
+```hcl
+"Jamf Pro"
+false
+["alpha", "beta", "gamma"]
+{ "us" = "New York", "eu" = "Berlin" }
+[ "Mac", 14, true ]
+```
+
+Answer:
+
+<details>
+  <summary>Click to reveal</summary>
+  <ul>
+    <li>String</li>
+    <li>boolean</li>
+    <li>list</li>
+    <li>map</li>
+    <li>tuple</li>
+  </ul>
+</details>
+
+#### Exercise 2 - Defining a Variable
+
+Write a variable that defines a list of device models (strings), with a default of at least 3 models.
+
+Answer:
+
+<details>
+  <summary>Click to reveal</summary>
+  ```
+  variable "macos_versions" {
+    description = "List of supported macOS versions"
+    type        = list(string)
+    default = [
+      "13.6",  # Ventura
+      "14.5",  # Sonoma
+      "15.0",  # Sequoia (example future release)
+    ]
+  }
+  ```
+</details>
+
+#### Exercise 3 - Object Practice
+
+Define a variable admin_user as an object with:
+
+- `username` (string)
+- `enabled` (bool)
+- `roles` (list of strings)
+
+Set the default to `"jamf-admin"`, `true`, and `["read", "write"]`.
+
+Answer:
+
+<details>
+  <summary>Click to reveal</summary>
+  ```
+  variable "admin_user" {
+    type = object({
+      username    = string
+      enabled = bool
+      roles    = list(string)
+    })
+    default = {
+      username    = "jamf-admin"
+      enabled = true
+      tags    = ["read", "write"]
+    }
+  }
+  ```
+</details>
