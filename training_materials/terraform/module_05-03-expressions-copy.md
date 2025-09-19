@@ -94,8 +94,8 @@ And several **complex types**:
   Example: `["alpha", "beta", "gamma"]`
 
 - **object({ … })** – a collection of named attributes with specified types
-  E
-  xample:
+
+  Example:
 
   ```bash
   {
@@ -108,3 +108,53 @@ And several **complex types**:
 - **tuple([ … ])** – a fixed-length ordered collection of potentially different types
 
   Example: `[ "macOS", 14, true ]`
+
+#### Values
+
+Values are the actual data that populate those types.
+
+**Primitive Value** examples:
+
+```
+# string
+name = "MacBook Pro"
+
+# number (integer)
+device_limit = 5
+
+# number (float/decimal)
+os_version = 14.2
+
+# bool
+enabled = true
+```
+
+**Complex Value** examples:
+
+```
+# list(string)
+os_list = ["macOS", "iOS", "iPadOS"]
+
+# list(number)
+ports = [80, 443, 8080]
+
+# map(string)
+user_roles = {
+  "alice" = "admin"
+  "bob"   = "viewer"
+}
+
+# set(string)
+unique_tags = toset(["alpha", "beta", "beta"])
+# result is ["alpha", "beta"] because there is no duplicates (unique)
+
+# object
+device_info = {
+  name    = "Jamf-managed Mac"
+  enabled = true
+  tags    = ["macOS", "laptop"]
+}
+
+# tuple
+mixed_values = ["Mac", 14, true]
+```
