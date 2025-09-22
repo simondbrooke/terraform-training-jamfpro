@@ -1162,6 +1162,313 @@ output "device_output" {
 
 ## For Expressions
 
+A **for expression** in Terraform lets you transform a list, set, or map into a new list, set, or map by applying an expression to each element.
+
+This is useful in Jamf Pro Terraform configs for:
+
+- Generating lists of app names
+
+- Creating maps of departments to device groups
+
+- Filtering items before using them in a resource
+
+- creating multiple resources based on a list
+
+### For Expression Syntax
+
+**General Form** - This is typically the general form of a for expression. In English, it would read - For every item in a collection, perform this expression:
+
+```hcl
+[for item in collection : expression]
+```
+
+**With Filtering** - You can also perform this for expression while filtering based on a condition:
+
+```hcl
+[for item in collection : expression if condition]
+```
+
+**For Maps** - This can also be done working with maps:
+
+```hcl
+{for key, value in map : new_key => new_value}
+```
+
+### Basic Examples
+
+**Example 1 – Simple Transformation**
+
+```hcl
+variable "apps" {
+  default = ["Chrome", "Zoom", "Slack"]
+}
+
+output "install_policies" {
+  value = [for app in var.apps : "Install ${app}"]
+}
+```
+
+**Result:**
+
+```hcl
+["Install Chrome", "Install Zoom", "Install Slack"]
+```
+
+**Example 2 – Filtering**
+
+```hcl
+variable "os_list" {
+  default = ["macOS", "iOS", "tvOS", "iPadOS"]
+}
+
+output "only_mac" {
+  value = [for os in var.os_list : os if os == "macOS"]
+}
+```
+
+**Result:**
+
+```
+["macOS"]
+```
+
+**Example 3 – For Maps**
+
+```hcl
+variable "departments" {
+  default = {
+    it         = 120
+    marketing  = 40
+    hr         = 25
+  }
+}
+
+output "dept_groups" {
+  value = {for dept, count in var.departments : dept => "${dept}-devices-${count}"}
+}
+```
+
+**Result:**
+
+```
+{
+  "it"        = "it-devices-120"
+  "marketing" = "marketing-devices-40"
+  "hr"        = "hr-devices-25"
+}
+```
+
+### Jamf Pro Examples
+
+**Example 1 – Policy Names from Apps**
+
+```hcl
+variable "apps" {
+  default = ["Chrome", "Zoom", "Slack"]
+}
+
+output "jamf_policy_names" {
+  value = [for app in var.apps : "Install ${app} on macOS"]
+}
+```
+
+**Result:**
+
+```
+["Install Chrome on macOS", "Install Zoom on macOS", "Install Slack on macOS"]
+```
+
+**Example 2 – Groups by Department**
+
+```hcl
+variable "departments" {
+  default = ["IT", "HR", "Marketing"]
+}
+
+output "jamf_groups" {
+  value = [for dept in var.departments : "${dept} Managed Devices"]
+}
+```
+
+**Result:**
+
+```
+["IT Managed Devices", "HR Managed Devices", "Marketing Managed Devices"]
+```
+
+**Example 3 – Filtering Only Apps That Start with "C"**
+
+```hcl
+variable "apps" {
+  default = ["Chrome", "Zoom", "Slack", "Citrix"]
+}
+
+output "c_apps" {
+  value = [for app in var.apps : app if startswith(app, "C")]
+}
+```
+
+**Result:**
+
+```
+["Chrome", "Citrix"]
+```
+
+#### Exercise 1 – Transform
+
+Given a variable of apps:
+
+```hcl
+apps = ["Safari", "Pages", "Numbers"]
+```
+
+Write a for expression that produces:
+
+```
+["Install Safari", "Install Pages", "Install Numbers"]
+```
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "apps" {
+  default = ["Safari", "Pages", "Numbers"]
+}
+
+output "app_output" {
+  value = [for app in var.apps : "Install ${app}"]
+}
+```
+
+</details>
+
+---
+
+#### Exercise 2 – Filter
+
+From the list:
+
+```hcl
+os_list = ["macOS", "iOS", "tvOS", "watchOS"]
+```
+
+Write a for expression that returns only:
+
+```
+["iOS", "watchOS"]
+```
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "os_list" {
+  default = ["macOS", "iOS", "tvOS", "watchOS"]
+}
+
+output "os_output" {
+  value = [for os in var.os_list : os if os == "iOS" || os == "watchOS"]
+}
+```
+
+</details>
+
+---
+
+#### Exercise 3 – Maps
+
+Given:
+
+```hcl
+departments = {
+  it = 50
+  hr = 20
+}
+```
+
+Write a for expression that produces:
+
+```
+{
+  it = "it-50-devices"
+  hr = "hr-20-devices"
+}
+```
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "departments" {
+  default = {
+    it = 50
+    hr = 20
+  }
+}
+
+output "dept_devices" {
+  value = {for dept, count in var.departments : dept => "${dept}-${count}-devices"}
+}
+```
+
+</details>
+
+---
+
+#### Exercise 4 – Jamf Pro Group Names
+
+Given a variable:
+
+```hcl
+departments = ["Engineering", "Design"]
+```
+
+Write a for expression that produces:
+
+```
+["Engineering Jamf Group", "Design Jamf Group"]
+```
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "departments" {
+  default = ["Engineering", "Design"]
+}
+
+output "dept_devices" {
+  value = [for dept in departments : "${dept} Jamf Group"]
+}
+```
+
+</details>
+
+---
+
+### Wrap-up
+
+- **For expressions** let you transform and filter collections.
+
+- Useful in Jamf Pro for **generating policy names, group names, or maps of departments to devices**.
+
+- Syntax can return **lists** or **maps**.
+
+- Filters let you include only the items you care about.
+
 ## Splat Expressions
 
 ## Dynamic Blocks
