@@ -248,7 +248,7 @@ false
 
 #### Exercise 2 - Defining a Variable
 
-Write a variable that defines a list of device models (strings), with a default of at least 3 models.
+Write a variable that defines a list of OS versions (strings), with a default of at least 3 versions.
 
 **Answer:**
 
@@ -852,6 +852,16 @@ jamfpro_policy "engineer_policy" {
 ```
 
 </details>
+
+### Wrap-up
+
+- **Arithmetic operators** work with numbers.
+
+- **Comparison operators** evaluate relationships (==, <, !=, etc.).
+
+- **Logical operators** (&&, ||, !) combine boolean values.
+
+- Operators are powerful in Jamf Pro modules for conditional enabling, naming, and resource logic.
 
 ## Conditional Expressions
 
