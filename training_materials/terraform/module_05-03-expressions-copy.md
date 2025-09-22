@@ -799,7 +799,7 @@ Write a condition that returns `true` if **the app name is "Chrome"** OR **the a
 
 ```hcl
 variable "app_name" {
-  default = "Chrome # This can be anything
+  default = "Chrome" # This can be anything
 }
 
 output "check_os_version" {
@@ -821,7 +821,7 @@ Create a Jamf Pro policy resource that is only enabled if the department is `Eng
 
 ```hcl
 variable "department" {
-  default = "Engineering
+  default = "Engineering"
 }
 
 variable "operating_system" {
@@ -866,6 +866,274 @@ jamfpro_policy "engineer_policy" {
 - Operators are powerful in Jamf Pro modules for conditional enabling, naming, and resource logic.
 
 ## Conditional Expressions
+
+A conditional expression in Terraform lets you choose a value based on whether a condition is true or false.
+
+The syntax is:
+
+```hcl
+condition ? true_value : false_value
+```
+
+This is similar to an **if/else** statement in programming languages.
+
+It computes the **condition** and returns the first value (`true_value`) if the condition is true, or returns the second value (`false_value`) if the condition is false.
+
+Let's take a look at some examples.
+
+### Basic Example
+
+Here is an example of checking if some policy is enabled. In this case we are setting the value to `true`:
+
+```hcl
+variable "is_enabled" {
+  default = true
+}
+
+output "status" {
+  value = var.is_enabled ? "Policy is ON" : "Policy is OFF" # Check if the 'var.enabled' variable/condition is True or False, then output the corrosponding value
+}
+```
+
+**Result:**
+
+```hcl
+Policy is ON
+```
+
+### Conditional Expressions with Jamf Pro
+
+Here are some examples that are specifically tied to Jamf Pro:
+
+**Example 1 – Enable/Disable a Policy**
+
+```hcl
+variable "department" {
+  default = "IT"
+}
+
+resource "jamfpro_policy" "vpn_policy" {
+  name    = "Install VPN"
+  enabled = var.department == "IT" ? true : false
+
+  # ... other policy configurations ...
+}
+```
+
+If `department = "IT"`, the policy is enabled. Otherwise, it’s disabled.
+
+**Example 2 – Policy Naming**
+
+```hcl
+variable "os" {
+default = "macOS"
+}
+
+resource "jamfpro_policy" "security_policy" {
+name = var.os == "macOS" ? "macOS Security Policy" : "General Security Policy"
+}
+```
+
+If the OS is `macOS`, the policy name is _macOS Security Policy_. Otherwise, it’s _General Security Policy_.
+
+**Example 3 – Different Values for Groups**
+
+```hcl
+variable "device_type" {
+default = "laptop"
+}
+
+resource "jamfpro_smart_computer_group" "device_group" {
+name = var.device_type == "laptop" ? "Laptop Devices" : "Desktop Devices"
+
+# ... other smart group configurations ...
+}
+```
+
+If `device_type = "laptop"`, the group name is _Laptop Devices_. Otherwise, _Desktop Devices_.
+
+### Nested Conditionals
+
+You can chain multiple conditions together.
+
+```hcl
+variable "os" {
+  default = "macOS"
+}
+
+variable "chip" {
+  default = "arm"
+}
+
+output "build_type" {
+  value = var.os == "macOS" ? (var.chip == "arm" ? "macOS Apple Silicon Build" : "macOS Intel Build") : "Other OS Build"
+}
+```
+
+This expression is checking to see **if the OS is macOS**. If it is **not** macOS then the conditional will be **false** and state `Other OS Build`. But if it **is** macOS, then it falls into another conditional statement to then check if `var.chip == "arm"`, if this is **true**, then it will display `"macOS Apple Silicon Build"` and if **not** then `"macOS Intel Build"`
+
+### Exercises
+
+Now that you have had some examples of Conditional Expressions, let's look at some exercises.
+
+#### Exercise 1 - Policy Status
+
+Write a conditional expression in a **Jamf Pro Policy** resource that sets `enabled = true` **only if** `department = "Engineering"`. Otherwise, it should be **false** using conditional expressions.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "department" {
+  default = "Engineering"
+}
+
+resource "jamfpro_policy" "eng_policy" {
+  name    = "Engineering Policy"
+  enabled = var.department == "Engineering" ? true : false
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+}
+```
+
+</details>
+
+#### Exercise 2 - Policy Naming
+
+Write a conditional expression within a **Jamf Pro Policy** resource that sets the policy name to:
+
+- `"Chrome for macOS"` if `os = "macOS"`,
+
+- Otherwise, `"Chrome for Other OS"`.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "operating_system" {
+  default = "macOS"
+}
+
+resource "jamfpro_policy" "chrome_policy" {
+  name    = var.operating_system == "macOS" ? "Chrome for macOS" : "Chrome for Other OS"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+}
+```
+
+</details>
+
+#### Exercise 3 - Device Groups
+
+Create a **Jamf Pro Smart Group** that is named `"iOS Devices"` **if** `os = "iOS"`, **otherwise** `"Other Devices"`.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "operating_system" {
+  default = "iOS"
+}
+
+resource "jamfpro_smart_computer_group" "device_group" {
+  name = var.operating_system == "iOS" ? "iOS Devices" : "Other Devices"
+
+  # ... Leaving the criteria blank here. Not needed ...
+
+}
+```
+
+</details>
+
+#### Bonus (Nested Conditionals)
+
+Create an **output** that evaluates:
+
+- `"Apple Silicon Mac"` **if** `os = "macOS"` **and** `chip = "arm"`
+
+- `"Intel Mac"` **if** `os = "macOS"` **and** `chip = "intel"`
+
+- `"Non-Mac Device"` otherwise
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "operating_system" {
+  default = "macOS"
+}
+
+variable "chip" {
+  default = "arm"
+}
+
+output "device_output" {
+  value = var.operating_system = "macOS" ? (var.chip = "arm" ? "Apple Silicon Mac" : "Intel Mac") : "Non-Mac Device"
+}
+```
+
+</details>
+
+### Wrap-up
+
+- Conditional expression syntax: `condition ? true_value : false_value`
+
+- Great for Jamf Pro configs:
+
+  - **Enable/disable policies**
+
+  - **Custom naming conventions**
+
+  - **Dynamic group selection**
+
+- Can be **nested** for more complex logic
 
 ## For Expressions
 
