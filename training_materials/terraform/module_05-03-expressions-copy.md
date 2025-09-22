@@ -337,13 +337,13 @@ marketing = 45
 
 ### Wrap-Up
 
-Types define the shape of values.
+- Types define the shape of values.
 
-Values are the actual data.
+- Values are the actual data.
 
-Terraform validates that values match expected types, preventing errors.
+- Terraform validates that values match expected types, preventing errors.
 
-Mastering this helps when defining reusable modules and provider configurations (e.g., Jamf Pro).
+- Mastering this helps when defining reusable modules and provider configurations (e.g., Jamf Pro).
 
 ## String Templates
 
@@ -424,7 +424,7 @@ resource "jamfpro_policy" "chrome_install" {
 **Resulting policy name in Jamf Pro:**
 
 ```hcl
-Install Google Chrom on macOS
+Install Google Chrome on macOS
 ```
 
 ### Interpolation with Functions
@@ -500,11 +500,13 @@ output "full_os_name" {
 
 #### Exercise 2 - Creating a Policy using Strings
 
-Using what you learned in the previous modules, create a Jamf Pro policy, with a payload that performs a recon and with a resource named. Don't scope it to anyone for now:
+Using what you learned in the previous modules, create a Jamf Pro policy, with a payload that performs a recon and with a resource named:
 
 ```hcl
 Update Inventory for Marketing
 ```
+
+**Don't scope it to anyone for now.**
 
 (using variables `policy_type = "Update Inventory"` and `department = "Marketing"`)
 
@@ -589,15 +591,15 @@ EOT
 
 ### Wrap-Up
 
-String templates = dynamic text building.
+- String templates = dynamic text building.
 
-Syntax: `${expression}` inside quotes.
+- Syntax: `${expression}` inside quotes.
 
-Useful in Jamf Pro for policy names, group names, labels, and scripts.
+- Useful in Jamf Pro for policy names, group names, labels, and scripts.
 
-Works with variables and functions.
+- Works with variables and functions.
 
-Multiline templates (heredocs) are perfect for Jamf Pro scripts.
+- Multiline templates (heredocs) are perfect for Jamf Pro scripts.
 
 ## Operators
 
@@ -714,7 +716,7 @@ true
 
 ### Practical Jamf Pro Example
 
-Enable a policy only if department = IT and OS = macOS:
+Enable a policy only if `department = IT` and `OS = macOS`:
 
 ```hcl
 variable "department" {
@@ -729,7 +731,7 @@ resource "jamfpro_policy" "security_updates" {
   name    = "Security Updates"
   enabled = var.department == "IT" && var.os == "macOS"
 
-  # Rest of the policy has been ommitted, this would be required to be filled in
+  # ... other jamf pro policy configurations ...
 }
 ```
 
