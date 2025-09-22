@@ -646,6 +646,213 @@ Other arithmetic operators:
 
 - % (modulus / remainder)
 
+### Comparison Operators
+
+Comparison operators are used to compare two values. The output results are either true or false.
+
+- == (equal to)
+
+- != (not equal to)
+
+- \> (greater than)
+
+- < (less than)
+
+- \>= (greater or equal)
+
+- <= (less or equal)
+
+Example in a Jamf Pro context:
+
+```hcl
+variable "os_version" {
+  default = 14
+}
+
+output "requires_upgrade" {
+  value = var.os_version < 15
+}
+```
+
+**Result:**
+
+```
+true
+```
+
+### Logical Operators
+
+Logical operators are used for combining boolean values which then outputs either a True or False value.
+
+- && (and)
+
+- || (or)
+
+- ! (not)
+
+Example in Jamf Pro: enabling a policy only if the OS is macOS and the department is IT.
+
+```hcl
+variable "os" {
+default = "macOS"
+}
+
+variable "department" {
+default = "IT"
+}
+
+output "enable_policy" {
+value = var.os == "macOS" && var.department == "IT"
+}
+```
+
+**Result:**
+
+```
+true
+```
+
+### Practical Jamf Pro Example
+
+Enable a policy only if department = IT and OS = macOS:
+
+```hcl
+variable "department" {
+  default = "IT"
+}
+
+variable "os" {
+  default = "macOS"
+}
+
+resource "jamfpro_policy" "security_updates" {
+  name    = "Security Updates"
+  enabled = var.department == "IT" && var.os == "macOS"
+
+  # Rest of the policy has been ommitted, this would be required to be filled in
+}
+```
+
+### Exercises
+
+Now that we have gone over the different types of operators, here are some exercises to test your knowledge and implement some resources using what you have learned so far.
+
+#### Exercise 1 - Arithmetic
+
+If the **IT department manages 120 devices** and **HR manages 30 devices**, write an expression that outputs the **total number of devices**.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "it_department" {
+  default = 120
+}
+
+variable "hr_department" {
+  default = 30
+}
+
+output "total_number_of_devices" {
+  value = var.it_department + var.hr_department
+}
+```
+
+</details>
+
+#### Exercise 2 - Comparison
+
+Write an expression that checks if the `os_version` variable is **greater than or equal to 14**.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "os_version" {
+  default = 15.6.1 # This can be anything
+}
+
+output "check_os_version" {
+  value = var.os_version >= 14
+}
+```
+
+</details>
+
+#### Exercise 3 - Logical
+
+Write a condition that returns `true` if **the app name is "Chrome"** OR **the app name is "Firefox"**.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "app_name" {
+  default = "Chrome # This can be anything
+}
+
+output "check_os_version" {
+  value = var.app_name == "Chrome || var.app_name == "Firefox"
+}
+```
+
+</details>
+
+#### Exercise 4 - Jamf Pro Policy Example
+
+Create a Jamf Pro policy resource that is only enabled if the department is `Engineering` and the OS is `macOS`. The policy should be named `Engineering macOS Policy`. The Payload can be anything, for simplicity, you can just enable the recon maintenance payload.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "department" {
+  default = "Engineering
+}
+
+variable "operating_system" {
+  default = "macOS"
+}
+
+jamfpro_policy "engineer_policy" {
+  name                          = "${var.department} ${var.operating_system} Policy"
+  enabled                       = var.department == "Engineering" && var.operating_system == "macOS"
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+}
+```
+
+</details>
+
 ## Conditional Expressions
 
 ## For Expressions
