@@ -246,6 +246,8 @@ false
   </ul>
 </details>
 
+---
+
 #### Exercise 2 - Defining a Variable
 
 Write a variable that defines a list of OS versions (strings), with a default of at least 3 versions.
@@ -269,6 +271,8 @@ variable "macos_versions" {
 ```
 
 </details>
+
+---
 
 #### Exercise 3 - Object Practice
 
@@ -302,6 +306,8 @@ Set the default to `"jamf-admin"`, `true`, and `["read", "write"]`.
 ```
 
 </details>
+
+---
 
 #### Exercise 4 - Bonus (Maps)
 
@@ -498,6 +504,8 @@ output "full_os_name" {
 
 </details>
 
+---
+
 #### Exercise 2 - Creating a Policy using Strings
 
 Using what you learned in the previous modules, create a Jamf Pro policy, with a payload that performs a recon and with a resource named:
@@ -553,6 +561,8 @@ resource "jamfpro_policy" "jamfpro_policy_001" {
 ```
 
 </details>
+
+---
 
 #### Exercise 3 - Create a Multiline Script
 
@@ -765,6 +775,8 @@ output "total_number_of_devices" {
 
 </details>
 
+---
+
 #### Exercise 2 - Comparison
 
 Write an expression that checks if the `os_version` variable is **greater than or equal to 14**.
@@ -787,6 +799,8 @@ output "check_os_version" {
 
 </details>
 
+---
+
 #### Exercise 3 - Logical
 
 Write a condition that returns `true` if **the app name is "Chrome"** OR **the app name is "Firefox"**.
@@ -808,6 +822,8 @@ output "check_os_version" {
 ```
 
 </details>
+
+---
 
 #### Exercise 4 - Jamf Pro Policy Example
 
@@ -1018,6 +1034,8 @@ resource "jamfpro_policy" "eng_policy" {
 
 </details>
 
+---
+
 #### Exercise 2 - Policy Naming
 
 Write a conditional expression within a **Jamf Pro Policy** resource that sets the policy name to:
@@ -1064,6 +1082,8 @@ resource "jamfpro_policy" "chrome_policy" {
 
 </details>
 
+---
+
 #### Exercise 3 - Device Groups
 
 Create a **Jamf Pro Smart Group** that is named `"iOS Devices"` **if** `os = "iOS"`, **otherwise** `"Other Devices"`.
@@ -1088,6 +1108,8 @@ resource "jamfpro_smart_computer_group" "device_group" {
 ```
 
 </details>
+
+---
 
 #### Bonus (Nested Conditionals)
 
