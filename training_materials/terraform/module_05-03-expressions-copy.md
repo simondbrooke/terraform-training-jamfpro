@@ -601,6 +601,51 @@ Multiline templates (heredocs) are perfect for Jamf Pro scripts.
 
 ## Operators
 
+Terraform supports a set of operators that let you combine, compare, and transform values in your configurations.
+These are especially useful in Jamf Pro modules where you might want to:
+
+- Decide if a policy should be enabled
+
+- Compare OS versions
+
+- Combine strings for naming conventions
+
+- Work with numbers or counts of devices
+
+### Arithmetic Operators
+
+Arithmetic operators are used for numbers to compute calculations
+
+```hcl
+variable "base_devices" {
+  default = 50
+}
+
+variable "extra_devices" {
+  default = 10
+}
+
+output "total_devices" {
+  value = var.base_devices + var.extra_devices
+}
+```
+
+**Output:**
+
+```hcl
+60
+```
+
+Other arithmetic operators:
+
+- \- (subtraction)
+
+- \* (multiplication)
+
+- / (division)
+
+- % (modulus / remainder)
+
 ## Conditional Expressions
 
 ## For Expressions
