@@ -988,6 +988,9 @@ output "build_type" {
 
 This expression is checking to see **if the OS is macOS**. If it is **not** macOS then the conditional will be **false** and state `Other OS Build`. But if it **is** macOS, then it falls into another conditional statement to then check if `var.chip == "arm"`, if this is **true**, then it will display `"macOS Apple Silicon Build"` and if **not** then `"macOS Intel Build"`
 
+> [!TIP]
+> Keep nested conditionals readable by formatting them across multiple lines. For more complex logic, consider locals or lookup() maps instead of long chains of ? : expressions.
+
 ### Exercises
 
 Now that you have had some examples of Conditional Expressions, let's look at some exercises.
