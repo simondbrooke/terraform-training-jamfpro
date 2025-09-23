@@ -814,3 +814,21 @@ Follow these steps:
 2. Modify the resource as well, like the scope or name
 3. Run `terraform plan` & `terraform apply` to modify the resource
 4. Verify the change in the Jamf Pro tenant
+
+---
+
+**🎉 Congratulations!** You've completed Module 5-02 and now understand the intermediate Jamf Pro Terraform configurations. You've built real Jamf Pro configuration and deployed some resources.
+
+**➡️ Ready for Module 5-03?** Let me know when you'd like to continue with Jamf Pro Terraform Resources - where we'll learn how to configure more resources that you use for everyday management of macOS devices!
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 5-03: Jamf Terraform Advanced](./module_05-03_jamf_terraform_advanced.md)**
+
+Learn intermediate Jamf Pro resource configuration by using expressions.
+
+---
