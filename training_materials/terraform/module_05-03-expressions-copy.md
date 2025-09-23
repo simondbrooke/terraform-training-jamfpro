@@ -1471,4 +1471,648 @@ output "dept_devices" {
 
 ## Splat Expressions
 
+A **splat expression** is a shorthand for accessing attributes across all elements of a list of resources or complex objects.
+
+It’s especially useful when you have **multiple Jamf Pro resources** created by `count` or `for_each` and you want to **collect a list of their attributes** (like names, IDs, or enabled states).
+
+### Syntax
+
+The syntax for **splat expressions** is as follows:
+
+```hcl
+resource.list[*].attribute
+```
+
+Legacy Splat (older style, still works):
+
+```hcl
+resource.list.*.attribute
+```
+
+Both forms return a list of all `attribute` values from the resources.
+
+### Basic Example
+
+The following example shows how you can create multiple policy resources using the `count` variable and splat expressions:
+
+```hcl
+variable "apps" {
+  default = ["Chrome", "Zoom", "Slack"]
+}
+
+resource "jamfpro_policy" "install_app" {
+  count = length(var.apps)
+  name  = "Install ${var.apps[count.index]}"
+
+  # ... other policy configurations ...
+}
+
+# Output the name of each of the policies
+output "policy_names" {
+  value = jamfpro_policy.install_app[*].name
+}
+```
+
+**Result:**
+
+```
+["Install Chrome", "Install Zoom", "Install Slack"]
+```
+
+### Splat Expressions with Attributes
+
+You can splat any attribute that the resource exposes. For example, Jamf Pro policies might have:
+
+- `id`
+
+- `name`
+
+- `enabled`
+
+Using the example of the `install_app` policy created above:
+
+```hcl
+output "policy_ids" {
+  value = jamfpro_policy.install_app[*].id
+}
+```
+
+**Result:**
+
+```
+151 # This is just an example and the ID could be any number
+```
+
+This splat expression was used in the previous modules to directly access the ID of resources to use within other resources. Like Smart Groups to scope within policies.
+
+### Nested Objects
+
+If an attribute is itself an object, splats can go deeper. Using the example of the `install_app` policy created above:
+
+```hcl
+output "policy_names_enabled" {
+  value = [for p in jamfpro_policy.install_app : "${p.name} - ${p.enabled}"]
+}
+```
+
+**Result:**
+
+```
+"Install Chrome - True"
+"Install Zoom - True"
+"Install Slack - True"
+```
+
+### Filtering with Splat and For Expressions
+
+You can combine splats with for to filter results.
+
+```hcl
+output "enabled_policies" {
+  value = [for p in jamfpro_policy.install_app : p.name if p.enabled]
+}
+```
+
+**Result:**
+
+```
+"Install Chrome"
+"Install Zoom"
+"Install Slack"
+```
+
+### Exercises
+
+Now that you have has some examples of Splat Expressions, here are some exercises to develop that knowledge.
+
+#### Exercise 1 - Names
+
+Using the apps `["Safari", "Pages"]`, create two Jamf Pro policies (with count) and output a list of their names using a splat expression.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "apps" {
+  default = ["Safari", "Pages"]
+}
+
+resource "jamfpro_policy" "install_app" {
+  count = length(var.apps)
+  name  = "Install ${var.apps[count.index]}"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+
+}
+
+output "app_output" {
+  value = [for p in jamfpro_policy.install_app : p.name]
+}
+```
+
+</details>
+
+---
+
+#### Exercise 2 - IDs
+
+Modify your policies so that you output only their IDs using splat expressions.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+output "app_output" {
+  value = [for p in jamfpro_policy.install_app : p.id]
+}
+```
+
+</details>
+
+---
+
+#### Exercise 3 - Enabled Status
+
+Create three Jamf Pro policies, two enabled and one disabled, and output a list of their enabled values (`true/false`) using a splat expression.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "policies" {
+  default = ["Policy 1", "Policy 2", "Policy 3"]
+}
+
+resource "jamfpro_policy" "policies" {
+  count = length(var.policies)
+  name  = "${var.policies[count.index]}"
+  enabled = if var.policies[count.index] == "Policy 1" ? false : true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+
+}
+
+output "enabled_output" {
+  value = [for p in jamfpro_policy.policies : p.enabled]
+}
+```
+
+</details>
+
+---
+
+#### Exercise 4 - Combined Output
+
+Using a `for` with splat, output a list of strings in the format:
+
+```
+PolicyName: Status
+```
+
+For example (using any of the previous exercise policies):
+
+```
+["Install Chrome: true", "Install Zoom: false"]
+```
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "policies" {
+  default = ["Policy 1", "Policy 2", "Policy 3"]
+}
+
+resource "jamfpro_policy" "policies" {
+  count = length(var.policies)
+  name  = "${var.policies[count.index]}"
+  enabled = if var.policies[count.index] == "Policy 1" ? false : true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
+    }
+  }
+
+}
+
+output "enabled_output" {
+  value = [for p in jamfpro_policy.policies : "${p.name}: ${p.enabled}"]
+}
+```
+
+</details>
+
+---
+
+### Wrap-up
+
+- **Splat expressions** collect attributes across all resources created with **count** or **for_each**.
+
+- Syntax: `resource[*].attribute`
+
+- Useful in Jamf Pro for getting lists of **policy names, IDs, or enabled flags.**
+
+- Can be combined with **for expressions** for filtering or formatting.
+
 ## Dynamic Blocks
+
+A **dynamic block** allows you to dynamically generate nested configuration blocks inside a resource.
+
+This is useful in Jamf Pro when:
+
+- You want to **attach multiple scripts** to a policy.
+
+- You want to **assign multiple packages** dynamically.
+
+- You want to **build scope rules** from a list of departments or groups.
+
+### Syntax
+
+```hcl
+dynamic "block_name" {
+  for_each = var.collection
+  content {
+    # Arguments for each block
+  }
+}
+```
+
+- `block_name` = the nested block you want to generate (e.g., `script`, `scope`).
+
+- `for_each` = the list or map you want to loop over.
+
+- `content` = defines what goes inside each generated block.
+
+### Simple Example - Scripts
+
+```hcl
+variable "jamf_scripts" {
+  default = [
+    { id = 201, priority = "Before" },
+    { id = 202, priority = "After"  }
+  ]
+}
+
+resource "jamfpro_policy" "run_scripts" {
+  name    = "Run Dynamic Scripts"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    dynamic "scripts" {
+      for_each = var.jamf_scripts
+      content {
+        id       = jamf_scripts.value.id
+        priority = jamf_scripts.value.priority
+      }
+    }
+  }
+}
+```
+
+This creates **one policy** with **two script blocks** attached.
+
+### Another Example - Packages
+
+```hcl
+variable "packages" {
+  default = [
+    { id = 101, action = "Install" },
+    { id = 102, action = "Cache" }
+  ]
+}
+
+resource "jamfpro_policy" "install_apps" {
+  name    = "Install Multiple Apps"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    packages {
+      distribution_point = "default"
+
+      dynamic "package" {
+        for_each = var.packages
+        content {
+          id     = package.value.id
+          action = package.value.action
+        }
+      }
+    }
+  }
+}
+```
+
+This creates **one policy** with **2 package objects** attached.
+
+### Dynamic Printers
+
+```hcl
+variable "printers" {
+  default = [
+    { id = 301, name = "PrinterA", action = "install", make_default = true },
+    { id = 302, name = "PrinterB", action = "install", make_default = false }
+    { id = 303, name = "PrinterC", action = "install", make_default = false }
+  ]
+}
+
+resource "jamfpro_policy" "add_printers" {
+  name    = "Install Printers"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    dynamic "printers" {
+      for_each = var.printers
+      content {
+        id           = printers.value.id
+        name         = printers.value.name
+        action       = printers.value.action
+        make_default = printers.value.make_default
+      }
+    }
+  }
+}
+```
+
+This will create **one policy** with **3 printer payloads**.
+
+### Filtering with Dynamic Blocks
+
+You can filter values before looping:
+
+```hcl
+variable "packages" {
+  default = [
+    { id = 501, action = "Install" },
+    { id = 502, action = "Cache"   },
+    { id = 503, action = "Install" }
+  ]
+}
+
+resource "jamfpro_policy" "filtered_packages" {
+  name    = "Install Only Packages"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    packages {
+      distribution_point = "default"
+
+      dynamic "package" {
+        for_each = [for p in var.packages : p if p.action == "Install"]
+        content {
+          id     = package.value.id
+          action = package.value.action
+        }
+      }
+    }
+  }
+}
+```
+
+This will create **one policy** with **3 packages** only if their action is `"Install"`
+
+### Exercises
+
+Now that you have seen some examples of dynamic blocks, let's do some exercises.
+
+#### Exercise 1 - Packages
+
+Given:
+
+```hcl
+packages = [
+  { id = 601, action = "Install" },
+  { id = 602, action = "Cache" }
+]
+```
+
+Write a dynamic block to install/cache both packages inside `payloads -> packages`.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "packages" {
+  default = [
+    { id = 601, action = "Install" },
+    { id = 602, action = "Cache" }
+  ]
+}
+
+resource "jamfpro_policy" "install_apps" {
+  name    = "Install Multiple Apps"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    packages {
+      distribution_point = "default"
+
+      dynamic "package" {
+        for_each = var.packages
+        content {
+          id     = package.value.id
+          action = package.value.action
+        }
+      }
+    }
+  }
+}
+```
+
+</details>
+
+---
+
+#### Exercise 2 - Scripts
+
+Given:
+
+```hcl
+scripts = [
+  { id = 701, priority = "Before" },
+  { id = 702, priority = "After" }
+]
+```
+
+Write a dynamic block that adds both scripts.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "scripts" {
+  default = [
+    { id = 701, priority = "Before" },
+    { id = 702, priority = "After" }
+  ]
+}
+
+resource "jamfpro_policy" "run_scripts" {
+  name    = "Run Dynamic Scripts"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    dynamic "scripts" {
+      for_each = var.scripts
+      content {
+        id       = scripts.value.id
+        priority = scripts.value.priority
+      }
+    }
+  }
+}
+```
+
+</details>
+
+---
+
+#### Exercise 3 - Printers
+
+Given:
+
+```hcl
+printers = [
+  { id = 801, name = "OfficePrinter", action = "install", make_default = true },
+  { id = 802, name = "LabPrinter",   action = "install", make_default = false }
+]
+```
+
+Write a dynamic block that installs both printers.
+
+**Minimal Viable Answer:**
+
+<details>
+
+  <summary>Click to reveal</summary>
+
+```hcl
+variable "printers" {
+  default = [
+    { id = 801, name = "OfficePrinter", action = "install", make_default = true },
+    { id = 802, name = "LabPrinter",   action = "install", make_default = false }
+  ]
+}
+
+resource "jamfpro_policy" "add_printers" {
+  name    = "Install Printers"
+  enabled = true
+
+  scope {
+    all_computers = false
+  }
+
+  payloads {
+    dynamic "printers" {
+      for_each = var.printers
+      content {
+        id           = printers.value.id
+        name         = printers.value.name
+        action       = printers.value.action
+        make_default = printers.value.make_default
+      }
+    }
+  }
+}
+```
+
+</details>
+
+---
+
+### Wrap-up
+
+- **Dynamic blocks** help manage nested Jamf Pro resources (packages, scripts, printers, dock items, etc.).
+
+- Use them when you’d otherwise repeat many similar blocks.
+
+- Don’t use them for simple ID lists (like 'computer_group_ids') — just assign a list directly.
