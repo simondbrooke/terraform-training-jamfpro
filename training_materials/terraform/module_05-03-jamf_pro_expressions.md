@@ -2116,3 +2116,78 @@ resource "jamfpro_policy" "add_printers" {
 - Use them when you’d otherwise repeat many similar blocks.
 
 - Don’t use them for simple ID lists (like 'computer_group_ids') — just assign a list directly.
+
+---
+
+## ✅ Module 9 Summary
+
+**🎯 Learning Objectives Achieved:**
+
+- ✅ Mastered **Terraform data types** including primitives, collections, and structural types
+- ✅ Created **dynamic string templates** with interpolation and conditional directives
+- ✅ Implemented **conditional logic** using ternary operators and complex nested conditions
+- ✅ Built **complex transformations** with for expressions and data manipulation
+- ✅ Simplified **iterations** using splat expressions for efficient value extraction
+- ✅ Generated **dynamic configurations** with dynamic blocks and programmatic resource creation
+- ✅ Applied **mathematical and logical operators** for complex calculations and comparisons
+
+**🔑 Key Concepts Covered:**
+
+- **Data Types**: Primitive (string, number, bool), Collection (list, set, map), Structural (object, tuple)
+- **String Templates**: Interpolation with `${}`, conditional directives with `%{if}`, iteration with `%{for}`
+- **Operators**: Arithmetic (+, -, \*, /, %), Comparison (==, !=, <, >, <=, >=), Logical (&&, ||, !)
+- **Conditional Expressions**: Ternary operators, nested conditionals, feature-based conditions
+- **For Expressions**: List transformations, map transformations, filtering, complex nested operations
+- **Splat Expressions**: Collection value extraction, nested attribute access, filtering patterns
+- **Dynamic Blocks**: Programmatic block generation, conditional block creation, nested dynamic structures
+
+**💼 Professional Skills Developed:**
+
+- **Advanced Configuration Management**: Creating flexible, data-driven infrastructure configurations
+- **Template Engineering**: Building dynamic templates with conditional logic and iteration
+- **Data Transformation**: Converting and manipulating complex data structures efficiently
+- **Pattern Recognition**: Identifying when to use different expression types for optimal solutions
+- **Code Optimization**: Writing maintainable and performant Terraform configurations
+- **Complex Logic Implementation**: Handling sophisticated business requirements in infrastructure code
+
+**🏗️ Technical Achievements:**
+
+- Built comprehensive multienvironment application with all expression types
+- Implemented dynamic security groups with conditional rules based on environment
+- Created complex data transformations with nested for expressions and filtering
+- Developed template-based user data scripts with conditional feature installation
+- Established patterns for cost calculation, resource scaling, and feature management
+- Demonstrated advanced splat usage for efficient collection manipulation
+
+**🧮 Advanced Expression Patterns Mastered:**
+
+- **Conditional Resource Creation**: Using expressions to control resource deployment
+- **Dynamic Configuration Generation**: Template-based configuration file creation
+- **Complex Data Structures**: Multi-level nested objects with computed values
+- **Cost Estimation**: Mathematical expressions for infrastructure cost calculations
+- **Feature Flag Implementation**: Boolean logic for conditional feature enablement
+- **Multi-Environment Scaling**: Expression-based scaling policies across environments
+
+**🎨 Expression Best Practices:**
+
+- **Readability**: Breaking complex expressions into manageable local values
+- **Performance**: Using splat expressions for efficient collection operations
+- **Maintainability**: Organizing expressions logically with clear naming conventions
+- **Flexibility**: Creating reusable expression patterns for common operations
+- **Documentation**: Using descriptive variable names and comments for complex logic
+
+**➡️ Next Steps**: Ready to explore **Terraform State Management** where you'll learn about state files, state commands, and state best practices!
+
+---
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 6: Terraform Providers](./module_06_terraform_providers.md)**
+
+Learn more about different Terraform Providers.
+
+---
