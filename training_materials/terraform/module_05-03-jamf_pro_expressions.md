@@ -817,7 +817,7 @@ variable "app_name" {
 }
 
 output "check_os_version" {
-  value = var.app_name == "Chrome || var.app_name == "Firefox"
+  value = var.app_name == "Chrome" || var.app_name == "Firefox"
 }
 ```
 
