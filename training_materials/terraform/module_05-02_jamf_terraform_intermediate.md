@@ -1,31 +1,46 @@
-# Section 2 - Overview
+# Module 5-02 - Jamf Pro Configuration
 
-This section is going to cover a lot about configuration profiles and other management resources like Policies, Smart Groups and others.
+## _Duration: 2 hour | Labs: 6_ | Difficulty: 🟢 Beginner\*
 
-Configuration profiles in the Jamf Provider are slightly different to all other resources. The process will be to have an XML/PLIST file of the configuration and then use that to configure the terraform resource.
+## 🎯 Learning Objectives
+
+By the end of this module, you will be able to:
+
+- ✅ Configure Scoping Groups - Creating Smart and Static Groups for both Computers and Devices
+- ✅ Configure Extension Attributes - Creating all types of Extension Attributes for Computers and Devices
+- ✅ Configure Policies - Going into details about how to configure policies and the different type of payloads
+- ✅ Create Configuration Profile XMLs - Going into detail how to create a Configuration profile XML file that can be used to configure a configuration profile resource in Terraform
+- ✅ Configure macOS Configuration Profiles - Creating macOS configuration profiles using Terraform and an external XML file
+- ✅ Configure mobile device Configuration Profiles - Creating mobile device configuration profiles using Terraform and an external XML file
+
+### 📚 Topics Covered
+
+This module is going to cover creating management objects in Jamf Pro. These are going to be the most used objects that are used in Jamf and what you would typically find yourself using on a day-to-day basis.
+
+Configuration profiles in the Jamf Provider are slightly different to all other resources. The process will require you to have an XML/PLIST file of the configuration and then use that to configure the Terraform resource.
 
 The main way of doing this would be to create the configuration profile in the Jamf UI in the first place, preferably in your sandbox tenant, use the Deployment Theory Jamf Pro GoLang SDK or the Jamf Pro API to download the unsigned plist and then use the plist to create your Terraform resource which will be used to promote the change through your production Route to Live.
 
-In this section, you will be covering the following topics:
+In this module, you will be covering the following topics:
 
-- [Lesson 1 - Smart Groups](#lesson-1---scoping-groups)
-- [Lesson 2 - Extension Attributes](#lesson-2---extension-attributes)
-- [Lesson 3 - Policies](#lesson-3---policies)
-- [Lesson 4 - Configuration Resource Creation](#lesson-4---configuration-resource-creation)
-- [Lesson 5 - Computer Configurations](#lesson-5---computer-configurations)
-- [Lesson 6 - Mobile Device Configurations](#lesson-6---mobile-device-configurations)
+- [Exercise 1 - Scoping Groups](#exercise-1---scoping-groups)
+- [Exercise 2 - Extension Attributes](#exercise-2---extension-attributes)
+- [Exercise 3 - Policies](#exercise-3---policies)
+- [Exercise 4 - Configuration Resource Creation](#exercise-4---configuration-resource-creation)
+- [Exercise 5 - Computer Configurations](#exercise-5---computer-configurations)
+- [Exercise 6 - Mobile Device Configurations](#exercise-6---mobile-device-configurations)
 
-In this section, to create the Configuration Profiles, you are going to need to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) in the deploymenttheory GitHub repo. Please download this and follow the setup guide in the repo prior to the Configuration Profile lesson. You will also need to install the Go programming language on the machine which you can follow the steps on the [go.dev webpage](https://go.dev/doc/install).
+In this module, to create the Configuration Profiles, you are going to need to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) in the deploymenttheory GitHub repo. Please download this and follow the setup guide in the repo prior to the Configuration Profile exercise. You will also need to install the Go programming language on the machine which you can follow the steps on the [go.dev webpage](https://go.dev/doc/install).
 
-Use **Option 2** in the setup guide when it is discussing your variables for authentication and create a config file.
+Use **Option 2** in the setup guide when configuring the Jamf Pro GO SDK when it is discussing your variables for authentication.
 
 ---
 
-## Lesson 1 - Scoping Groups
+## Exercise 1 - Scoping Groups
 
-This lesson will describe how to create Smart Group resources. Using similar techniques as in the previous section, you can create smart groups in your terraform project and then link to them in policies either by their ID in Jamf Pro or by using the resource ID in Terraform. Using the Terraform resource ID can make the codebase dynamic and will mean that whenever you update the Smart Group, it will automatically sync with whatever the smart group is scoped to.
+This exercise will describe how to create Smart Group resources. Using similar techniques as in the previous module, you can create smart groups in your terraform project and then link to them in policies either by their ID in Jamf Pro or by using the resource ID in Terraform. Using the Terraform resource ID can make the codebase dynamic and will mean that whenever you update the Smart Group, it will automatically sync with whatever the smart group is scoped to.
 
-In this lesson, we will cover the following topics:
+In this exercise, we will cover the following topics:
 
 - [Static Computer & Mobile Device Groups](#static-computer--mobile-groups)
 - [Smart Computer & Mobile Device Groups](#smart-computer--mobile-groups)
@@ -36,10 +51,10 @@ For more information on any of the resources we are going to create today, you c
 
 Static Computer Groups in Terraform require you to know all Computer IDs in Jamf Pro so that you can scope the specific devices to the Group. Creating Static Computer Groups can be done by using the following resource:
 
-```
+```hcl
 resource "jamfpro_static_computer_group" "jamfpro_static_computer_group_001" {
-  name = "Example Static Computer Group"
 
+  name = "Example Static Computer Group"
 
   ## Optional Block
   site_id = 1
@@ -51,14 +66,14 @@ resource "jamfpro_static_computer_group" "jamfpro_static_computer_group_001" {
 
 The only required attribute in this resource is the `name`. Although, if you actually want to scope devices to the group, you will need to have the `assigned_computer_ids` attribute configured as well.
 
-You can see more about Static Computer Groups on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/static_computer_group) webpage.
+You can see more about Static Computer Groups on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/static_computer_group) webpage.
 
 Mobile Device Groups are similar to the Computer Groups, except the resource block would be:
 
-```
+```hcl
 resource "jamfpro_static_mobile_device_group" "jamfpro_static_mobile_device_group_001" {
-  name = "Example Mobile Device Group"
 
+  name = "Example Mobile Device Group"
 
   ## Optional Block
   site_id = 1
@@ -68,13 +83,13 @@ resource "jamfpro_static_mobile_device_group" "jamfpro_static_mobile_device_grou
 }
 ```
 
-You can see more about Static Computer Groups on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/static_mobile_device_group) webpage.
+You can see more about Static Computer Groups on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/static_mobile_device_group) webpage.
 
 ### Smart Computer & Mobile Groups
 
 Smart Groups in Terraform work exactly the same as the way that Smart Groups work in the Jamf Pro UI. You will be required to know the criteria and operators for the criteria. To create a Smart Computer Group in Terraform, you can use the following resource:
 
-```
+```hcl
 resource "jamfpro_smart_computer_group" "smart_example" {
   name = "Example Smart Computer Group"
 
@@ -83,21 +98,21 @@ resource "jamfpro_smart_computer_group" "smart_example" {
 
   ## Optional: Define criteria for Smart groups
   criteria {
-    name          = "Criterion Name #1"
+    name          = "Criterion Name #1" ## e.g. Operating System Version
     priority      = 0     ## 0 is the highest priority, 1 is the next highest, etc.
     and_or        = "and" ## or "or", defaults to "and" if not provided
     search_type   = "is"  ## or any other supported search type
-    value         = "Criterion Value"
+    value         = "Criterion Value" ## e.g. "15.6.1"
     opening_paren = false ## true or false, defaults to false if not provided
     closing_paren = false ## true or false, defaults to false if not provided
   }
 
   criteria {
-    name          = "Criterion Name #n+1 etc"
+    name          = "Criterion Name #n+1 etc" ## e.g. Serial Number
     priority      = 1
     and_or        = "and" ## or "or", defaults to "and" if not provided
     search_type   = "is"  ## or any other supported search type
-    value         = "Criterion Value"
+    value         = "Criterion Value" ## e.g. "FXJH24AFO"
     opening_paren = false ## true or false, defaults to false if not provided
     closing_paren = false ## true or false, defaults to false if not provided
   }
@@ -107,11 +122,11 @@ resource "jamfpro_smart_computer_group" "smart_example" {
 
 The only required attribute for a Smart Computer group is the `name` attribute. All other attributes are optional, but required if you want to define a group that computers are scoped to, similar to if you were using the UI.
 
-You can see more about Static Computer Groups on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/smart_computer_group) webpage.
+You can see more about Smart Computer Groups on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/smart_computer_group) webpage.
 
 Smart Mobile Device Groups work the exact same as Smart Computer Groups, just using a different resource. This resource is resource for Smart Mobile Device Groups:
 
-```
+```hcl
 resource "jamfpro_smart_mobile_device_group" "smart_example" {
   name = "Example Smart Mobile Device Group"
 
@@ -142,57 +157,63 @@ resource "jamfpro_smart_mobile_device_group" "smart_example" {
 }
 ```
 
-You can see more about Static Mobile Device Groups on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/smart_mobile_device_group) webpage.
+You can see more about Static Mobile Device Groups on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/smart_mobile_device_group) webpage.
 
-#### Scoping Groups - Exercise 1 - Creating a Static Computer Group
+#### Scoping Groups - Exercise 1.1 - Creating a Static Computer Group
 
 In this exercise you will create a Static Computer Group using the resource mentioned above. This exercise requires that you have device records in your Jamf Pro instance so that you can use the Device ID's.
 
 Follow these steps:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `jamfpro_static_computer_groups.tf`
+1. Create a new file in your project in the working directory and name it `jamfpro_static_computer_groups.tf`
 2. Add in the resource mentioned in the Static Computer Groups section above and configure the Static Computer Group attributes by giving it a name and adding in some valid computer IDs from you Jamf Pro instance
 3. Save the file
-4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+4. Run your terraform and create the site by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+5. Verify that the change has been successful by checking the Jamf Pro UI
 
-#### Scoping Groups - Exercise 2 - Creating a Static Mobile Device Group
+#### Scoping Groups - Exercise 1.2 - Creating a Static Mobile Device Group
 
 This exercise will be similar to the previous, but instead of creating a Static Computer Group, you will create a Static Mobile Device Group.
 
 Follow these steps:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `jamfpro_static_mobile_device_groups.tf`
+1. Create a new file in your project in the working directory and name it `jamfpro_static_mobile_device_groups.tf`
 2. Follow the same steps as in Exercise 1, but using the Mobile Device Static Group resource.
 3. Save the file
-4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+4. Run your terraform and create the site by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+5. Verify that the change has been successful by checking the Jamf Pro UI
 
-#### Scoping Groups - Exercise 3 - Creating a Smart Computer Group
+#### Scoping Groups - Exercise 1.3 - Creating a Smart Computer Group
 
 In this exercise you will create a Smart Computer Group using the resource mentioned above. In this exercise, you can create a Smart Group with whatever criteria that you want.
 
 Follow these steps:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `jamfpro_smart_computer_groups.tf`
-2. Add in the resource mentioned in the Smart Computer Groups section above and configure the Static Computer Group attributes by giving it a name and adding in a search criteria
-3. Save the file
-4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+1. Create a new file in your project in the working directory and name it `jamfpro_smart_computer_groups.tf`
+2. Add in the resource mentioned in the Smart Computer Groups section above and configure the Smart Computer Group attributes by giving it a name and adding in a search criteria
+3. Search for all computers that are on the latest OS version
+4. Save the file
+5. Run your terraform and create the site by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+6. Verify that the change has been successful by checking the Jamf Pro UI
 
-#### Scoping Groups - Exercise 4 - Creating a Smart Mobile Device Group
+#### Scoping Groups - Exercise 1.4 - Creating a Smart Mobile Device Group
 
 This exercise will be similar to the previous, but instead of creating a Smart Computer Group, you will create a Smart Mobile Device Group.
 
 Follow these steps:
 
-1. Create a new file in your project in the `/workload/terraform/jamfpro/` directory and name it `jamfpro_smart_mobile_device_groups.tf`
+1. Create a new file in your project in the working directory and name it `jamfpro_smart_mobile_device_groups.tf`
 2. Follow the same steps in Exercise 3, but using the Mobile Device Smart Group resource.
-3. Save the file
-4. Run your terraform and create the site by running the `terraform apply` command in the terminal in the `/workload/terraform/jamfpro` directory
+3. Search for all mobile devices that are **not** on the latest iOS
+4. Save the file
+5. Run your terraform and create the site by running the `terraform plan` & `terraform apply` command in the terminal in the working directory
+6. Verify that the change has been successful by checking the Jamf Pro UI
 
 ---
 
-## Lesson 2 - Extension Attributes
+## Exercise 2 - Extension Attributes
 
-There are multiple ways to create Extension Attributes in Jamf, and in the same way, there are multiple ways to configure the Extension Attribute resource in Terraform. The following topics will be covered in this lesson:
+There are multiple ways to create Extension Attributes in Jamf, and in the same way, there are multiple ways to configure the Extension Attribute resource in Terraform. The following topics will be covered in this exercise:
 
 - [Computer Extension Attributes](#computer-extension-attributes)
   - [Pop-up Menu Example](#pop-up-menu-example)
@@ -204,13 +225,13 @@ For more information on any of the resources we are going to create today, you c
 
 ### Computer Extension Attributes
 
-Extension Attributes have multiple functions, and they all have different ways to be configured in Terraform. There are also 2 different types of Extension Attributes, one for Computers and one for Mobile Devices. The only difference with Mobile Devices is that you can't deploy a script extension attribute.
+Extension Attributes have multiple functions, and they all have different ways to be configured in Terraform. There are also 2 different types of Extension Attribute resources, one for Computers and one for Mobile Devices. The only difference with Mobile Devices is that you can't deploy a script extension attribute.
 
 #### Pop-up Menu Example
 
-Configuring an extension attribute with a pop-up menu can be configured using the following resource:
+Configuring an extension attribute for computers with a pop-up menu can be configured using the following resource:
 
-```
+```hcl
 ## Pop-up Menu Example
 resource "jamfpro_computer_extension_attribute" "jamfpro_computer_extension_attribute_popup_menu_1" {
   name                   = "tf-ghatest-cexa-popup-menu-example"
@@ -225,9 +246,9 @@ resource "jamfpro_computer_extension_attribute" "jamfpro_computer_extension_attr
 
 #### Text Field Example
 
-To configure an extension attribute with a text field you can use the following resource:
+To configure an extension attribute for computers with a text field you can use the following resource:
 
-```
+```hcl
 ## Text Field Example
 resource "jamfpro_computer_extension_attribute" "computer_extension_attribute_text_field_1" {
   name                   = "tf-example-cexa-text-field-example"
@@ -243,7 +264,7 @@ resource "jamfpro_computer_extension_attribute" "computer_extension_attribute_te
 
 Configuring the script extension attribute has a little more involved, which needs to include a script which will be deployed to the devices. It can be configured using the following resource:
 
-```
+```hcl
 ## Script Example
 resource "jamfpro_computer_extension_attribute" "computer_extension_attribute_script_1" {
   name                   = "tf-example-cexa-hello-world"
@@ -256,11 +277,13 @@ resource "jamfpro_computer_extension_attribute" "computer_extension_attribute_sc
 }
 ```
 
-This example shows an inline script contents. But this isn't the only way you can configure this example. You can use the same method as in the scripts lesson and point the script contents to a file and read the contents in that way.
+This example shows an inline script. But this isn't the only way you can configure this example. You can use the same method as in the scripts exercise in the previous module and point the script contents to a file and read the contents in that way.
+
+There is also another `input_type` allowed for Computer Devices which is `DIRECTORY_SERVICE_ATTRIBUTE_MAPPING`. But this is not covered in this exercise. For more information about this, view the registry page below.
 
 There are 3 required fields in an extension attribute, the `name`, `enabled` and `input_type` attributes. Everything else is optional depending on the input type.
 
-You can see more about Computer Extension Attributes on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/computer_extension_attribute) webpage.
+You can see more about Computer Extension Attributes on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/computer_extension_attribute) webpage.
 
 ### Mobile Device Extension Attributes
 
@@ -268,7 +291,7 @@ Mobile Device Extension Attributes are configured exactly the same as Computer E
 
 The following resource examples are how you would configure the Mobile Device Extension Attributes:
 
-```
+```hcl
 ## Pop-up menu Example
 resource "jamfpro_mobile_device_extension_attribute" "popup_menu_example" {
   name                   = "Device Location"
@@ -285,7 +308,7 @@ resource "jamfpro_mobile_device_extension_attribute" "popup_menu_example" {
 }
 ```
 
-```
+```hcl
 ## Text Field Example
 resource "jamfpro_mobile_device_extension_attribute" "text_field_example" {
   name                   = "User Department"
@@ -296,99 +319,101 @@ resource "jamfpro_mobile_device_extension_attribute" "text_field_example" {
 }
 ```
 
-You can see more about Mobile Device Extension Attributes on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/mobile_device_extension_attribute) webpage.
+There is also another `input_type` allowed for Mobile Devices which is `DIRECTORY_SERVICE_ATTRIBUTE_MAPPING`. But this is not covered in this exercise. For more information about this, view the registry page below.
+
+You can see more about Mobile Device Extension Attributes on the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/mobile_device_extension_attribute) webpage.
 
 #### Extension Attributes - Exercises
 
-##### Exercise 1: Basic Attribute
+##### Exercise 2.1: Basic Attribute
 
-Create a simple extension attribute called **Device Owner**:
+Create a simple computer extension attribute called **Device Owner**:
 
-- Type: `string`
-- Input type: `text`
+- Data type: `STRING`
+- Input type: `TEXT`
 - Visible in inventory `GENERAL`
 - Add a description: `"Person responsible for the mobile device"`
 
 **Tasks:**
 
-1. Write the Terraform configuration.
-2. Run `terraform plan` and check the changes.
-3. Apply the configuration.
+1. Create a new file called `jamfpro_computer_extension_attributes.tf`
+2. Write the Terraform configuration shown in above example
+3. Run `terraform plan` and check the changes
+4. Run `terraform apply` to apply the configuration
+5. Log in to Jamf Pro and see if the Extension Attribute has been created
 
 ---
 
-##### Exercise 2: Drop-Down Options
+##### Exercise 2.2: Drop-Down Options
 
-Define a **Region** attribute that lets users select a region:
+Define a **Region** attribute for computers that lets users select a region:
 
-- Input type: `pop-up menu`
-- Options: `EMEA`, `APAC`, `Americas`
+- Input type: `POPUP`
+- Options: `["EMEA", "APAC", "Americas"]`
 - Visible in the `GENERAL` inventory
 
 **Tasks:**
 
-1. Configure the resource in Terraform.
-2. Apply it, then log in to Jamf Pro and confirm the drop-down appears.
+1. Configure the resource in Terraform
+2. Apply it, then log in to Jamf Pro and confirm the drop-down appears
 
 ---
 
-##### Exercise 3: Updating an Attribute
+##### Exercise 2.3: Updating an Attribute
 
-Start with an attribute called **Warranty Expiry**:
+Start with a mobile device attribute called **Warranty Expiry**:
 
-- Type: `DATE`
+- Type: `TEXT`
+- Data Type: `STRING`
 - Visible in the `GENERAL` inventory
 
 **Tasks:**
 
-1. Create the attribute and apply it.
-2. Update the same attribute to make it visible in `USER_AND_LOCATION` inventory.
-3. Add a description: `"Date the warranty expires"`.
+1. Create the attribute and apply it using `terraform plan` & `terraform apply`
+2. Update the same attribute to make it visible in `USER_AND_LOCATION` inventory
+3. Add a description: `"Date the warranty expires"`
+4. Run `terraform plan` and look at the changes in the terminal
+5. Run `terraform apply` and verify the changes have taken affect
 
 ---
 
-##### Exercise 4: Multiple Attributes
+##### Exercise 2.4: Multiple Attributes
 
 Create two attributes at once:
 
 1. **Project Code**
-   - Type: `string`
-   - Input type: `text`
+   - Data Type: `STRING`
+   - Input type: `TEXT`
    - Visible in `USER_AND_LOCATION` inventory
 2. **Support Tier**
-   - Input type: `pop-up menu`
-   - Options: `Gold`, `Silver`, `Bronze`
+   - Input type: `POPUP`
+   - Options: `["Gold", "Silver", "Bronze"]`
    - Visible in `GENERAL` inventory
 
 **Tasks:**
 
 - Write both resources in one Terraform configuration.
-- Apply and verify both in Jamf Pro.
+- Plan, apply and verify both in Jamf Pro.
 
 ---
 
-##### Exercise 5: Drift Detection
+##### Exercise 2.5: Drift Detection
 
 1. Create an attribute called **Asset Tag**:
-   - Type: `string`
+   - Data Type: `STRING`
+   - Input Type: `TEXT`
    - Visible in `GENERAL` inventory
-2. After applying, manually change the attribute in the Jamf Pro console (e.g., change the name or disable inventory visibility).
+2. After applying, manually change the attribute in the Jamf Pro console (e.g., change the name or description)
 3. Run `terraform plan` to see how Terraform detects drift.
-4. Use `terraform apply` to bring the resource back to the desired state.
+4. Use `terraform plan` & `terraform apply` to bring the resource back to the desired state.
 
 ---
 
-## Lesson 3 - Policies
+## Exercise 3 - Policies
 
-This tutorial introduces the Terraform **`jamfpro_policy`** resource (part of the `deploymenttheory/jamfpro` provider) and guides you through several hands-on lessons, so you can learn by doing.
+This tutorial introduces the Terraform **`jamfpro_policy`** resource and guides you through several hands-on exercises.
 
----
-
-### What Is `jamfpro_policy`?
-
-The `jamfpro_policy` resource allows you to define and manage Jamf Pro Policies using Terraform, supporting Jamf Pro’s Classic and modern APIs via the community provider **deploymenttheory/jamfpro**.
-
-This Terraform provider lets you codify device management resources—like policies, smart groups, scripts, configuration profiles—as infrastructure-as-code for Jamf Pro environments.
+The `jamfpro_policy` resource allows you to define and manage Jamf Pro Policies using Terraform.
 
 ---
 
@@ -476,17 +501,27 @@ resource "jamfpro_policy" "jamfpro_policy_001" {
   }
 
   payloads {
-    scripts {
-      id          = 123
-      priority    = "After"
-      parameter4  = "param_value_4"
-      parameter5  = "param_value_5"
-      parameter6  = "param_value_6"
-      parameter7  = "param_value_7"
-      parameter8  = "param_value_8"
-      parameter9  = "param_value_9"
-      parameter10 = "param_value_10"
-      parameter11 = "param_value_11"
+    packages {
+      distribution_point = "default" // Set the appropriate distribution point
+      package {
+        id                          = 123       // The ID of the package in Jamf Pro
+        action                      = "Install" // The action to perform with the package (e.g., Install, Cache, etc.)
+        fill_user_template          = false     // Whether to fill the user template
+        fill_existing_user_template = false     // Whether to fill existing user templates
+      }
+    }
+
+    maintenance {
+      recon                       = true
+      reset_name                  = false
+      install_all_cached_packages = false
+      heal                        = false
+      prebindings                 = false
+      permissions                 = false
+      byhost                      = false
+      system_cache                = false
+      user_cache                  = false
+      verify                      = false
     }
 
     disk_encryption {
@@ -502,43 +537,47 @@ resource "jamfpro_policy" "jamfpro_policy_001" {
 
 This resource has a number of required attributes, including `enabled`, `name`, `payloads` and `scope`. There are a number of attributes for creating a policy within the `payloads` attribute, which is the same as if you were creating a policy in the Jamf Pro UI.
 
+Some payloads enabled here are the Packages, Maintenance and Disk Encryption payloads.
+
 You can see more about Policies on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/policy) webpage.
 
 ---
 
 #### Exercises
 
-##### Exercise 1 - Creating a basic policy
+##### Exercise 3.1 - Creating a basic policy
 
-Create a basic policy that runs a script on all devices. This lesson will be similar to the one created in the health check lesson in Section 1.
+**Complete if not already done**
+
+Create a basic policy that runs a script on all devices. This exercise will be similar to the one created in the health check exercise in Section 1.
 
 Using the resource above follow these steps:
 
-1. If not already done so, create the script and policy that was mentioned [Section 1 - Lesson 1](/support_materials/Section%201%20-%20Configuration/Lesson%201%20-%20Infrastructure/Lesson%201%20-%20Infrastructure.md)
-2. Use `terraform plan` and `terraform apply` to create the script and policy in your Jamf Pro instance
+1. If not already done so, create the script and policy that was mentioned [Section 1 - Exercise 1](/support_materials/Section%201%20-%20Configuration/Exercise%201%20-%20Infrastructure/Exercise%201%20-%20Infrastructure.md)
+2. Use `terraform plan` & `terraform apply` to create the script and policy in your Jamf Pro instance
 3. Once created, verify that the policy and script is created in your Jamf Pro instance
 
-##### Exercise 2 - Modifying a policies scope
+##### Exercise 3.2 - Modifying a policies scope
 
-Now that you have created a basic policy in Jamf Pro. We are going to modify the policies scope to restrict it to a smart group that you created in a previous lesson in this section.
+Now that you have created a basic policy in Jamf Pro. We are going to modify the policies scope to restrict it to a smart group that you created in a previous exercise in this module.
 
 Using the same resource, follow these steps:
 
-1. Modify the `scope` attribute to point the scope to the smart group created in the previous lesson. You can do this multiple ways, you can either point to the ID of the Smart Group by grabbing it from the UI, or as mentioned before, you can point it to the resource created for the smart group. **Try both**
-2. Run `terraform plan` and `terraform apply` to modify the policy
-3. Verify that the changes have been successful UI
+1. Modify the `scope` attribute to point the scope to the smart group created in the previous exercise. You can do this multiple ways, you can either point to the ID of the Smart Group by grabbing it from the UI, or as mentioned before, you can point it to the resource created for the smart group. **Try both**
+2. Run `terraform plan` & `terraform apply` to modify the policy
+3. Verify that the changes have been successful in the UI
 
-##### Exercise 3 - Modifying a policies payloads
+##### Exercise 3.3 - Modifying a policies payloads
 
 You now have a policy that is scoped to all. Let's say you want to have a maintenance payload attached to the payload to run an inventory collection after the script runs. Let's add that into the policy.
 
 Using the link to the terraform registry above, find the maintenance payload and follow these steps:
 
 1. Modify the `payloads` attribute and add in the maintenance payload, configure it to run an inventory update
-2. Run `terraform plan` and `terraform apply` to modify the policy
+2. Run `terraform plan` & `terraform apply` to modify the policy
 3. Verify that the change have been successful in the UI
 
-##### Exercise 4 - Drift Detection
+##### Exercise 3.4 - Drift Detection
 
 Now that you have a policy created and modified in Jamf Pro, we are going to see what it looks like when you modify the policy in the UI and then re-apply your Terraform.
 
@@ -554,11 +593,11 @@ Follow these steps:
 
 ---
 
-## Lesson 4 - Configuration Resource Creation
+## Exercise 4 - Configuration Resource Creation
 
-Creating Configuration Profiles is a little more difficult than creating policies, because it relies on having an unsigned PLIST of the configuration to upload to the Jamf Pro tenant. This can be done in a number of ways, but the easiest way is to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) mentioned in the [Section Overview](/support_materials/Section%202%20-%20Management/Section%202%20-%20Management.md).
+Creating Configuration Profiles is a little more difficult than creating policies, because it relies on having an unsigned PLIST of the configuration to upload to the Jamf Pro tenant. This can be done in a number of ways, but the easiest way is to use the [Jamf Pro GO SDK](https://github.com/deploymenttheory/go-api-sdk-jamfpro) mentioned in the [Topics Covered](#-topics-covered) section.
 
-This lesson will cover how to set up the Jamf Pro GO SDK and how to create and download the Configuration Profile that will be used in the next lesson to create the Configuration Profile resource.
+This exercise will cover how to set up the Jamf Pro GO SDK and how to create and download the Configuration Profile that will be used in the next exercise to create the Configuration Profile resource.
 
 ### Configuring the Jamf Pro GO SDK
 
@@ -566,7 +605,7 @@ Following the steps on the deploymenttheory GitHub repo, you should now have the
 
 Follow these steps:
 
-1. In the `go-api-sdk-jamfpro-main` directory, browse to `/go-api-sdk-jamfpro-main/recipes/macos_configuration_profiles/ExportMacOSConfigurationProfileToFile/ExportMacOSConfigurationProfileToFile.go` file.
+1. In the `go-api-sdk-jamfpro-main` directory, browse to the `/go-api-sdk-jamfpro-main/recipes/macos_configuration_profiles/ExportMacOSConfigurationProfileToFile/ExportMacOSConfigurationProfileToFile.go` file.
 2. Find the following block of code:
 
 ```
@@ -589,7 +628,7 @@ So that we can download the Configuration Profile, it has to be created in the J
 
 This is for a few reasons. The main one being so that everything is created in code and is managed by the Terraform provider. Another reason is that in a Route to Live environment, you would create the Configuration Profile in the UI, then download it, delete the profile, and push it through your Route to Live using only the one definition in code, rather than needing to duplicate effort across all of your tenants.
 
-So in this section, you will create a configuration profile that can be downloaded in the next part of this lesson.
+So in this section, you will create a configuration profile that can be downloaded in the next part of this exercise.
 
 Follow these steps:
 
@@ -612,25 +651,27 @@ To do this, follow these steps:
 6. Ensure that your PLIST file has been created
 7. Now go back to your Jamf Pro tenant and delete the configuration profile in the UI
 
-Now that you have this file, you can continue to your next lesson
+Now that you have this file, you can continue to your next exercise
 
 ---
 
-## Lesson 5 - Computer Configurations
+## Exercise 5 - Computer Configurations
 
-Following on from the previous lesson, you should now have a PLIST file of a configuration that you will use to push a new Configuration Profile to your Jamf Pro tenant.
+Following on from the previous exercise, you should now have a PLIST file of a configuration that you will use to push a new Configuration Profile to your Jamf Pro tenant.
 
-This lesson will go over the macOS Configuration Profile resource in Terraform and discuss how to use the PLIST file to push the new profile to the Jamf Pro tenant.
+This exercise will go over the macOS Configuration Profile resource in Terraform and discuss how to use the PLIST file to push the new profile to the Jamf Pro tenant.
 
 ### macOS Configuration Profile Resource
 
-There are multiple ways of creating a macOS configuration profile in Terraform as mentioned previously, but the resource we are going to use today will use the PLIST that was created in the previous lesson.
+There are multiple ways of creating a macOS configuration profile in Terraform as mentioned previously, but the resource we are going to use today will use the PLIST that was created in the previous exercise.
+
+We will also introduce the use of variables in this exercise.
 
 The follow resource is used to create the macOS Configuration Profile:
 
 ```
 variable "version_number" {
-  description = "The version number to include in the name and install button text."
+  description = "The version number to include in the name."
   type        = string
   default     = "v1.0"
 }
@@ -655,8 +696,6 @@ resource "jamfpro_macos_configuration_profile_plist" "jamfpro_macos_configuratio
 }
 ```
 
-This block also introduces a new feature that hasn't been mentioned before on these lessons. A variable block. In this instance, the variable block is used to denote a version number which can be used in the name and install button if used for Self Service.
-
 The 2 required attributes for this resource are the `name` and `payloads` attributes. There are other optional attributes that are used for things like Self Service deployment.
 
 You can see more about macOS Configuration Profiles on this [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs/resources/macos_configuration_profile_plist) webpage.
@@ -665,9 +704,9 @@ You can see more about macOS Configuration Profiles on this [Terraform Registry]
 
 #### Exercises
 
-In these exercises, you will learn how to create, update and delete a macOS configuration profile using Terraform and the PLIST created in the previous lesson.
+In these exercises, you will learn how to create, update and delete a macOS configuration profile using Terraform and the PLIST created in the previous exercise.
 
-##### Exercise 1 - Creating a macOS configuration Profile
+##### Exercise 5.1 - Creating a macOS configuration Profile
 
 Follow these steps:
 
@@ -676,22 +715,22 @@ Follow these steps:
 3. Using the resource above, not including the variable block, create a new resource for your macOS Config Profile
 4. Fill in all the attributes, making sure to remove the variable in the name
 5. Point the `payloads` attribute to your PLIST file that you have moved into your Terraform Project
-6. Run `terraform plan` and `terraform apply` to push the new config to the Jamf Pro instance
+6. Run `terraform plan` & `terraform apply` to push the new config to the Jamf Pro instance
 7. Verify that the change has been successful by browsing to the Jamf Pro instance and checking whether the profile was created or not
 
-##### Exercise 2 - Modifying the configuration profile
+##### Exercise 5.2 - Modifying the configuration profile
 
 Follow these steps:
 
 1. Opening the PLIST file that you created, try and change some key value pairs to modify how the profile is configured
 2. Save the file
 3. Now modify the scope of the Config Profile, if you need help with this, try visiting the Terraform Registry webpage
-4. Run a `terraform plan` and `terraform apply` to make the changes to the config profile
+4. Run a `terraform plan` & `terraform apply` to make the changes to the config profile
 5. Verify the change by browsing to the config profile in the Jamf Pro instance
 
-##### Exercise 3 - Verifying Drift Detection
+##### Exercise 5.3 - Verifying Drift Detection
 
-Now that you have a config profile that is configured by Terraform, let's try modifying it in the UI and see the behaviour of the Terraform when we next run our `terraform apply`
+Now that you have a config profile that is configured by Terraform, let's try modifying it in the UI and see the behaviour of the Terraform when we next run our `terraform plan` & `terraform apply`
 
 Follow these steps:
 
@@ -701,10 +740,10 @@ Follow these steps:
 4. Save the profile
 5. Come back to your Terraform Project and run a `terraform plan`
 6. Notice the output of the command, it should detect a drift from the code
-7. Now run a `terraform apply`
-8. Verify that the `terraform apply` has reverted the changes back to the desired state defined in Terraform
+7. Now run a `terraform plan` and view the differences that are detected
+8. Run and verify that the `terraform apply` has reverted the changes back to the desired state defined in Terraform
 
-##### Exercise 4 - Deleting the profile
+##### Exercise 5.4 - Deleting the profile
 
 Now that you have finished with the profile, it is time to delete it.
 
@@ -719,7 +758,7 @@ Follow these steps:
 
 ---
 
-## Lesson 6 - Mobile Device Configurations
+## Exercise 6 - Mobile Device Configurations
 
 You can manage both macOS Configuration Profiles and Mobile Device Configuration Profiles using Terraform. There is very little difference between the two, other than the resource type you are using and the payload contents.
 
@@ -753,25 +792,43 @@ You can see more about Mobile Device Configuration Profiles on this [Terraform R
 
 ### Exercises
 
-#### Exercise 1 - Creating a Configuration Profile for Mobile Devices
+#### Exercise 6.1 - Creating a Configuration Profile for Mobile Devices
 
-In this exercise, you will be following the same process as the previous lessons in this section.
+In this exercise, you will be following the same process as the previous exercises in this section.
 
 Follow these steps:
 
-1. Follow the previous lessons to create a basic Mobile Device Configuration Profile in Jamf Pro
+1. Follow the previous exercises to create a basic Mobile Device Configuration Profile in Jamf Pro
 2. Download the Configuration Profile using the GoLang SDK
 3. Create a Mobile Device Configuration Profile using the above resource
-4. Run `terraform plan` and `terraform apple`
+4. Run `terraform plan` and `terraform apply`
 5. Verify the change has been created in the Jamf Pro instance
 
-#### Exercise 2 - Modifying the Configuration profile
+#### Exercise 6.2 - Modifying the Configuration profile
 
-Similar to the previous lessons, you will now modify the config plist and resource to notice the changes being made in the Jamf Tenant
+Similar to the previous exercises, you will now modify the config plist and resource to notice the changes being made in the Jamf Tenant
 
 Follow these steps:
 
 1. In the plist file that was created when downloading from Jamf Pro, modify some values of the keys and save the file
 2. Modify the resource as well, like the scope or name
-3. Run `terraform plan` and `terraform apply` to modify the resource
+3. Run `terraform plan` & `terraform apply` to modify the resource
 4. Verify the change in the Jamf Pro tenant
+
+---
+
+**🎉 Congratulations!** You've completed Module 5-02 and now understand the intermediate Jamf Pro Terraform configurations. You've built real Jamf Pro configuration and deployed some resources.
+
+**➡️ Ready for Module 5-03?** Let me know when you'd like to continue with Jamf Pro Terraform Resources - where we'll learn how to configure more resources that you use for everyday management of macOS devices!
+
+---
+
+## 🔗 **Next Steps**
+
+Ready to continue your Terraform journey? Proceed to the next module:
+
+**➡️ [Module 5-03: Jamf Terraform Advanced](./module_05-03_jamf_terraform_advanced.md)**
+
+Learn intermediate Jamf Pro resource configuration by using expressions.
+
+---
