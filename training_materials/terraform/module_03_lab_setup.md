@@ -457,20 +457,20 @@ provider "jamfpro" {
 }
 
 # Variables for configuration
-variable "jamfpro_url" {
+variable "jamfpro_instance_fqdn" {
   description = "Jamf Pro server URL"
   type        = string
   default     = ""
 }
 
-variable "client_id" {
+variable "jamfpro_client_id" {
   description = "Jamf Pro API client ID"
   type        = string
   default     = ""
   sensitive   = true
 }
 
-variable "client_secret" {
+variable "jamfpro_client_secret" {
   description = "Jamf Pro API client secret"
   type        = string
   default     = ""
