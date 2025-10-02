@@ -35,6 +35,8 @@ Before starting the Module 04 labs, you must have the following software install
 
 #### 🍎 macOS Installation
 
+_Choose one of the following options:_
+
 **Option 1: Using Brew (Recommended)**
 
 ```bash
@@ -63,6 +65,9 @@ Press RETURN/ENTER to continue or any other key to abort:
 - Run brew help to get started
 - Further documentation:
     https://docs.brew.sh
+
+# Now restart your terminal, or run:
+source ~/.zshrc
 
 # Verify install
 brew help
@@ -144,7 +149,7 @@ terraform --version
 After installing VS Code, install these **required** extensions:
 
 ```bash
-# Install extensions via command line (this will require you to have VS Code in your $PATH)
+# Install extensions via command line (this will require you to have VS Code in your $PATH - covered in the overview)
 code --install-extension HashiCorp.terraform
 code --install-extension ms-vscode.vscode-json
 code --install-extension redhat.vscode-yaml
@@ -221,6 +226,8 @@ code --install-extension ms-python.python                 # Python support
 
 **Create environment variables for your credentials:**
 
+**Option 1 (using terminal environment variables):**
+
 **macOS/Linux:**
 
 ```bash
@@ -249,8 +256,6 @@ $env:JAMF_PRO_CLIENT_SECRET = "your-client-secret-here"
 # Or add to your PowerShell profile
 ```
 
-#### ✅ Test API Access
-
 **Verify your credentials work by getting an access token:**
 
 ```bash
@@ -270,6 +275,15 @@ curl -X POST "https://your-jamf-server.jamfcloud.com/api/oauth/token" \
   "token_type": "Bearer",
   "expires_in": 1800
 }
+```
+
+**Option 2 (Using a .tfvars file) - Recommended:**
+
+```hcl
+# Create a file called secrets.tfvars and add the folowing variables:
+jamfpro_client_id="ADD-YOUR-CLIENT-ID-HERE"
+jamfpro_client_secret="ADD-YOUR-CLIENT-SECRET-HERE"
+jamfpro_instance_fqdn="ADD-YOUR-JAMF_URL-HERE"
 ```
 
 #### 🔄 Credential Management Best Practices
@@ -344,7 +358,7 @@ code --version
 # Verify Git
 git --version
 
-# Verify Jamf Pro credentials are set
+# Verify Jamf Pro credentials are set (only if following terminal method of env variables)
 echo $JAMF_PRO_URL
 echo $JAMF_PRO_CLIENT_ID
 # Note: Don't echo the client secret for security
@@ -382,11 +396,21 @@ x64
 1. **Open your workspace in VS Code:**
 
 ```bash
-cd ~/terraform-labs/module-04
+# Ensure you have a directory created for your terraform training (where your .tfvars file is)
+# Follow this if using terminal
+cd ~/terraform-labs/module-04 # Or wherever your directory is
 code .
 ```
 
-2. **Configure Terraform settings in VS Code:**
+**GUI Method:**
+
+```
+1. Open VS Code
+2. Using the menu bar and open your directory
+3. Ensure you can see your .tfvars file
+```
+
+2. **Configure Terraform settings in VS Code (optional):**
 
    - Open VS Code Settings (Ctrl+.)
    - Search for "terraform"
@@ -426,16 +450,16 @@ code .
 Let's verify everything works with a minimal Terraform configuration:
 
 **Navigate or create the follow directory structure in your VS Code workspace:**
-`~/terraform-labs/module-04/lab1-first-config`
+`~/terraform-labs/`
 
-**Create a simple test file for Jamf Pro named `test.tf`:**
+**Create a file for Jamf Pro named `provider.tf`:**
 
 ```hcl
 terraform {
   required_providers {
     jamfpro = {
-      source  = "terraform.local/local/jamfpro"
-      version = "0.1.0"
+      source  = "deploymenttheory/jamfpro"
+      version = ">=0.26.0"
     }
   }
 }
@@ -462,7 +486,7 @@ variable "jamfpro_auth_method" {
   description = "Auth method chosen for Jamf. Options are 'basic' or 'oauth2'."
   sensitive   = true
   type        = string
-  default = "oauth2"
+  default     = "oauth2"
 }
 
 variable "jamfpro_client_id" {
@@ -551,12 +575,15 @@ terraform fmt
 # Create execution plan
 terraform plan
 
-# Apply the configuration with your Jamf Pro credentials
+# Apply the configuration with your Jamf Pro credentials if using Terminal env variables
 terraform apply \
   -var="jamfpro_url=$JAMF_PRO_URL" \
   -var="client_id=$JAMF_PRO_CLIENT_ID" \
   -var="client_secret=$JAMF_PRO_CLIENT_SECRET" \
   -auto-approve
+
+# Apply if using .tfvars file
+terraform apply
 
 # View outputs
 terraform output
@@ -567,6 +594,9 @@ terraform destroy \
   -var="client_id=$JAMF_PRO_CLIENT_ID" \
   -var="client_secret=$JAMF_PRO_CLIENT_SECRET" \
   -auto-approve
+
+# Or using .tfvars file
+terraform destroy
 ```
 
 **Expected workflow success indicates your environment is ready!**
