@@ -1,9 +1,11 @@
-# 📊 Module 09: Variables and Data
-*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟢🟡 Beginner - Intermediate*
----
+# 📊 Module 10: Variables and Data
+
+## _Duration: 2.5 hours | Labs: 3_ | Difficulty: 🟢🟡 Beginner - Intermediate\*
 
 ### 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Master input variables with advanced types and validation for Jamf Pro resources
 - ✅ Use variable definition files and environment variables in Jamf Pro configurations
 - ✅ Understand variable precedence and loading order
@@ -20,6 +22,7 @@ By the end of this module, you will be able to:
 Input variables serve as **parameters** for Terraform configurations, making them flexible and reusable across different Jamf Pro environments.
 
 **🎯 Variable Declaration Syntax:**
+
 ```hcl
 variable "name" {
   description = "Description of the variable"
@@ -27,7 +30,7 @@ variable "name" {
   default     = "default_value"
   sensitive   = false
   nullable    = true
-  
+
   validation {
     condition     = length(var.name) > 0
     error_message = "Name cannot be empty."
@@ -46,7 +49,7 @@ variable "extension_attribute_name" {
   description = "Name for the computer extension attribute"
   type        = string
   default     = "Department Code"
-  
+
   validation {
     condition     = can(regex("^[A-Za-z0-9 _-]+$", var.extension_attribute_name))
     error_message = "Extension attribute name must contain only alphanumeric characters, spaces, hyphens, and underscores."
@@ -56,7 +59,7 @@ variable "extension_attribute_name" {
 variable "jamf_environment" {
   description = "Jamf Pro environment"
   type        = string
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.jamf_environment)
     error_message = "Jamf environment must be dev, staging, or prod."
@@ -66,7 +69,7 @@ variable "jamf_environment" {
 variable "restricted_software_process" {
   description = "Process name to restrict"
   type        = string
-  
+
   validation {
     condition     = length(var.restricted_software_process) > 0 && can(regex("\\.(app|exe)$", var.restricted_software_process))
     error_message = "Process name must end with .app or .exe extension."
@@ -75,6 +78,7 @@ variable "restricted_software_process" {
 ```
 
 **💡 String Variable Best Practices:**
+
 - **Use descriptive names**: `extension_attribute_name` instead of just `name`
 - **Include validation**: Regex patterns ensure proper formatting for Jamf Pro requirements
 - **Provide defaults**: Sensible defaults reduce configuration overhead
@@ -90,7 +94,7 @@ variable "api_token_lifetime_hours" {
   description = "API token lifetime in hours"
   type        = number
   default     = 2
-  
+
   validation {
     condition     = var.api_token_lifetime_hours >= 1 && var.api_token_lifetime_hours <= 24
     error_message = "API token lifetime must be between 1 and 24 hours."
@@ -101,7 +105,7 @@ variable "password_rotation_hours" {
   description = "LAPS password rotation interval in hours"
   type        = number
   default     = 24
-  
+
   validation {
     condition     = var.password_rotation_hours >= 1 && var.password_rotation_hours <= 168
     error_message = "Password rotation must be between 1 and 168 hours (1 week)."
@@ -112,7 +116,7 @@ variable "enrollment_rank" {
   description = "Rank order for enrollment panes"
   type        = number
   default     = 1
-  
+
   validation {
     condition     = var.enrollment_rank >= 1 && var.enrollment_rank <= 10
     error_message = "Enrollment rank must be between 1 and 10."
@@ -123,7 +127,7 @@ variable "max_popup_choices" {
   description = "Maximum number of choices in popup menus"
   type        = number
   default     = 15
-  
+
   validation {
     condition     = var.max_popup_choices >= 2 && var.max_popup_choices <= 50
     error_message = "Popup menu choices must be between 2 and 50 options."
@@ -132,6 +136,7 @@ variable "max_popup_choices" {
 ```
 
 **💡 Number Variable Best Practices:**
+
 - **Range validation**: Always validate numeric ranges for Jamf Pro API limits
 - **Business logic**: Use validation to enforce business rules (e.g., token lifetime policies)
 - **Unit clarity**: Include units in variable names (hours, seconds, days, count)
@@ -182,6 +187,7 @@ variable "enforce_security_baseline" {
 ```
 
 **💡 Boolean Variable Best Practices:**
+
 - **Clear naming**: Use verbs like `enable_`, `auto_`, `send_`, `enforce_` to indicate action
 - **Security defaults**: Default to secure/conservative settings (false for auto-deploy, true for notifications)
 - **Environment awareness**: Use booleans for environment-specific feature toggles
@@ -198,7 +204,7 @@ variable "popup_menu_choices" {
   description = "Choices for extension attribute popup menu"
   type        = list(string)
   default     = ["Engineering", "Sales", "Marketing", "Support", "Executive"]
-  
+
   validation {
     condition     = length(var.popup_menu_choices) >= 2 && length(var.popup_menu_choices) <= 20
     error_message = "Popup menu must have between 2 and 20 choices."
@@ -215,7 +221,7 @@ variable "api_scopes" {
   description = "API authorization scopes"
   type        = list(string)
   default     = ["Read Computer Extension Attributes", "Create Computer Extension Attributes"]
-  
+
   validation {
     condition     = length(var.api_scopes) > 0
     error_message = "At least one API scope must be specified."
@@ -226,10 +232,10 @@ variable "restricted_process_names" {
   description = "List of process names to restrict"
   type        = list(string)
   default     = ["Install macOS Big Sur.app", "Steam.app", "BitTorrent.app"]
-  
+
   validation {
     condition = alltrue([
-      for process in var.restricted_process_names : 
+      for process in var.restricted_process_names :
       can(regex("\\.app$", process))
     ])
     error_message = "All process names must end with .app extension (macOS application bundles)."
@@ -240,7 +246,7 @@ variable "enrollment_pane_ranks" {
   description = "Ordered list of enrollment pane ranks"
   type        = list(number)
   default     = [1, 2, 3, 4, 5]
-  
+
   validation {
     condition = alltrue([
       for rank in var.enrollment_pane_ranks :
@@ -252,6 +258,7 @@ variable "enrollment_pane_ranks" {
 ```
 
 **💡 List Variable Best Practices:**
+
 - **Ordered data**: Use lists when order matters (enrollment pane sequences, priority lists)
 - **Homogeneous types**: All items in a list must be the same type
 - **Validation with `alltrue`**: Validate each item in the list using functions like `alltrue`
@@ -285,7 +292,7 @@ variable "enrollment_branding" {
     button_text_color = "FFFFFF"
     background_color  = "F5F5F5"
   }
-  
+
   validation {
     condition = alltrue([
       for color in values(var.enrollment_branding) : can(regex("^[0-9A-Fa-f]{6}$", color))
@@ -313,7 +320,7 @@ variable "api_token_lifetimes" {
     production    = 2
     emergency     = 1
   }
-  
+
   validation {
     condition = alltrue([
       for lifetime in values(var.api_token_lifetimes) :
@@ -332,7 +339,7 @@ variable "restriction_severity_levels" {
     unauthorized  = "TERMINATE"
     suspicious    = "QUARANTINE"
   }
-  
+
   validation {
     condition = alltrue([
       for level in values(var.restriction_severity_levels) :
@@ -344,6 +351,7 @@ variable "restriction_severity_levels" {
 ```
 
 **💡 Map Variable Best Practices:**
+
 - **Key-value relationships**: Perfect for lookups and associations (environment → settings)
 - **Configuration tables**: Use for storing related configuration values by category
 - **Environment mapping**: Excellent for environment-specific configurations
@@ -368,7 +376,7 @@ variable "computer_extension_attributes" {
     popup_choices          = optional(list(string))
     script_contents        = optional(string)
   }))
-  
+
   default = {
     "Department" = {
       enabled                = true
@@ -398,7 +406,7 @@ variable "computer_extension_attributes" {
       script_contents        = "#!/bin/bash\nsw_vers -buildVersion"
     }
   }
-  
+
   validation {
     condition = alltrue([
       for name, config in var.computer_extension_attributes :
@@ -406,7 +414,7 @@ variable "computer_extension_attributes" {
     ])
     error_message = "Input type must be POPUP, TEXT, or SCRIPT."
   }
-  
+
   validation {
     condition = alltrue([
       for name, config in var.computer_extension_attributes :
@@ -414,7 +422,7 @@ variable "computer_extension_attributes" {
     ])
     error_message = "POPUP input type requires popup_choices to be specified."
   }
-  
+
   validation {
     condition = alltrue([
       for name, config in var.computer_extension_attributes :
@@ -426,6 +434,7 @@ variable "computer_extension_attributes" {
 ```
 
 **💡 Complex Object Variable Best Practices:**
+
 - **Logical grouping**: Group related attributes together in meaningful object structures
 - **Optional fields**: Use `optional()` for fields that aren't always required
 - **Multiple validation rules**: Create separate validation blocks for different business rules
@@ -439,135 +448,136 @@ variable "computer_extension_attributes" {
 
 **🔗 Variable Type Summary:**
 
-| Variable Type | Use Case | Jamf Pro Examples | Key Features |
-|---------------|----------|-------------------|--------------|
-| **String** | Text values, names, identifiers | Extension attribute names, process names, environment labels | Simple, validation-friendly, human-readable |
-| **Number** | Numeric values, counts, timeouts | API token lifetimes, rotation hours, rank orders | Range validation, mathematical operations |
-| **Boolean** | Feature flags, enable/disable | Auto-deploy settings, kill processes, send notifications | Simple true/false logic, conditional resources |
-| **List** | Ordered collections, sequences | Popup choices, API scopes, process names | Ordered, homogeneous, iteration-friendly |
-| **Map** | Key-value associations, lookups | Environment settings, branding colors, type mappings | Fast lookups, configuration tables |
-| **Object** | Complex structured data | Extension attributes, enrollment customizations | Most flexible, type-safe, validation-rich |
+| Variable Type | Use Case                         | Jamf Pro Examples                                            | Key Features                                   |
+| ------------- | -------------------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
+| **String**    | Text values, names, identifiers  | Extension attribute names, process names, environment labels | Simple, validation-friendly, human-readable    |
+| **Number**    | Numeric values, counts, timeouts | API token lifetimes, rotation hours, rank orders             | Range validation, mathematical operations      |
+| **Boolean**   | Feature flags, enable/disable    | Auto-deploy settings, kill processes, send notifications     | Simple true/false logic, conditional resources |
+| **List**      | Ordered collections, sequences   | Popup choices, API scopes, process names                     | Ordered, homogeneous, iteration-friendly       |
+| **Map**       | Key-value associations, lookups  | Environment settings, branding colors, type mappings         | Fast lookups, configuration tables             |
+| **Object**    | Complex structured data          | Extension attributes, enrollment customizations              | Most flexible, type-safe, validation-rich      |
 
 variable "mobile_extension_attributes" {
-  description = "Mobile device extension attribute configurations"
-  type = map(object({
-    description            = string
-    data_type              = string
-    inventory_display_type = string
-    input_type             = string
-    popup_choices          = optional(list(string))
-  }))
-  
-  default = {
-    "Device Location" = {
-      description            = "Primary location where device is used"
-      data_type              = "STRING"
-      inventory_display_type = "USER_AND_LOCATION"
-      input_type             = "POPUP"
-      popup_choices          = ["Head Office", "Branch Office", "Home Office", "Client Site"]
-    }
-    "User Department" = {
-      description            = "Department of device user"
-      data_type              = "STRING"
-      inventory_display_type = "GENERAL"
-      input_type             = "TEXT"
-      popup_choices          = null
-    }
-  }
+description = "Mobile device extension attribute configurations"
+type = map(object({
+description = string
+data_type = string
+inventory_display_type = string
+input_type = string
+popup_choices = optional(list(string))
+}))
+
+default = {
+"Device Location" = {
+description = "Primary location where device is used"
+data_type = "STRING"
+inventory_display_type = "USER_AND_LOCATION"
+input_type = "POPUP"
+popup_choices = ["Head Office", "Branch Office", "Home Office", "Client Site"]
+}
+"User Department" = {
+description = "Department of device user"
+data_type = "STRING"
+inventory_display_type = "GENERAL"
+input_type = "TEXT"
+popup_choices = null
+}
+}
 }
 
 variable "restricted_software_configs" {
-  description = "Restricted software configurations"
-  type = map(object({
-    process_name             = string
-    match_exact_process_name = bool
-    send_notification        = bool
-    kill_process             = bool
-    delete_executable        = bool
-    display_message          = string
-  }))
-  
-  default = {
-    "high_sierra_installer" = {
-      process_name             = "Install macOS High Sierra.app"
-      match_exact_process_name = true
-      send_notification        = true
-      kill_process             = true
-      delete_executable        = true
-      display_message          = "macOS High Sierra installation is not permitted on this device."
-    }
-    "unauthorized_game" = {
-      process_name             = "Game.app"
-      match_exact_process_name = false
-      send_notification        = true
-      kill_process             = true
-      delete_executable        = false
-      display_message          = "Gaming applications are restricted during business hours."
-    }
-  }
+description = "Restricted software configurations"
+type = map(object({
+process_name = string
+match_exact_process_name = bool
+send_notification = bool
+kill_process = bool
+delete_executable = bool
+display_message = string
+}))
+
+default = {
+"high_sierra_installer" = {
+process_name = "Install macOS High Sierra.app"
+match_exact_process_name = true
+send_notification = true
+kill_process = true
+delete_executable = true
+display_message = "macOS High Sierra installation is not permitted on this device."
+}
+"unauthorized_game" = {
+process_name = "Game.app"
+match_exact_process_name = false
+send_notification = true
+kill_process = true
+delete_executable = false
+display_message = "Gaming applications are restricted during business hours."
+}
+}
 }
 
 variable "enrollment_customizations" {
-  description = "Enrollment customization configurations"
-  type = map(object({
-    display_name = string
-    description  = string
-    branding = object({
-      text_color        = string
-      button_color      = string
-      button_text_color = string
-      background_color  = string
-    })
-    text_pane = optional(object({
-      title                = string
-      body                 = string
-      subtext              = string
-      back_button_text     = string
-      continue_button_text = string
-    }))
-    sso_enabled = bool
-  }))
-  
-  default = {
-    "Corporate Standard" = {
-      display_name = "Corporate Device Enrollment"
-      description  = "Standard corporate device enrollment process"
-      branding = {
-        text_color        = "000000"
-        button_color      = "0066CC"
-        button_text_color = "FFFFFF"
-        background_color  = "F5F5F5"
-      }
-      text_pane = {
-        title                = "Welcome to Corporate IT"
-        body                 = "We're setting up your device with the tools you need to be productive."
-        subtext              = "This process takes about 10 minutes."
-        back_button_text     = "Back"
-        continue_button_text = "Continue"
-      }
-      sso_enabled = true
-    }
-    "Executive Enrollment" = {
-      display_name = "Executive Device Setup"
-      description  = "Enhanced enrollment for executive devices"
-      branding = {
-        text_color        = "000000"
-        button_color      = "1F4E79"
-        button_text_color = "FFFFFF"
-        background_color  = "F8F9FA"
-      }
-      text_pane = {
-        title                = "Executive Device Configuration"
-        body                 = "Your device will be configured with executive-level access and security."
-        subtext              = "Please contact IT if you need assistance."
-        back_button_text     = "Previous"
-        continue_button_text = "Proceed"
-      }
-      sso_enabled = true
-    }
-  }
+description = "Enrollment customization configurations"
+type = map(object({
+display_name = string
+description = string
+branding = object({
+text_color = string
+button_color = string
+button_text_color = string
+background_color = string
+})
+text_pane = optional(object({
+title = string
+body = string
+subtext = string
+back_button_text = string
+continue_button_text = string
+}))
+sso_enabled = bool
+}))
+
+default = {
+"Corporate Standard" = {
+display_name = "Corporate Device Enrollment"
+description = "Standard corporate device enrollment process"
+branding = {
+text_color = "000000"
+button_color = "0066CC"
+button_text_color = "FFFFFF"
+background_color = "F5F5F5"
 }
-```
+text_pane = {
+title = "Welcome to Corporate IT"
+body = "We're setting up your device with the tools you need to be productive."
+subtext = "This process takes about 10 minutes."
+back_button_text = "Back"
+continue_button_text = "Continue"
+}
+sso_enabled = true
+}
+"Executive Enrollment" = {
+display_name = "Executive Device Setup"
+description = "Enhanced enrollment for executive devices"
+branding = {
+text_color = "000000"
+button_color = "1F4E79"
+button_text_color = "FFFFFF"
+background_color = "F8F9FA"
+}
+text_pane = {
+title = "Executive Device Configuration"
+body = "Your device will be configured with executive-level access and security."
+subtext = "Please contact IT if you need assistance."
+back_button_text = "Previous"
+continue_button_text = "Proceed"
+}
+sso_enabled = true
+}
+}
+}
+
+````
 
 #### 🔒 Sensitive Variables
 
@@ -580,7 +590,7 @@ variable "jamf_api_credentials" {
     client_secret = string
   })
   sensitive = true
-  
+
   validation {
     condition     = length(var.jamf_api_credentials.client_id) > 0 && length(var.jamf_api_credentials.client_secret) > 0
     error_message = "Both client_id and client_secret must be provided."
@@ -591,7 +601,7 @@ variable "vpp_service_token" {
   description = "Apple Business Manager VPP service token"
   type        = string
   sensitive   = true
-  
+
   validation {
     condition     = can(base64decode(var.vpp_service_token))
     error_message = "VPP service token must be a valid base64 encoded string."
@@ -617,11 +627,12 @@ variable "ldap_credentials" {
     bind_password = ""
   }
 }
-```
+````
 
 #### 📂 Variable Definition Files
 
 **📁 terraform.tfvars (Auto-loaded):**
+
 ```hcl
 # terraform.tfvars
 jamf_environment = "production"
@@ -636,7 +647,7 @@ kill_restricted_process   = true
 
 popup_menu_choices = [
   "Engineering",
-  "Sales", 
+  "Sales",
   "Marketing",
   "Support",
   "Executive",
@@ -646,7 +657,7 @@ popup_menu_choices = [
 mobile_device_locations = [
   "Corporate Headquarters",
   "Regional Office - East",
-  "Regional Office - West", 
+  "Regional Office - West",
   "Remote Work",
   "Client Site"
 ]
@@ -666,6 +677,7 @@ laps_settings_by_environment = {
 ```
 
 **🌍 Environment-Specific Files:**
+
 ```hcl
 # dev.tfvars
 jamf_environment = "dev"
@@ -685,7 +697,7 @@ computer_extension_attributes = {
   }
 }
 
-# staging.tfvars  
+# staging.tfvars
 jamf_environment = "staging"
 api_token_lifetime_hours = 4
 password_rotation_hours = 12
@@ -720,12 +732,13 @@ enrollment_customizations = {
 ```
 
 **🔄 Variable Loading Precedence (Highest to Lowest):**
+
 1. **Command line flags**: `-var` and `-var-file`
 2. **Environment variables**: `TF_VAR_jamf_environment`
 3. **terraform.tfvars.json**
 4. **terraform.tfvars**
-5. ***.auto.tfvars.json** (alphabetical order)
-6. ***.auto.tfvars** (alphabetical order)
+5. **\*.auto.tfvars.json** (alphabetical order)
+6. **\*.auto.tfvars** (alphabetical order)
 7. **Variable defaults** in configuration files
 
 #### 📤 Output Values
@@ -733,6 +746,7 @@ enrollment_customizations = {
 Output values expose information about your Jamf Pro infrastructure for use by other configurations, scripts, or users.
 
 **🎯 Basic Output Syntax:**
+
 ```hcl
 output "name" {
   description = "Description of the output"
@@ -743,6 +757,7 @@ output "name" {
 ```
 
 **📊 Jamf Pro Resource Outputs:**
+
 ```hcl
 # Extension attribute outputs
 output "computer_extension_attribute_ids" {
@@ -861,6 +876,7 @@ output "environment_configuration" {
 Local values help reduce repetition and improve maintainability by computing expressions once and referencing them multiple times.
 
 **🎯 Local Value Syntax:**
+
 ```hcl
 locals {
   name = expression
@@ -868,63 +884,64 @@ locals {
 ```
 
 **🔧 Jamf Pro Local Values:**
+
 ```hcl
 locals {
   # Common naming conventions
   resource_prefix = "${var.jamf_environment}-${random_string.suffix.result}"
-  
+
   # Environment-specific settings
   is_production = var.jamf_environment == "prod"
   is_development = var.jamf_environment == "dev"
-  
+
   # API configuration
   api_token_lifetime_seconds = var.api_token_lifetime_hours * 3600
-  
+
   # LAPS configuration
   laps_rotation_seconds = var.password_rotation_hours * 3600
   laps_expiration_days = var.jamf_environment == "prod" ? 90 : 30
-  
+
   # Extension attribute categorization
   computer_attributes = {
     for name, config in var.computer_extension_attributes :
     name => config
   }
-  
+
   mobile_attributes = {
     for name, config in var.mobile_extension_attributes :
     name => config
   }
-  
+
   popup_attributes = {
     for name, config in var.computer_extension_attributes :
     name => config
     if config.input_type == "POPUP"
   }
-  
+
   text_attributes = {
     for name, config in var.computer_extension_attributes :
     name => config
     if config.input_type == "TEXT"
   }
-  
+
   script_attributes = {
     for name, config in var.computer_extension_attributes :
     name => config
     if config.input_type == "SCRIPT"
   }
-  
+
   # Restricted software message templates
   restriction_messages = {
     for name, config in var.restricted_software_configs :
     name => "${config.display_message} Contact IT support for assistance."
   }
-  
+
   # Enrollment customization computed values
   enrollment_titles = {
     for name, config in var.enrollment_customizations :
     name => "${config.display_name} - ${title(var.jamf_environment)}"
   }
-  
+
   # Branding color validation
   valid_colors = {
     for name, config in var.enrollment_customizations :
@@ -934,21 +951,21 @@ locals {
       background_valid = can(regex("^[0-9A-Fa-f]{6}$", config.branding.background_color))
     }
   }
-  
+
   # Security settings based on environment
   security_settings = {
     kill_process      = local.is_production ? true : var.kill_restricted_process
     delete_executable = local.is_production ? true : false
     send_notification = true
   }
-  
+
   # VPP configuration
   vpp_config = {
     auto_populate = local.is_production ? true : false
     auto_register = local.is_production ? true : false
     notifications = !local.is_development
   }
-  
+
   # Common tags for all resources
   common_tags = {
     Environment   = var.jamf_environment
@@ -956,7 +973,7 @@ locals {
     Module        = "variables-and-data"
     CreatedDate   = formatdate("YYYY-MM-DD", timestamp())
   }
-  
+
   # Computed scope configurations
   default_scope = {
     all_computers = false
@@ -971,15 +988,17 @@ locals {
 Data sources allow Terraform to fetch information about existing Jamf Pro infrastructure.
 
 **🎯 Data Source Syntax:**
+
 ```hcl
 data "provider_type" "name" {
   # Configuration arguments
 }
 ```
 
-**Note**: *Currently, the Jamf Pro provider has limited data source support. The following examples demonstrate the pattern using hypothetical data sources that may be available in future provider versions.*
+**Note**: _Currently, the Jamf Pro provider has limited data source support. The following examples demonstrate the pattern using hypothetical data sources that may be available in future provider versions._
 
 **🔍 Hypothetical Jamf Pro Data Sources:**
+
 ```hcl
 # Query existing categories
 data "jamfpro_categories" "existing" {
@@ -1016,6 +1035,7 @@ data "jamfpro_volume_purchasing_locations" "existing" {}
 ### 🟢 Simple Use Cases
 
 **📍 Environment Information:**
+
 ```hcl
 # Random suffix for unique naming
 resource "random_string" "suffix" {
@@ -1045,6 +1065,7 @@ resource "jamfpro_api_integration" "basic" {
 ```
 
 **🔧 LAPS Configuration:**
+
 ```hcl
 # Local admin password settings with environment-specific values
 resource "jamfpro_local_admin_password_settings" "corporate" {
@@ -1056,6 +1077,7 @@ resource "jamfpro_local_admin_password_settings" "corporate" {
 ```
 
 **📱 Mobile Extension Attributes:**
+
 ```hcl
 # Mobile device location tracking
 resource "jamfpro_mobile_device_extension_attribute" "location" {
@@ -1080,11 +1102,12 @@ resource "jamfpro_mobile_device_extension_attribute" "user_dept" {
 ### 🟡 Medium Use Cases
 
 **🚫 Restricted Software with Dynamic Configuration:**
+
 ```hcl
 # Create restricted software policies from variable configuration
 resource "jamfpro_restricted_software" "corporate_restrictions" {
   for_each = var.restricted_software_configs
-  
+
   name                     = "${local.resource_prefix}-${each.key}"
   process_name             = each.value.process_name
   match_exact_process_name = each.value.match_exact_process_name
@@ -1092,15 +1115,15 @@ resource "jamfpro_restricted_software" "corporate_restrictions" {
   kill_process             = each.value.kill_process && local.security_settings.kill_process
   delete_executable        = each.value.delete_executable && local.security_settings.delete_executable
   display_message          = local.restriction_messages[each.key]
-  
+
   site_id {
     id = -1
   }
-  
+
   scope {
     all_computers = local.default_scope.all_computers
     building_ids  = local.default_scope.building_ids
-    
+
     exclusions {
       computer_ids = local.is_development ? [1, 2, 3] : []
     }
@@ -1109,22 +1132,23 @@ resource "jamfpro_restricted_software" "corporate_restrictions" {
 ```
 
 **🎨 Enrollment Customization with Complex Branding:**
+
 ```hcl
 # Create enrollment customizations from variable configuration
 resource "jamfpro_enrollment_customization" "corporate" {
   for_each = var.enrollment_customizations
-  
+
   site_id      = "-1"
   display_name = local.enrollment_titles[each.key]
   description  = "${each.value.description} (${title(var.jamf_environment)})"
-  
+
   branding_settings {
     text_color        = each.value.branding.text_color
     button_color      = each.value.branding.button_color
     button_text_color = each.value.branding.button_text_color
     background_color  = each.value.branding.background_color
   }
-  
+
   # Conditional text pane
   dynamic "text_pane" {
     for_each = each.value.text_pane != null ? [each.value.text_pane] : []
@@ -1138,7 +1162,7 @@ resource "jamfpro_enrollment_customization" "corporate" {
       continue_button_text = text_pane.value.continue_button_text
     }
   }
-  
+
   # Conditional SSO pane for production
   dynamic "sso_pane" {
     for_each = each.value.sso_enabled && local.is_production ? [1] : []
@@ -1156,6 +1180,7 @@ resource "jamfpro_enrollment_customization" "corporate" {
 ```
 
 **💾 Volume Purchasing Program Integration:**
+
 ```hcl
 # VPP location with environment-specific configuration
 resource "jamfpro_volume_purchasing_locations" "corporate" {
@@ -1171,21 +1196,22 @@ resource "jamfpro_volume_purchasing_locations" "corporate" {
 ### 🔴 Complex Use Cases
 
 **🏗️ Multi-Attribute Extension System:**
+
 ```hcl
 # Create computer extension attributes from complex variable
 resource "jamfpro_computer_extension_attribute" "corporate_attributes" {
   for_each = local.computer_attributes
-  
+
   name        = "${local.resource_prefix}-${each.key}"
   enabled     = each.value.enabled
   description = "${each.value.description} (${title(var.jamf_environment)})"
   input_type  = each.value.input_type
   inventory_display_type = each.value.inventory_display_type
   data_type   = each.value.data_type
-  
+
   # Conditional popup choices
   popup_menu_choices = each.value.popup_choices != null ? each.value.popup_choices : null
-  
+
   # Conditional script contents
   script_contents = each.value.script_contents != null ? each.value.script_contents : null
 }
@@ -1193,7 +1219,7 @@ resource "jamfpro_computer_extension_attribute" "corporate_attributes" {
 # Create mobile extension attributes
 resource "jamfpro_mobile_device_extension_attribute" "device_tracking" {
   for_each = local.mobile_attributes
-  
+
   name                   = "${local.resource_prefix}-Mobile-${each.key}"
   description            = each.value.description
   data_type              = each.value.data_type
@@ -1204,13 +1230,14 @@ resource "jamfpro_mobile_device_extension_attribute" "device_tracking" {
 ```
 
 **🔐 Advanced API Integration with Role-Based Access:**
+
 ```hcl
 # API role for extension attribute management
 resource "jamfpro_api_role" "extension_attribute_manager" {
   display_name = "${local.resource_prefix}-ExtAttr-Manager"
   privileges = [
     "Create Computer Extension Attributes",
-    "Read Computer Extension Attributes", 
+    "Read Computer Extension Attributes",
     "Update Computer Extension Attributes",
     "Create Mobile Device Extension Attributes",
     "Read Mobile Device Extension Attributes",
@@ -1224,7 +1251,7 @@ resource "jamfpro_api_integration" "advanced" {
   enabled                       = var.api_integration_enabled && local.is_production
   access_token_lifetime_seconds = local.api_token_lifetime_seconds
   authorization_scopes          = [jamfpro_api_role.extension_attribute_manager.display_name]
-  
+
   depends_on = [
     jamfpro_computer_extension_attribute.corporate_attributes,
     jamfpro_mobile_device_extension_attribute.device_tracking
@@ -1233,6 +1260,7 @@ resource "jamfpro_api_integration" "advanced" {
 ```
 
 **🎯 Comprehensive Device Management Integration:**
+
 ```hcl
 # Local values for complex integration
 locals {
@@ -1246,7 +1274,7 @@ locals {
       enabled     = attr.enabled
     }
   }
-  
+
   # Integration configuration
   integration_config = {
     total_computer_attrs = length(jamfpro_computer_extension_attribute.corporate_attributes)
@@ -1293,11 +1321,13 @@ output "device_management_summary" {
 ---
 
 ## 🧪 **Lab 1**: Variables - The Very Basics
+
 **Duration**: 10 minutes
 
 Let's start with the absolute basics - what is a variable and how do you create one?
 
 **🎯 What You'll Learn:**
+
 - How to declare a simple variable
 - Basic variable types (string, number, bool)
 - How variables work without any complexity
@@ -1305,6 +1335,7 @@ Let's start with the absolute basics - what is a variable and how do you create 
 **Step 1: Create Your First Variables**
 
 Create a new directory `terraform-variables-basics` and create `variables.tf`:
+
 ```hcl
 # This is a simple string variable
 variable "department_name" {
@@ -1313,7 +1344,7 @@ variable "department_name" {
   default     = "Engineering"
 }
 
-# This is a simple number variable  
+# This is a simple number variable
 variable "team_size" {
   description = "Number of people in the team"
   type        = number
@@ -1331,6 +1362,7 @@ variable "is_active" {
 **Step 2: See Your Variables**
 
 Create `main.tf` (we're not creating resources yet, just learning variables):
+
 ```hcl
 # We'll use locals to show how variables work
 locals {
@@ -1343,6 +1375,7 @@ locals {
 **Step 3: Output Your Variables**
 
 Create `outputs.tf`:
+
 ```hcl
 output "department_name" {
   description = "The department name from our variable"
@@ -1390,6 +1423,7 @@ terraform apply -var='department_name=Marketing' -var='team_size=8' -var='is_act
 ```
 
 **🎉 Congratulations!** You've learned:
+
 - How to declare variables with `variable "name" { }`
 - The three basic types: `string`, `number`, `bool`
 - How to reference variables with `var.name`
@@ -1398,11 +1432,13 @@ terraform apply -var='department_name=Marketing' -var='team_size=8' -var='is_act
 ---
 
 ## 🧪 **Lab 2**: Using Variables in Resources
+
 **Duration**: 15 minutes
 
 Now let's use variables to actually create Jamf Pro resources!
 
 **🎯 What You'll Learn:**
+
 - How to use variables in real resources
 - String interpolation with `${}`
 - How variables make configurations flexible
@@ -1410,6 +1446,7 @@ Now let's use variables to actually create Jamf Pro resources!
 **Step 1: Add Resource Variables**
 
 Add to your `variables.tf`:
+
 ```hcl
 # Variables for creating a Jamf Pro extension attribute
 variable "attribute_name" {
@@ -1434,6 +1471,7 @@ variable "environment" {
 **Step 2: Create a Real Resource Using Variables**
 
 Update `main.tf`:
+
 ```hcl
 # Random suffix for unique naming (required for Jamf Pro)
 resource "random_string" "suffix" {
@@ -1456,6 +1494,7 @@ resource "jamfpro_computer_extension_attribute" "department" {
 **Step 3: Update Outputs to Show Resource Information**
 
 Update `outputs.tf`:
+
 ```hcl
 output "extension_attribute_id" {
   description = "ID of the created extension attribute"
@@ -1497,6 +1536,7 @@ terraform destroy
 ```
 
 **🎉 You've learned:**
+
 - How to use variables in resource arguments
 - String interpolation: `"${var.name}"`
 - How variables make resources flexible and reusable
@@ -1504,11 +1544,13 @@ terraform destroy
 ---
 
 ## 🧪 **Lab 3**: Outputs - Getting Information Back
+
 **Duration**: 10 minutes
 
 Let's master outputs - how to get information from your Terraform resources.
 
 **🎯 What You'll Learn:**
+
 - Different types of outputs
 - How to structure output data
 - When outputs are useful
@@ -1516,6 +1558,7 @@ Let's master outputs - how to get information from your Terraform resources.
 **Step 1: Create Multiple Resources**
 
 Update `main.tf` to create more resources:
+
 ```hcl
 # Create multiple extension attributes
 resource "jamfpro_computer_extension_attribute" "department" {
@@ -1540,6 +1583,7 @@ resource "jamfpro_computer_extension_attribute" "location" {
 **Step 2: Create Different Types of Outputs**
 
 Replace `outputs.tf`:
+
 ```hcl
 # Simple value output
 output "department_attribute_id" {
@@ -1602,6 +1646,7 @@ terraform output -json deployment_summary
 ```
 
 **🎉 You've learned:**
+
 - Simple outputs: `value = resource.attribute`
 - Structured outputs with maps: `{ key = value }`
 - How to view outputs with `terraform output`
@@ -1610,11 +1655,13 @@ terraform output -json deployment_summary
 ---
 
 ## 🧪 **Lab 4**: Variable Files - Different Environments
+
 **Duration**: 15 minutes
 
 Learn how to manage different environments with variable files.
 
 **🎯 What You'll Learn:**
+
 - How to create `.tfvars` files
 - Managing different environments
 - Variable file precedence
@@ -1622,6 +1669,7 @@ Learn how to manage different environments with variable files.
 **Step 1: Create Environment-Specific Variable Files**
 
 Create `dev.tfvars`:
+
 ```hcl
 # Development environment settings
 department_name      = "Dev Team"
@@ -1633,6 +1681,7 @@ attribute_description = "Development team assignment"
 ```
 
 Create `staging.tfvars`:
+
 ```hcl
 # Staging environment settings
 department_name      = "Staging Team"
@@ -1644,6 +1693,7 @@ attribute_description = "Staging environment assignment"
 ```
 
 Create `prod.tfvars`:
+
 ```hcl
 # Production environment settings
 department_name      = "Production Team"
@@ -1685,6 +1735,7 @@ terraform output deployment_summary
 **Step 3: Create a Default terraform.tfvars**
 
 Create `terraform.tfvars` (automatically loaded):
+
 ```hcl
 # Default values - automatically loaded
 department_name      = "Default Team"
@@ -1709,6 +1760,7 @@ terraform plan -var-file="dev.tfvars" -var="team_size=99"
 ```
 
 **🎉 You've learned:**
+
 - `.tfvars` files for environment-specific values
 - `terraform.tfvars` is loaded automatically
 - `-var-file` to specify which file to use
@@ -1717,11 +1769,13 @@ terraform plan -var-file="dev.tfvars" -var="team_size=99"
 ---
 
 ## 🧪 **Lab 5**: Validation - Making Variables Safer
+
 **Duration**: 15 minutes
 
 Now let's learn how to add validation rules to make variables safer.
 
 **🎯 What You'll Learn:**
+
 - How to add validation rules
 - Common validation patterns
 - When validation helps prevent mistakes
@@ -1729,12 +1783,13 @@ Now let's learn how to add validation rules to make variables safer.
 **Step 1: Add Simple Validation**
 
 Update your `variables.tf` with validation rules:
+
 ```hcl
 variable "department_name" {
   description = "Name of the department"
   type        = string
   default     = "Engineering"
-  
+
   # Simple validation - must not be empty
   validation {
     condition     = length(var.department_name) > 0
@@ -1746,7 +1801,7 @@ variable "team_size" {
   description = "Number of people in the team"
   type        = number
   default     = 5
-  
+
   # Number range validation
   validation {
     condition     = var.team_size >= 1 && var.team_size <= 100
@@ -1758,7 +1813,7 @@ variable "environment" {
   description = "Environment name"
   type        = string
   default     = "dev"
-  
+
   # Must be one of specific values
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
@@ -1770,7 +1825,7 @@ variable "attribute_name" {
   description = "Name for the extension attribute"
   type        = string
   default     = "Department"
-  
+
   # Pattern validation with regex
   validation {
     condition     = can(regex("^[A-Za-z0-9 _-]+$", var.attribute_name))
@@ -1796,6 +1851,7 @@ terraform plan -var='attribute_name=Bad@Name' # Invalid characters
 ```
 
 **🎉 You've learned:**
+
 - Basic validation with `validation { }` blocks
 - Length validation: `length(var.name) > 0`
 - Range validation: `var.num >= 1 && var.num <= 100`
@@ -1805,11 +1861,13 @@ terraform plan -var='attribute_name=Bad@Name' # Invalid characters
 ---
 
 ## 🧪 **Lab 6**: Lists - Working with Collections
+
 **Duration**: 15 minutes
 
 Learn how to work with lists (ordered collections of the same type).
 
 **🎯 What You'll Learn:**
+
 - How to create list variables
 - Using lists in resources
 - Basic list operations
@@ -1817,13 +1875,14 @@ Learn how to work with lists (ordered collections of the same type).
 **Step 1: Create Simple List Variables**
 
 Add to your `variables.tf`:
+
 ```hcl
 # List of strings - department names
 variable "department_list" {
   description = "List of all departments"
   type        = list(string)
   default     = ["Engineering", "Sales", "Marketing"]
-  
+
   validation {
     condition     = length(var.department_list) >= 1
     error_message = "Must have at least one department."
@@ -1848,11 +1907,12 @@ variable "office_locations" {
 **Step 2: Use Lists in Resources**
 
 Update `main.tf`:
+
 ```hcl
 # Create one extension attribute for each department
 resource "jamfpro_computer_extension_attribute" "department_attributes" {
   count = length(var.department_list)
-  
+
   name        = "${var.department_list[count.index]}-Dept-${var.environment}-${random_string.suffix.result}"
   enabled     = true
   description = "Extension attribute for ${var.department_list[count.index]} department"
@@ -1876,6 +1936,7 @@ resource "jamfpro_computer_extension_attribute" "office_location" {
 **Step 3: Output List Information**
 
 Add to `outputs.tf`:
+
 ```hcl
 # Show the original list
 output "all_departments" {
@@ -1936,6 +1997,7 @@ terraform plan -var='department_list=[]'
 ```
 
 **🎉 You've learned:**
+
 - List variables: `type = list(string)`
 - Accessing list items: `var.list[0]`, `var.list[1]`
 - List length: `length(var.list)`
@@ -1946,11 +2008,13 @@ terraform plan -var='department_list=[]'
 ---
 
 ## 🧪 **Lab 7**: Maps - Key-Value Pairs
+
 **Duration**: 15 minutes
 
 Learn how to work with maps (key-value collections).
 
 **🎯 What You'll Learn:**
+
 - How to create map variables
 - Using maps for lookups
 - Maps vs lists - when to use each
@@ -1958,6 +2022,7 @@ Learn how to work with maps (key-value collections).
 **Step 1: Create Simple Map Variables**
 
 Add to your `variables.tf`:
+
 ```hcl
 # Map of department codes
 variable "department_codes" {
@@ -1999,11 +2064,12 @@ variable "department_managers" {
 **Step 2: Use Maps in Resources**
 
 Update `main.tf`:
+
 ```hcl
 # Create extension attributes using for_each with maps
 resource "jamfpro_computer_extension_attribute" "department_codes" {
   for_each = var.department_codes
-  
+
   name        = "${each.key}-Code-${each.value}-${var.environment}-${random_string.suffix.result}"
   enabled     = true
   description = "Department code for ${each.key}: ${each.value}"
@@ -2015,7 +2081,7 @@ resource "jamfpro_computer_extension_attribute" "department_codes" {
 # Create manager attributes using map lookups
 resource "jamfpro_computer_extension_attribute" "department_info" {
   for_each = var.department_codes
-  
+
   name        = "${each.key}-Info-${var.environment}-${random_string.suffix.result}"
   enabled     = true
   description = "Department: ${each.key} | Code: ${each.value} | Manager: ${var.department_managers[each.key]} | Team Size: ${var.team_sizes[each.key]}"
@@ -2028,6 +2094,7 @@ resource "jamfpro_computer_extension_attribute" "department_info" {
 **Step 3: Output Map Information**
 
 Add to `outputs.tf`:
+
 ```hcl
 # Show the original maps
 output "department_codes" {
@@ -2102,6 +2169,7 @@ terraform apply -var='department_codes={finance="FIN", legal="LEG"}' \
 ```
 
 **🎉 You've learned:**
+
 - Map variables: `type = map(string)` or `type = map(number)`
 - Accessing map values: `var.map["key"]` or `var.map[each.key]`
 - Using maps with `for_each`: `for_each = var.map`
@@ -2112,11 +2180,13 @@ terraform apply -var='department_codes={finance="FIN", legal="LEG"}' \
 ---
 
 ## 🧪 **Lab 8**: Locals - Computed Values
+
 **Duration**: 15 minutes
 
 Learn how to use locals for computed values and avoiding repetition.
 
 **🎯 What You'll Learn:**
+
 - What locals are and when to use them
 - Computing values from variables
 - Avoiding repetition with locals
@@ -2124,21 +2194,22 @@ Learn how to use locals for computed values and avoiding repetition.
 **Step 1: Create Simple Locals**
 
 Add to `main.tf`:
+
 ```hcl
 # Local values for computed expressions
 locals {
   # Simple computed values
   resource_prefix = "${var.environment}-${random_string.suffix.result}"
   is_production   = var.environment == "prod"
-  
+
   # Computed from our lists and maps
   total_departments = length(var.department_list)
   total_employees   = sum(values(var.team_sizes))
-  
+
   # String computations
   organization_name = "ACME Corp"
   full_prefix      = "${local.organization_name}-${local.resource_prefix}"
-  
+
   # Conditional values
   backup_enabled = local.is_production ? true : false
   retention_days = local.is_production ? 90 : 30
@@ -2148,6 +2219,7 @@ locals {
 **Step 2: Use Locals in Resources**
 
 Update your resources to use locals:
+
 ```hcl
 # Use locals to avoid repetition
 resource "jamfpro_computer_extension_attribute" "organization_info" {
@@ -2172,6 +2244,7 @@ resource "jamfpro_computer_extension_attribute" "backup_info" {
 **Step 3: Output Local Values**
 
 Add to `outputs.tf`:
+
 ```hcl
 # Show computed local values
 output "computed_values" {
@@ -2225,6 +2298,7 @@ terraform output organization_summary  # Notice total_employees changes
 ```
 
 **🎉 You've learned:**
+
 - Locals compute values once: `locals { name = expression }`
 - Reference locals with `local.name` (not `var.name`)
 - Locals can use variables, other locals, and functions
@@ -2235,11 +2309,13 @@ terraform output organization_summary  # Notice total_employees changes
 ---
 
 ## 🧪 **Lab 9**: Environment Variables - System-Level Configuration
+
 **Duration**: 15 minutes
 
 Learn how to use system environment variables with Terraform.
 
 **🎯 What You'll Learn:**
+
 - How to use `TF_VAR_*` environment variables
 - When environment variables are useful
 - Security benefits of environment variables
@@ -2247,6 +2323,7 @@ Learn how to use system environment variables with Terraform.
 **Step 1: Understand Environment Variables**
 
 Environment variables starting with `TF_VAR_` automatically become Terraform variables:
+
 - `TF_VAR_environment` becomes `var.environment`
 - `TF_VAR_team_size` becomes `var.team_size`
 - `TF_VAR_api_token` becomes `var.api_token`
@@ -2254,6 +2331,7 @@ Environment variables starting with `TF_VAR_` automatically become Terraform var
 **Step 2: Set Environment Variables**
 
 In your terminal (macOS/Linux):
+
 ```bash
 # Set basic variables
 export TF_VAR_environment="dev"
@@ -2268,6 +2346,7 @@ export TF_VAR_team_sizes='{"devops": 8, "security": 4, "platform": 6}'
 ```
 
 For Windows PowerShell:
+
 ```powershell
 # Set basic variables
 $env:TF_VAR_environment = "dev"
@@ -2304,6 +2383,7 @@ unset TF_VAR_team_size
 ```
 
 **🎉 You've learned:**
+
 - Environment variables: `TF_VAR_name` becomes `var.name`
 - Useful for CI/CD pipelines and scripts
 - JSON format for complex types: `TF_VAR_list='["a", "b"]'`
@@ -2313,11 +2393,13 @@ unset TF_VAR_team_size
 ---
 
 ## 🧪 **Lab 10**: Sensitive Variables - Handling Secrets Safely
+
 **Duration**: 20 minutes
 
 Learn how to handle sensitive data like API keys and passwords safely.
 
 **🎯 What You'll Learn:**
+
 - How to mark variables as sensitive
 - Best practices for handling secrets
 - How sensitive variables affect outputs
@@ -2325,6 +2407,7 @@ Learn how to handle sensitive data like API keys and passwords safely.
 **Step 1: Create Sensitive Variables**
 
 Add to your `variables.tf`:
+
 ```hcl
 # Sensitive API credentials
 variable "jamf_client_id" {
@@ -2347,7 +2430,7 @@ variable "vpp_service_token" {
   type        = string
   sensitive   = true
   default     = "sample-base64-encoded-token"
-  
+
   validation {
     condition     = length(var.vpp_service_token) > 10
     error_message = "VPP service token must be provided."
@@ -2358,6 +2441,7 @@ variable "vpp_service_token" {
 **Step 2: Use Sensitive Variables in Resources**
 
 Update `main.tf`:
+
 ```hcl
 # Extension attribute that references sensitive data indirectly
 resource "jamfpro_computer_extension_attribute" "security_info" {
@@ -2373,6 +2457,7 @@ resource "jamfpro_computer_extension_attribute" "security_info" {
 **Step 3: Handle Sensitive Outputs**
 
 Add to `outputs.tf`:
+
 ```hcl
 # This output will be marked as sensitive automatically
 output "api_client_id" {
@@ -2421,6 +2506,7 @@ unset TF_VAR_vpp_service_token
 ```
 
 **🎉 You've learned:**
+
 - Mark sensitive variables with `sensitive = true`
 - Sensitive values are hidden in logs and output
 - Use environment variables for secrets in CI/CD
@@ -2432,8 +2518,9 @@ unset TF_VAR_vpp_service_token
 ## ✅ Module 09 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Mastered **input variables** with progressive complexity from basics to advanced
-- ✅ Understood **variable definition files** and environment-specific configurations  
+- ✅ Understood **variable definition files** and environment-specific configurations
 - ✅ Implemented **output values** for Jamf Pro resource integration and data retrieval
 - ✅ Created **local values** for computed expressions and avoiding repetition
 - ✅ Applied **environment variables** for system-level and CI/CD configuration
@@ -2441,6 +2528,7 @@ unset TF_VAR_vpp_service_token
 - ✅ Understood **variable precedence** and loading order
 
 **🔑 Complete Learning Path Covered:**
+
 - **Lab 1**: Variables - The Very Basics (string, number, bool fundamentals)
 - **Lab 2**: Using Variables in Resources (interpolation and resource flexibility)
 - **Lab 3**: Outputs - Getting Information Back (simple and structured outputs)
@@ -2449,19 +2537,21 @@ unset TF_VAR_vpp_service_token
 - **Lab 6**: Lists - Working with Collections (ordered data and iteration)
 - **Lab 7**: Maps - Key-Value Pairs (lookups and associations)
 - **Lab 8**: Locals - Computed Values (calculations and avoiding repetition)
-- **Lab 9**: Environment Variables - System-Level Configuration (TF_VAR_* usage)
+- **Lab 9**: Environment Variables - System-Level Configuration (TF*VAR*\* usage)
 - **Lab 10**: Sensitive Variables - Handling Secrets Safely (security best practices)
 
 **🔑 Key Concepts Mastered:**
+
 - **Variable Types**: string, number, bool, list, map with progressive complexity
 - **Validation Rules**: Length, range, pattern, choice validation with real examples
 - **Sensitive Variables**: API credentials, tokens with security best practices
 - **Variable Files**: Environment-specific configurations for dev/staging/prod
-- **Environment Variables**: TF_VAR_* for CI/CD and system-level configuration
+- **Environment Variables**: TF*VAR*\* for CI/CD and system-level configuration
 - **Variable Precedence**: Command line > var-file > TF_VAR > .tfvars > defaults
 - **Local Values**: Computed expressions, string manipulation, conditional logic
 
 **💼 Professional Skills Developed:**
+
 - **Configuration Management**: Organizing Jamf Pro variables and outputs effectively
 - **Security Best Practices**: Handling sensitive API credentials and tokens
 - **Infrastructure Integration**: Building upon existing Jamf Pro resources
@@ -2469,6 +2559,7 @@ unset TF_VAR_vpp_service_token
 - **Dynamic Configuration**: Creating flexible, reusable Jamf Pro modules
 
 **🏗️ Technical Achievements:**
+
 - Built complete Jamf Pro extension attribute system with validation
 - Implemented advanced API integration with role-based access control
 - Created dynamic software restriction policies with environment-specific settings
@@ -2483,7 +2574,7 @@ unset TF_VAR_vpp_service_token
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 10: Functions and Expressions](./module_10_functions_and_expressions.md)**
+**➡️ [Module 11: Meta Arguments](./module_11_meta_arguments.md)**
 
 Master advanced HCL functions and expressions for complex Jamf Pro configurations.
 

@@ -1,8 +1,6 @@
+# 📁 Module 13: Terraform State
 
-
-# 📁 Module 12: Terraform State
-*Duration: 2.5 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
----
+## _Duration: 2.5 hours | Labs: 3_ | Difficulty: 🟡 Intermediate\*
 
 ## 🎯 Learning Objectives
 
@@ -22,8 +20,9 @@ By the end of this module, you will be able to:
 **Terraform state** is a **JSON file** that maps your Terraform configuration to the real-world resources it manages. It's the **source of truth** that tracks resource metadata, dependencies, and current status.
 
 **🔍 Key State Concepts:**
+
 - **🗂️ State File** - JSON database of managed resources
-- **🔄 State Tracking** - Maps configuration to real infrastructure  
+- **🔄 State Tracking** - Maps configuration to real infrastructure
 - **📊 Resource Metadata** - Stores attributes, dependencies, and status
 - **🔒 State Locking** - Prevents concurrent modifications
 - **💾 State Backends** - Local vs remote state storage
@@ -33,7 +32,7 @@ By the end of this module, you will be able to:
 resource "aws_instance" "web" {
   ami           = "ami-12345"
   instance_type = "t3.micro"
-  
+
   tags = {
     Name = "web-server"
   }
@@ -65,18 +64,21 @@ resource "aws_instance" "web" {
 ### 🎯 Why State is Critical
 
 **📊 Resource Tracking:**
+
 - Maps configuration names to real resource IDs
 - Tracks resource dependencies and relationships
 - Stores sensitive data like passwords and keys
 - Enables performance optimization through caching
 
 **🔄 Change Detection:**
+
 - Compares current state vs desired configuration
 - Identifies what needs to be created, updated, or destroyed
 - Prevents duplicate resource creation
 - Enables drift detection and correction
 
 **⚡ Performance Benefits:**
+
 - Caches resource attributes to avoid API calls
 - Enables parallel operations through dependency graph
 - Reduces plan/apply time for large infrastructures
@@ -194,6 +196,7 @@ terraform state rm aws_instance.web[0]           # Actually remove
 ```
 
 **⚠️ Important Notes:**
+
 - Resources removed from state still exist in your infrastructure
 - Use this when you want to stop managing a resource with Terraform
 - The resource won't be destroyed by `terraform destroy`
@@ -247,10 +250,10 @@ terraform {
     key            = "prod/terraform.tfstate"
     region         = "us-west-2"
     versioning     = true  # Enable versioning for backups
-    
+
     # State locking
     dynamodb_table = "terraform-state-lock"
-    
+
     # Encryption
     encrypt = true
     kms_key_id = "arn:aws:kms:us-west-2:123456789:key/12345678-1234-1234-1234-123456789012"
@@ -264,7 +267,7 @@ terraform {
     storage_account_name = "terraformstate"
     container_name       = "tfstate"
     key                  = "prod.terraform.tfstate"
-    
+
     # Optional: Access key or use Azure CLI/MSI
     access_key = var.storage_access_key
   }
@@ -274,7 +277,7 @@ terraform {
 terraform {
   backend "remote" {
     organization = "my-organization"
-    
+
     workspaces {
       name = "production-infrastructure"
     }
@@ -286,7 +289,7 @@ terraform {
   backend "gcs" {
     bucket = "my-terraform-state"
     prefix = "terraform/state"
-    
+
     # Optional: Credentials
     credentials = "path/to/service-account-key.json"
   }
@@ -296,6 +299,7 @@ terraform {
 #### 🔧 Remote State Operations
 
 **📊 State Inspection with Remote Backends:**
+
 ```bash
 # Pull remote state to local file for inspection
 terraform state pull > remote-state.json
@@ -311,6 +315,7 @@ terraform state list
 ```
 
 **🔄 Remote State Movement Operations:**
+
 ```bash
 # State mv works the same with remote backends
 terraform state mv aws_instance.web[0] aws_instance.primary
@@ -325,13 +330,14 @@ terraform state mv aws_instance.web[0] aws_instance.primary
 #   Who:       user@hostname
 #   Version:   1.6.0
 #   Created:   2023-12-01 14:30:00.123456789 +0000 UTC
-#   Info:      
+#   Info:
 
 # Force unlock if necessary (use with caution!)
 terraform force-unlock 12345678-1234-1234-1234-123456789012
 ```
 
 **🔒 Remote State Security Considerations:**
+
 ```bash
 # Encrypt state at rest (S3 example)
 aws s3api put-bucket-encryption \
@@ -359,6 +365,7 @@ aws s3api put-bucket-logging \
 #### ⚠️ Remote State Limitations
 
 **🚫 Operations Not Available with Terraform Cloud:**
+
 ```bash
 # These operations are LIMITED or UNAVAILABLE with Terraform Cloud:
 
@@ -376,6 +383,7 @@ terraform state push terraform.tfstate  # Error: not supported
 ```
 
 **✅ Available Remote State Operations:**
+
 ```bash
 # ✅ These operations work with all remote backends:
 terraform state list
@@ -395,6 +403,7 @@ terraform import aws_instance.web i-1234567890abcdef0
 #### 🔄 Remote State Recovery Strategies
 
 **📁 S3 Backend Recovery:**
+
 ```bash
 # List state versions
 aws s3api list-object-versions \
@@ -417,6 +426,7 @@ aws s3 cp terraform.tfstate.recovered \
 ```
 
 **🔧 Azure Backend Recovery:**
+
 ```bash
 # List blob versions (if versioning enabled)
 az storage blob list \
@@ -433,6 +443,7 @@ az storage blob download \
 ```
 
 **☁️ Terraform Cloud Recovery:**
+
 ```bash
 # Use Terraform Cloud API
 curl \
@@ -450,18 +461,21 @@ curl \
 #### 🎯 Remote State Best Practices
 
 **🔐 Security Best Practices:**
+
 - **Encryption**: Always encrypt state at rest and in transit
 - **Access Control**: Use IAM/RBAC to limit state access
 - **Audit Logging**: Enable access logging for compliance
 - **Network Security**: Use VPC endpoints or private networks when possible
 
 **🔄 Operational Best Practices:**
+
 - **State Locking**: Always use state locking for team environments
 - **Versioning**: Enable versioning for recovery capabilities
 - **Backup Strategy**: Regular automated backups to separate locations
 - **Monitoring**: Alert on state lock timeouts and access patterns
 
 **👥 Team Collaboration:**
+
 - **Shared Backend**: Use centralized remote backend for all team members
 - **Consistent Configuration**: Standardize backend configuration across projects
 - **Access Management**: Implement proper role-based access controls
@@ -470,6 +484,7 @@ curl \
 ---
 
 ## 💻 **Exercise 10.1**: State Management Hands-On
+
 **Duration**: 25 minutes
 
 ⚠️ **Important Note**: This exercise assumes **local state** or **reachable remote state** (like S3/Azure backends). Many of these operations **will NOT work** with **Terraform Cloud** remote backend due to security restrictions. For Terraform Cloud users, use the UI for state management operations.
@@ -477,6 +492,7 @@ curl \
 Let's practice essential state management operations.
 
 **Step 1: Create Infrastructure**
+
 ```bash
 mkdir terraform-state-demo
 cd terraform-state-demo
@@ -491,7 +507,7 @@ resource "aws_instance" "web" {
   count         = 2
   ami           = "ami-12345"  # Update with valid AMI
   instance_type = "t2.micro"
-  
+
   tags = {
     Name = "web-\${count.index + 1}"
   }
@@ -503,6 +519,7 @@ terraform apply
 ```
 
 **Step 2: Practice State Commands**
+
 ```bash
 # List all resources
 terraform state list
@@ -524,6 +541,7 @@ terraform plan
 ```
 
 **Step 3: Recovery Operations**
+
 ```bash
 # Restore backup if needed (LOCAL STATE ONLY)
 terraform state push backup.tfstate
@@ -536,10 +554,11 @@ terraform destroy
 ```
 
 **Step 4: Remote State Considerations**
+
 ```bash
 # If using S3 backend, these operations work:
 terraform state list                    # ✅ Works
-terraform state show aws_instance.web[0] # ✅ Works  
+terraform state show aws_instance.web[0] # ✅ Works
 terraform state mv aws_instance.web[0] aws_instance.primary # ✅ Works
 terraform state rm aws_instance.web[1]  # ✅ Works
 terraform import aws_instance.web i-123 # ✅ Works
@@ -561,6 +580,7 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 ## ✅ Module 10 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Understood **Terraform state** and its critical role in infrastructure tracking
 - ✅ Mastered **state commands** including `list`, `show`, `mv`, `rm`, and `pull/push`
 - ✅ Implemented **state backup** strategies and recovery procedures
@@ -569,6 +589,7 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 - ✅ Handled **state conflicts** and corruption recovery scenarios
 
 **🔑 Key Concepts Covered:**
+
 - **State File Structure**: JSON format, resources, metadata, dependencies
 - **State Commands**: Inspection, manipulation, and recovery operations
 - **State Backups**: Automatic and manual backup strategies
@@ -576,6 +597,7 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 - **State Operations**: Import, export, move, and remove procedures
 
 **💼 Professional Skills Developed:**
+
 - **State Management**: Effective state file administration and maintenance
 - **Troubleshooting**: Diagnosing and resolving state-related issues
 - **Disaster Recovery**: Backup and restoration procedures for state files
@@ -592,7 +614,7 @@ terraform state push backup.tfstate     # ✅ S3/Azure, ❌ Terraform Cloud
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 13: TF Initialization](./module_13_tf_initialization.md)**
+**➡️ [Module 14: TF Initialization](./module_14_tf_initialization.md)**
 
 Learn the terraform init process and dependency management.
 

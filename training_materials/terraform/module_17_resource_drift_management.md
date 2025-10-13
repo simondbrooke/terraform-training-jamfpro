@@ -1,6 +1,4 @@
-
-
-# 🔄 Module 16: Resource Drift Management
+# 🔄 Module 17: Resource Drift Management
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Intermediate to Advanced  
@@ -36,6 +34,7 @@ By the end of this module, you will be able to:
 ### 📊 Types of Drift
 
 **Configuration Drift Overview and Impact:**
+
 ```mermaid
 graph TB
     subgraph "🌊 Configuration Drift Sources"
@@ -45,19 +44,19 @@ graph TB
         FAILURE["⚠️ System Failures<br/>Component degradation<br/>Infrastructure failures"]
         MAINTENANCE["🔧 Maintenance Activities<br/>Uncoordinated updates<br/>Emergency fixes"]
     end
-    
+
     subgraph "📊 Drift Types"
         PROPERTY["🎯 Resource Property Drift<br/>• Security group rules<br/>• Instance types<br/>• Tags and metadata<br/>• Network configurations"]
         DELETION["🗑️ Resource Deletion Drift<br/>• Manual console deletion<br/>• External automation<br/>• Policy enforcement<br/>• Billing cleanup"]
         ADDITION["➕ Resource Addition Drift<br/>• Manual resource creation<br/>• Auto-scaling events<br/>• Other IaC tools<br/>• Emergency resources"]
     end
-    
+
     subgraph "💥 Impact Categories"
         SEC_RISK["🚨 Security Risks<br/>• Open security groups<br/>• Exposed services<br/>• Compliance violations"]
         COST_IMPACT["💸 Cost Impact<br/>• Oversized instances<br/>• Untracked resources<br/>• Budget overruns"]
         OPS_ISSUES["🔧 Operational Issues<br/>• Service disruption<br/>• Monitoring gaps<br/>• Backup failures"]
     end
-    
+
     %% Source to drift type relationships
     MANUAL --> PROPERTY
     MANUAL --> DELETION
@@ -67,13 +66,13 @@ graph TB
     AUTOMATION --> ADDITION
     FAILURE --> DELETION
     MAINTENANCE --> PROPERTY
-    
+
     %% Drift type to impact relationships
     PROPERTY --> SEC_RISK
     PROPERTY --> COST_IMPACT
     DELETION --> OPS_ISSUES
     ADDITION --> COST_IMPACT
-    
+
     style MANUAL fill:#ffebee
     style SECURITY fill:#ffcdd2
     style PROPERTY fill:#fff3e0
@@ -82,17 +81,20 @@ graph TB
 ```
 
 **🎯 Resource Property Drift:**
+
 - Security group rules changed manually
 - Instance types modified outside Terraform
 - Tags added, removed, or modified
 - Network configurations altered
 
 **🗑️ Resource Deletion Drift:**
+
 - Resources deleted manually from cloud console
 - Resources terminated by external automation
 - Resources removed due to billing or policy enforcement
 
 **➕ Resource Addition Drift:**
+
 - New resources created manually
 - Resources created by other IaC tools
 - Auto-scaling creating unmanaged resources
@@ -100,11 +102,12 @@ graph TB
 ### 💥 Impact of Configuration Drift
 
 **🚨 Security Risks:**
+
 ```hcl
 # Expected: Restrictive security group
 resource "aws_security_group" "web" {
   name = "web-sg"
-  
+
   ingress {
     from_port   = 443
     to_port     = 443
@@ -123,6 +126,7 @@ resource "aws_security_group" "web" {
 ```
 
 **💸 Cost Impact:**
+
 ```hcl
 # Expected: Cost-optimized instance
 resource "aws_instance" "web" {
@@ -135,6 +139,7 @@ resource "aws_instance" "web" {
 ```
 
 **🔧 Operational Issues:**
+
 - **Service Disruption**: Critical features disabled
 - **Compliance Violations**: Security policies not enforced
 - **Backup Failures**: Backup configurations removed
@@ -145,35 +150,36 @@ resource "aws_instance" "web" {
 ## 🔍 Detecting Configuration Drift
 
 **Complete Drift Detection Workflow:**
+
 ```mermaid
 flowchart TD
     START["🔍 Drift Detection Process"] --> PLAN_CHECK["terraform plan<br/>Compare desired vs actual state"]
-    
+
     PLAN_CHECK --> DRIFT_STATUS{Changes Detected?}
-    
+
     DRIFT_STATUS -->|No Changes| NO_DRIFT["✅ No Drift Detected<br/>Infrastructure matches configuration"]
     DRIFT_STATUS -->|Changes Found| ANALYZE_DRIFT["📊 Analyze Drift Type"]
-    
+
     ANALYZE_DRIFT --> REFRESH_ONLY["terraform plan -refresh-only<br/>Show external changes only"]
-    
+
     REFRESH_ONLY --> DRIFT_CATEGORY{Categorize Drift}
-    
+
     DRIFT_CATEGORY -->|Property Changes| PROP_DRIFT["🎯 Property Drift<br/>• Modified security rules<br/>• Changed instance types<br/>• Updated tags"]
     DRIFT_CATEGORY -->|Resource Missing| DEL_DRIFT["🗑️ Deletion Drift<br/>• Resources deleted externally<br/>• Manual termination<br/>• Policy enforcement"]
     DRIFT_CATEGORY -->|New Resources| ADD_DRIFT["➕ Addition Drift<br/>• Unmanaged resources<br/>• Manual creation<br/>• Auto-scaling events"]
-    
+
     PROP_DRIFT --> ASSESS_IMPACT["⚖️ Assess Impact<br/>Security, Cost, Operations"]
     DEL_DRIFT --> ASSESS_IMPACT
     ADD_DRIFT --> ASSESS_IMPACT
-    
+
     ASSESS_IMPACT --> RESOLUTION_PLAN["📋 Plan Resolution<br/>Choose appropriate method"]
-    
+
     NO_DRIFT --> MONITOR["👁️ Continue Monitoring<br/>Schedule next check"]
     RESOLUTION_PLAN --> IMPLEMENT["🔧 Implement Resolution<br/>Apply, Update, or Accept"]
-    
+
     IMPLEMENT --> VERIFY["✅ Verify Resolution<br/>terraform plan to confirm"]
     VERIFY --> MONITOR
-    
+
     style START fill:#e3f2fd
     style NO_DRIFT fill:#e8f5e8
     style PROP_DRIFT fill:#fff3e0
@@ -246,34 +252,35 @@ can update the Terraform state to reflect the updated values.
 ## 🔧 Resolving Configuration Drift
 
 **Drift Resolution Decision Tree:**
+
 ```mermaid
 flowchart TD
     DRIFT_DETECTED["🌊 Configuration Drift Detected"] --> EVALUATE{Evaluate Change}
-    
+
     EVALUATE -->|Unauthorized/Accidental| UNAUTHORIZED["❌ Unauthorized Change<br/>• Security risk<br/>• Policy violation<br/>• Accidental modification"]
     EVALUATE -->|Beneficial/Planned| BENEFICIAL["✅ Beneficial Change<br/>• Operational improvement<br/>• Planned update<br/>• Emergency fix"]
     EVALUATE -->|External Deletion| DELETED["🗑️ Resource Deleted<br/>• Manual termination<br/>• External automation<br/>• Policy enforcement"]
-    
+
     UNAUTHORIZED --> METHOD1["🔄 Method 1: Standard Apply<br/>terraform apply<br/>Restore desired state"]
-    
+
     BENEFICIAL --> DECISION1{Should preserve change?}
     DECISION1 -->|Yes| METHOD2["📝 Method 2: Update Configuration<br/>1. Modify .tf files<br/>2. terraform plan<br/>3. terraform apply"]
     DECISION1 -->|No| METHOD1
-    
+
     DELETED --> DECISION2{Intentional deletion?}
     DECISION2 -->|Yes| METHOD3["🔄 Method 3: Refresh-Only<br/>terraform apply -refresh-only<br/>Sync state with reality"]
     DECISION2 -->|No| METHOD1
-    
+
     METHOD1 --> VERIFY1["✅ Verify: terraform plan<br/>Should show no changes"]
     METHOD2 --> VERIFY2["✅ Verify: terraform plan<br/>Should show no changes"]
     METHOD3 --> VERIFY3["✅ Verify: State updated<br/>Plan shows recreation if needed"]
-    
+
     VERIFY1 --> SUCCESS["🎯 Resolution Complete"]
     VERIFY2 --> SUCCESS
     VERIFY3 --> SUCCESS
-    
+
     SUCCESS --> PREVENT["🛡️ Implement Prevention<br/>• Access controls<br/>• Monitoring<br/>• Automation"]
-    
+
     style DRIFT_DETECTED fill:#f3e5f5
     style UNAUTHORIZED fill:#ffebee
     style BENEFICIAL fill:#e8f5e8
@@ -302,6 +309,7 @@ terraform apply
 ```
 
 **📋 When to Use:**
+
 - Manual changes should be reverted
 - Configuration represents the desired state
 - Changes were unauthorized or accidental
@@ -318,7 +326,7 @@ When manual changes should be **accepted and codified**:
 resource "aws_instance" "web" {
   ami           = "ami-12345"
   instance_type = "t3.micro"
-  
+
   tags = {
     Name = "web-server"
   }
@@ -328,7 +336,7 @@ resource "aws_instance" "web" {
 resource "aws_instance" "web" {
   ami           = "ami-12345"
   instance_type = "t3.micro"
-  
+
   tags = {
     Name        = "web-server"
     Environment = "production"  # Accept this manual addition
@@ -341,6 +349,7 @@ terraform plan
 ```
 
 **📋 When to Use:**
+
 - Manual changes were beneficial improvements
 - Changes align with operational requirements
 - Changes should be preserved going forward
@@ -358,6 +367,7 @@ terraform apply -refresh-only
 ```
 
 **📋 When to Use:**
+
 - Resources were intentionally removed outside Terraform
 - Want to sync state with reality
 - Planning to update configuration later
@@ -371,38 +381,39 @@ When resources become **damaged or degraded** beyond what Terraform can detect, 
 ### ⚠️ When Resources Need Replacement
 
 **Resource Replacement Process:**
+
 ```mermaid
 flowchart TD
     ISSUE_DETECTED["⚠️ Resource Issue Detected"] --> ASSESS_DAMAGE{Assess Resource State}
-    
+
     ASSESS_DAMAGE -->|System Issues| SYSTEM_ISSUES["🔧 System-Level Problems<br/>• VM corrupted/unresponsive<br/>• Database inconsistent<br/>• Load balancer failing<br/>• Container stuck"]
     ASSESS_DAMAGE -->|Security Concerns| SECURITY_ISSUES["🔒 Security Concerns<br/>• Potential compromise<br/>• Leaked credentials<br/>• Unknown modifications<br/>• Access violations"]
     ASSESS_DAMAGE -->|Performance Issues| PERF_ISSUES["📊 Performance Problems<br/>• Significant degradation<br/>• Memory leaks<br/>• Resource exhaustion<br/>• Network issues"]
-    
+
     SYSTEM_ISSUES --> REPLACEMENT_NEEDED["🔄 Replacement Required"]
     SECURITY_ISSUES --> REPLACEMENT_NEEDED
     PERF_ISSUES --> REPLACEMENT_NEEDED
-    
+
     REPLACEMENT_NEEDED --> PLAN_REPLACE["📋 Plan Replacement<br/>terraform plan -replace=resource"]
-    
+
     PLAN_REPLACE --> REVIEW_PLAN{Review Replacement Plan}
-    
+
     REVIEW_PLAN -->|Acceptable| EXECUTE_REPLACE["⚡ Execute Replacement<br/>terraform apply -replace=resource"]
     REVIEW_PLAN -->|Issues Found| ADJUST_PLAN["🔧 Adjust Plan<br/>• Check dependencies<br/>• Review timing<br/>• Coordinate downtime"]
-    
+
     ADJUST_PLAN --> PLAN_REPLACE
-    
+
     EXECUTE_REPLACE --> REPLACEMENT_STAGES["🔄 Replacement Stages<br/>1. Create new resource<br/>2. Update dependencies<br/>3. Destroy old resource"]
-    
+
     REPLACEMENT_STAGES --> VERIFY_REPLACEMENT["✅ Verify Replacement<br/>• Resource health<br/>• Connectivity<br/>• Performance<br/>• Dependencies"]
-    
+
     VERIFY_REPLACEMENT --> REPLACEMENT_SUCCESS{Replacement Successful?}
-    
+
     REPLACEMENT_SUCCESS -->|Yes| SUCCESS_COMPLETE["🎯 Replacement Complete<br/>• Monitor new resource<br/>• Update documentation<br/>• Review incident"]
     REPLACEMENT_SUCCESS -->|No| TROUBLESHOOT["🔍 Troubleshoot Issues<br/>• Check logs<br/>• Verify configuration<br/>• Review dependencies"]
-    
+
     TROUBLESHOOT --> PLAN_REPLACE
-    
+
     style ISSUE_DETECTED fill:#ffebee
     style SYSTEM_ISSUES fill:#ffcdd2
     style SECURITY_ISSUES fill:#ffcdd2
@@ -412,17 +423,20 @@ flowchart TD
 ```
 
 **🔧 System-Level Issues:**
+
 - Virtual machine corrupted or unresponsive
 - Database instance in inconsistent state
 - Load balancer not routing traffic properly
 - Container instances stuck in unhealthy state
 
 **🔒 Security Concerns:**
+
 - Instance potentially compromised
 - Certificates or keys may be leaked
 - Unknown modifications to system files
 
 **📊 Performance Degradation:**
+
 - Resource performance significantly degraded
 - Memory leaks or resource exhaustion
 - Network connectivity issues
@@ -471,52 +485,53 @@ terraform apply -replace=aws_instance.web
 ### 🎯 Address Structure
 
 **Resource Addressing Guide:**
+
 ```mermaid
 graph TB
     subgraph "🎯 Resource Address Structure"
         ADDRESS["[module path]resource_type.resource_name[instance key]"]
     end
-    
+
     subgraph "📋 Address Components"
         MODULE_PATH["Module Path<br/>module.module_name.<br/>(optional)"]
         RESOURCE_TYPE["Resource Type<br/>aws_instance<br/>aws_s3_bucket<br/>azurerm_vm"]
         RESOURCE_NAME["Resource Name<br/>User-defined<br/>from configuration"]
         INSTANCE_KEY["Instance Key<br/>[0] for count<br/>[key] for for_each<br/>(optional)"]
     end
-    
+
     subgraph "💻 Example Addresses"
         SINGLE["Single Resource<br/>aws_instance.web"]
         COUNT_ADDR["Count Resource<br/>aws_instance.web[0]<br/>aws_instance.web[2]"]
         FOREACH_ADDR["For_Each Resource<br/>aws_instance.db[primary]<br/>aws_instance.db[secondary]"]
         MODULE_ADDR["Module Resource<br/>module.networking.aws_vpc.main<br/>module.web.aws_instance.server[0]"]
     end
-    
+
     subgraph "🔍 Address Discovery"
         STATE_LIST["terraform state list<br/>Lists all resources"]
         STATE_SHOW["terraform state show<br/>Shows resource details"]
         TARGETING["Resource Targeting<br/>-target=address<br/>-replace=address"]
     end
-    
+
     subgraph "🛠️ Common Use Cases"
         DRIFT_TARGET["Drift Resolution<br/>terraform apply -target=resource"]
         REPLACE_TARGET["Resource Replacement<br/>terraform apply -replace=resource"]
         PLAN_TARGET["Targeted Planning<br/>terraform plan -target=resource"]
         IMPORT_TARGET["Resource Import<br/>terraform import address id"]
     end
-    
+
     %% Component relationships
     ADDRESS --> MODULE_PATH
     ADDRESS --> RESOURCE_TYPE
     ADDRESS --> RESOURCE_NAME
     ADDRESS --> INSTANCE_KEY
-    
+
     %% Example relationships
     MODULE_PATH --> MODULE_ADDR
     RESOURCE_TYPE --> SINGLE
     RESOURCE_NAME --> SINGLE
     INSTANCE_KEY --> COUNT_ADDR
     INSTANCE_KEY --> FOREACH_ADDR
-    
+
     %% Discovery to usage
     STATE_LIST --> TARGETING
     STATE_SHOW --> TARGETING
@@ -524,7 +539,7 @@ graph TB
     TARGETING --> REPLACE_TARGET
     TARGETING --> PLAN_TARGET
     TARGETING --> IMPORT_TARGET
-    
+
     style ADDRESS fill:#e3f2fd
     style SINGLE fill:#e8f5e8
     style COUNT_ADDR fill:#fff3e0
@@ -540,6 +555,7 @@ A resource address identifies resources in your configuration:
 ```
 
 **📋 Components:**
+
 - **Module Path**: `module.module_name.` (optional)
 - **Resource Type**: `aws_instance`, `aws_s3_bucket`, etc.
 - **Resource Name**: User-defined name in configuration
@@ -560,7 +576,7 @@ resource "aws_instance" "database" {
     primary   = "t3.large"
     secondary = "t3.medium"
   }
-  
+
   ami           = "ami-12345"
   instance_type = each.value
 }
@@ -621,9 +637,11 @@ terraform apply -replace='aws_instance.database["primary"]'
 ---
 
 ## 💻 **Exercise 14.1**: Drift Detection and Resolution
+
 **Duration**: 25 minutes
 
 **Complete Drift Management Lab Workflow:**
+
 ```mermaid
 flowchart TD
     subgraph "🏗️ Lab Setup"
@@ -631,64 +649,64 @@ flowchart TD
         DEPLOY_INFRA["Deploy Infrastructure<br/>terraform init<br/>terraform apply"]
         GET_IDS["Capture Resource IDs<br/>Security Group & Instance IDs"]
     end
-    
+
     subgraph "🌊 Simulate Drift"
         MANUAL_CHANGE["Simulate Manual Change<br/>Open security group to world<br/>aws ec2 authorize-security-group-ingress"]
         DRIFT_CREATED["⚠️ Drift Created<br/>Security group now open<br/>Configuration mismatch"]
     end
-    
+
     subgraph "🔍 Detection Practice"
         DETECT_PLAN["Detect with Plan<br/>terraform plan<br/>Shows proposed changes"]
         DETECT_REFRESH["Detect with Refresh<br/>terraform plan -refresh-only<br/>Shows external changes"]
         TARGET_CHECK["Targeted Detection<br/>terraform plan -target=resource<br/>Focus on specific resource"]
     end
-    
+
     subgraph "🔧 Resolution Practice"
         RESTORE_STATE["Restore Desired State<br/>terraform apply -target=resource<br/>Close security group"]
         VERIFY_FIX["Verify Resolution<br/>terraform plan<br/>Should show no changes"]
     end
-    
+
     subgraph "🔄 Replacement Practice"
         PLAN_REPLACEMENT["Plan Replacement<br/>terraform plan -replace=resource<br/>Preview replacement"]
         EXECUTE_REPLACEMENT["Execute Replacement<br/>terraform apply -replace=resource<br/>Replace instance"]
         VERIFY_REPLACEMENT["Verify New Resource<br/>terraform state show<br/>Confirm replacement"]
     end
-    
+
     subgraph "🤖 Automation"
         CREATE_SCRIPT["Create Drift Detection Script<br/>drift-check.sh<br/>Automated monitoring"]
         TEST_SCRIPT["Test Automation<br/>./drift-check.sh<br/>Verify detection works"]
     end
-    
+
     subgraph "🧹 Cleanup"
         DESTROY_INFRA["Cleanup Resources<br/>terraform destroy<br/>Remove all infrastructure"]
     end
-    
+
     %% Lab progression
     SETUP_ENV --> DEPLOY_INFRA
     DEPLOY_INFRA --> GET_IDS
     GET_IDS --> MANUAL_CHANGE
     MANUAL_CHANGE --> DRIFT_CREATED
-    
+
     DRIFT_CREATED --> DETECT_PLAN
     DETECT_PLAN --> DETECT_REFRESH
     DETECT_REFRESH --> TARGET_CHECK
-    
+
     TARGET_CHECK --> RESTORE_STATE
     RESTORE_STATE --> VERIFY_FIX
-    
+
     VERIFY_FIX --> PLAN_REPLACEMENT
     PLAN_REPLACEMENT --> EXECUTE_REPLACEMENT
     EXECUTE_REPLACEMENT --> VERIFY_REPLACEMENT
-    
+
     VERIFY_REPLACEMENT --> CREATE_SCRIPT
     CREATE_SCRIPT --> TEST_SCRIPT
-    
+
     TEST_SCRIPT --> DESTROY_INFRA
-    
+
     %% Parallel learning paths
     DETECT_PLAN -.-> RESTORE_STATE
     DETECT_REFRESH -.-> PLAN_REPLACEMENT
-    
+
     style SETUP_ENV fill:#e3f2fd
     style DRIFT_CREATED fill:#ffebee
     style DETECT_PLAN fill:#fff3e0
@@ -700,12 +718,14 @@ flowchart TD
 Let's practice detecting and resolving various drift scenarios in a realistic infrastructure setup.
 
 **Step 1: Setup Infrastructure with Drift Potential**
+
 ```bash
 mkdir terraform-drift-demo
 cd terraform-drift-demo
 ```
 
 Create `main.tf`:
+
 ```hcl
 terraform {
   required_providers {
@@ -738,7 +758,7 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = merge(local.common_tags, {
     Name = "${var.environment}-vpc"
   })
@@ -746,12 +766,12 @@ resource "aws_vpc" "main" {
 
 resource "aws_subnet" "public" {
   count = 2
-  
+
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.${count.index + 1}.0/24"
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
-  
+
   tags = merge(local.common_tags, {
     Name = "${var.environment}-public-${count.index + 1}"
     Type = "public"
@@ -763,7 +783,7 @@ resource "aws_security_group" "web" {
   name_prefix = "${var.environment}-web-"
   vpc_id      = aws_vpc.main.id
   description = "Security group for web servers"
-  
+
   # Restrictive HTTPS access
   ingress {
     description = "HTTPS from internal"
@@ -772,14 +792,14 @@ resource "aws_security_group" "web" {
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/8"]  # Internal only
   }
-  
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = merge(local.common_tags, {
     Name = "${var.environment}-web-sg"
   })
@@ -788,13 +808,13 @@ resource "aws_security_group" "web" {
 # Web servers
 resource "aws_instance" "web" {
   count = 2
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"  # Cost-optimized
   subnet_id     = aws_subnet.public[count.index].id
-  
+
   vpc_security_group_ids = [aws_security_group.web.id]
-  
+
   tags = merge(local.common_tags, {
     Name = "${var.environment}-web-${count.index + 1}"
     Role = "webserver"
@@ -809,7 +829,7 @@ data "aws_availability_zones" "available" {
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
-  
+
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
@@ -827,6 +847,7 @@ output "web_instance_ids" {
 ```
 
 **Step 2: Deploy and Simulate Drift**
+
 ```bash
 # Deploy infrastructure
 terraform init
@@ -850,6 +871,7 @@ echo "✅ Simulated security drift"
 ```
 
 **Step 3: Detect Drift**
+
 ```bash
 # Detect drift with plan
 terraform plan
@@ -862,6 +884,7 @@ terraform plan -target=aws_security_group.web
 ```
 
 **Step 4: Resolve Drift**
+
 ```bash
 # Method 1: Restore desired state
 terraform apply -target=aws_security_group.web
@@ -871,6 +894,7 @@ terraform plan -target=aws_security_group.web
 ```
 
 **Step 5: Practice Resource Replacement**
+
 ```bash
 # Simulate damaged instance scenario
 terraform plan -replace=aws_instance.web[0]
@@ -884,6 +908,7 @@ terraform state show aws_instance.web[0]
 
 **Step 6: Create Drift Detection Script**
 Create `drift-check.sh`:
+
 ```bash
 #!/bin/bash
 set -e
@@ -914,6 +939,7 @@ chmod +x drift-check.sh
 ```
 
 **Step 7: Cleanup**
+
 ```bash
 terraform destroy
 ```
@@ -925,6 +951,7 @@ terraform destroy
 ## ✅ Module 14 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Understood **configuration drift** and its various causes and impacts
 - ✅ Mastered **drift detection** using `terraform plan` and refresh-only mode
 - ✅ Learned **drift resolution strategies** for different scenarios
@@ -933,6 +960,7 @@ terraform destroy
 - ✅ Developed **drift prevention** and monitoring strategies
 
 **🔑 Key Concepts Covered:**
+
 - **Drift Types**: Property changes, resource deletion, resource addition
 - **Detection Methods**: Plan-based detection, refresh-only mode, automated monitoring
 - **Resolution Strategies**: Restore desired state, accept changes, sync state
@@ -940,6 +968,7 @@ terraform destroy
 - **Resource Addressing**: Targeting specific resources in complex infrastructures
 
 **💼 Professional Skills Developed:**
+
 - **Drift Management**: Systematic approach to detecting and resolving drift
 - **Infrastructure Monitoring**: Continuous drift detection and alerting
 - **Incident Response**: Rapid resolution of infrastructure issues
@@ -956,7 +985,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 17: State Import and Refresh Operations](./module_17_state_import_and_refresh_operations.md)**
+**➡️ [Module 18: Finding and Using Terraform Modules](./module_18_finding_and_using_terraform_modules.md)**
 
 Import existing resources and manage state operations.
 

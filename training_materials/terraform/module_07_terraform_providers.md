@@ -1,7 +1,6 @@
+# Module 07: Terraform Providers
 
-# Module 06: Terraform Providers
-*Duration: 2 hours | Labs: 2* | Difficulty: 🟢 Beginner*
----
+## _Duration: 2 hours | Labs: 2_ | Difficulty: 🟢 Beginner\*
 
 ### 🎯 Learning Objectives
 
@@ -37,30 +36,30 @@ flowchart TB
         Dev[Provider Developers]
         GoSDK[Terraform Go SDK]
         DevProcess[Development Process]
-        
+
         subgraph "Build & Release"
             GoReleaser[GoReleaser]
             Platforms[Multi-Platform Builds]
             Signing[GPG Signing]
         end
     end
-    
+
     subgraph "Terraform Registry"
         Registry["🏪 registry.terraform.io"]
-        
+
         subgraph "Provider Tiers"
             Official["🏢 Official\n(hashicorp)"]
             Partner["🤝 Partner\n(mongodb/mongodbatlas)"]
             Community["👥 Community\n(deploymenttheory/jamfpro)"]
             Archived["📦 Archived"]
         end
-        
+
         subgraph "Validation Process"
             PartnerProgram[Partner Development Program]
             ValidationTesting[Validation & Testing]
         end
     end
-    
+
     subgraph "Required Platforms"
         Darwin_AMD64[Darwin/AMD64]
         Darwin_ARM64[Darwin/ARM64]
@@ -68,28 +67,28 @@ flowchart TB
         Linux_ARM64[Linux/ARM64]
         Windows_AMD64[Windows/AMD64]
     end
-    
+
     Dev --> GoSDK
     GoSDK --> DevProcess
     DevProcess --> GoReleaser
     GoReleaser --> Platforms
     Platforms --> Signing
     Signing --> Registry
-    
+
     Registry --> Official
     Registry --> Partner
     Registry --> Community
     Registry --> Archived
-    
+
     Partner --> PartnerProgram
     PartnerProgram --> ValidationTesting
-    
+
     Platforms --> Darwin_AMD64
     Platforms --> Darwin_ARM64
     Platforms --> Linux_AMD64
     Platforms --> Linux_ARM64
     Platforms --> Windows_AMD64
-    
+
     style Registry fill:#7B42BC,color:#fff
     style Official fill:#FF6B35,color:#fff
     style Partner fill:#4ECDC4,color:#fff
@@ -106,23 +105,23 @@ sequenceDiagram
     participant Registry as Terraform Registry
     participant FS as Local File System
     participant APIs as External APIs
-    
+
     Note over HCL: terraform { required_providers { ... } }
     HCL->>CLI: terraform init
     CLI->>Registry: Query required providers
-    
+
     Note over Registry: deploymenttheory/jamfpro ~> 0.24.0
     Registry->>CLI: Provider metadata & download URLs
     CLI->>Registry: Download provider binaries
     Registry->>CLI: Provider binaries + checksums
-    
+
     CLI->>FS: Install to .terraform/providers/
     CLI->>CLI: Verify signatures & checksums
-    
+
     Note over HCL: provider "jamfpro" { ... }
     HCL->>CLI: Provider configuration
     CLI->>APIs: Initialize provider connections
-    
+
     Note over APIs: Jamf Pro, HTTP endpoints, etc.
     APIs-->>CLI: Connection established
     CLI-->>HCL: Providers ready for use
@@ -156,24 +155,25 @@ Each installation method serves different organizational needs, from the simplic
 
 Terraform providers are published and maintained by a variety of sources. The Registry uses tiers and badges to denote the source of a provider:
 
-| Tier | Description | Namespace | Example |
-|------|-------------|-----------|----------|
-| **🏢 Official** | Owned and maintained by HashiCorp | `hashicorp` | `hashicorp/random` |
-| **🤝 Partner** | Written, maintained, validated and published by third-party companies through the HashiCorp Technology Partner Program | Third-party organization | `mongodb/mongodbatlas` |
-| **👥 Community** | Published by individual maintainers, groups, or community members | Individual or organization account | `deploymenttheory/jamfpro` |
-| **📦 Archived** | Official or Partner providers no longer maintained | `hashicorp` or third-party | Deprecated APIs |
+| Tier             | Description                                                                                                            | Namespace                          | Example                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------- |
+| **🏢 Official**  | Owned and maintained by HashiCorp                                                                                      | `hashicorp`                        | `hashicorp/random`         |
+| **🤝 Partner**   | Written, maintained, validated and published by third-party companies through the HashiCorp Technology Partner Program | Third-party organization           | `mongodb/mongodbatlas`     |
+| **👥 Community** | Published by individual maintainers, groups, or community members                                                      | Individual or organization account | `deploymenttheory/jamfpro` |
+| **📦 Archived**  | Official or Partner providers no longer maintained                                                                     | `hashicorp` or third-party         | Deprecated APIs            |
 
 **🏆 Partner Provider Development Program:** Sets standards for publishing providers and marks approved providers with a Partner badge. This program ensures quality and compatibility standards.
 
 **🛠️ Provider Binary Requirements:**
 
 Recommended operating system and architecture combinations for compiled binaries:
+
 - **Darwin/AMD64** & **Darwin/ARM64** - macOS support
 - **Linux/AMD64** - **Required for HCP Terraform compatibility**
 - **Linux/ARM64** - Modern ARM processors
 - **Windows/AMD64** - Windows support
 
-*Note: Providers must not have CGO enabled and should not depend on external tools for HCP Terraform compatibility.*
+_Note: Providers must not have CGO enabled and should not depend on external tools for HCP Terraform compatibility._
 
 #### ⚙️ Provider Plugin Caching Configuration
 
@@ -201,14 +201,14 @@ Development overrides provide a powerful mechanism for provider developers and o
 
 **📊 Jamf Pro Ecosystem Providers:**
 
-| Provider | Tier | Namespace | Resources | Use Case |
-|----------|------|-----------|-----------|----------|
-| **Jamf Pro** | 👥 Community | `deploymenttheory/jamfpro` | 50+ | Jamf Pro device management |
-| **Random** | 🏢 Official | `hashicorp/random` | 10+ | Generate unique identifiers |
-| **HTTP** | 🏢 Official | `hashicorp/http` | 5+ | Fetch external configuration data |
-| **Local** | 🏢 Official | `hashicorp/local` | 5+ | Manage local files and certificates |
-| **Time** | 🏢 Official | `hashicorp/time` | 5+ | Time-based operations |
-| **External** | 🏢 Official | `hashicorp/external` | 2+ | Execute external programs |
+| Provider     | Tier         | Namespace                  | Resources | Use Case                            |
+| ------------ | ------------ | -------------------------- | --------- | ----------------------------------- |
+| **Jamf Pro** | 👥 Community | `deploymenttheory/jamfpro` | 50+       | Jamf Pro device management          |
+| **Random**   | 🏢 Official  | `hashicorp/random`         | 10+       | Generate unique identifiers         |
+| **HTTP**     | 🏢 Official  | `hashicorp/http`           | 5+        | Fetch external configuration data   |
+| **Local**    | 🏢 Official  | `hashicorp/local`          | 5+        | Manage local files and certificates |
+| **Time**     | 🏢 Official  | `hashicorp/time`           | 5+        | Time-based operations               |
+| **External** | 🏢 Official  | `hashicorp/external`       | 2+        | Execute external programs           |
 
 #### ⚙️ Provider Configuration
 
@@ -217,7 +217,7 @@ Development overrides provide a powerful mechanism for provider developers and o
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -258,32 +258,32 @@ terraform {
 
 provider "jamfpro" {
   jamfpro_instance_fqdn = var.jamfpro_instance_fqdn
-  
+
   # Authentication methods (choose one)
   auth_method   = "oauth2"  # Recommended for production
   client_id     = var.jamfpro_client_id
   client_secret = var.jamfpro_client_secret
-  
+
   # Alternative: Basic authentication
   # auth_method = "basic"
   # username    = var.jamfpro_username
   # password    = var.jamfpro_password
-  
+
   # Alternative: Bearer token
   # auth_method   = "bearer"
   # bearer_token  = var.jamfpro_bearer_token
-  
+
   # Performance and reliability settings
   jamfpro_load_balancer_lock    = true   # Prevent concurrent API calls
   jamfpro_api_timeout           = 30     # API timeout in seconds
   jamfpro_max_retry_attempts    = 3      # Retry failed requests
-  
+
   # Custom HTTP client settings
   client_sdk_log_level = "INFO"  # DEBUG, INFO, WARN, ERROR
-  
+
   # Hide sensitive values in logs
   hide_sensitive_data = true
-  
+
   # Custom User-Agent for API requests
   custom_cookies = {
     "terraform-managed" = "true"
@@ -346,7 +346,7 @@ resource "jamfpro_category" "production" {
 # Uncomment to test staging provider (will fail authentication)
 # resource "jamfpro_category" "staging_test" {
 #   provider = jamfpro.staging
-#   name     = "Staging Test Software"  
+#   name     = "Staging Test Software"
 #   priority = 5
 # }
 
@@ -360,7 +360,7 @@ resource "jamfpro_category" "production" {
 # Working example that only uses the default provider
 resource "jamfpro_smart_computer_group" "production_servers" {
   name = "Production Servers"
-  
+
   criteria {
     name          = "Computer Name"
     priority      = 0
@@ -382,7 +382,7 @@ provider "jamfpro" {
   auth_method           = "oauth2"
   client_id             = var.corp_client_id
   client_secret         = var.corp_client_secret
-  
+
   # Corporate-specific settings
   jamfpro_load_balancer_lock = true
   jamfpro_api_timeout        = 60
@@ -394,7 +394,7 @@ provider "jamfpro" {
   auth_method           = "oauth2"
   client_id             = var.sub_client_id
   client_secret         = var.sub_client_secret
-  
+
   # Subsidiary-specific settings
   jamfpro_load_balancer_lock = false
   jamfpro_api_timeout        = 30
@@ -405,7 +405,7 @@ resource "jamfpro_policy" "corporate_security" {
   provider = jamfpro.corp_main
   name     = "Corporate Security Baseline"
   enabled  = true
-  
+
   category {
     name = "Corporate IT"
   }
@@ -416,7 +416,7 @@ resource "jamfpro_policy" "subsidiary_apps" {
   provider = jamfpro.subsidiary
   name     = "Subsidiary Application Install"
   enabled  = true
-  
+
   category {
     name = "Local IT"
   }
@@ -428,6 +428,7 @@ resource "jamfpro_policy" "subsidiary_apps" {
 Provider versioning ensures **consistency** and **compatibility** across your infrastructure.
 
 **🔍 Version Constraint Operators:**
+
 - **`= 1.2.3`**: Exactly version 1.2.3
 - **`>= 1.2`**: Version 1.2 or newer
 - **`~> 1.2`**: Any version in the 1.2.x series
@@ -444,31 +445,31 @@ terraform {
       source  = "deploymenttheory/jamfpro"
       version = "= 0.24.0"
     }
-    
+
     # Pessimistic constraint (recommended for Jamf Pro)
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
       version = "~> 0.24.0"  # 0.24.x series
     }
-    
+
     # Range constraint
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
       version = ">= 0.20.0, < 1.0.0"
     }
-    
+
     # Minimum version (for newer features)
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
       version = ">= 0.24.0"
     }
-    
+
     # Supporting providers with compatible versions
     random = {
       source  = "hashicorp/random"
       version = "~> 3.4"
     }
-    
+
     http = {
       source  = "hashicorp/http"
       version = "~> 3.4"
@@ -480,6 +481,7 @@ terraform {
 💡 **Pro Tip**: Use `~>` (pessimistic constraint) for the Jamf Pro provider to get bug fixes and new resources while avoiding breaking API changes!
 
 ### 💻 **Exercise 6.1**: Basic Jamf Pro Provider Configuration
+
 **Duration**: 30 minutes
 
 Let's practice configuring the Jamf Pro provider with proper authentication and basic resource management.
@@ -506,7 +508,7 @@ Create `main.tf`:
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -539,7 +541,7 @@ resource "time_static" "deployment_time" {}
 locals {
   app_name = random_pet.app_name.id
   suffix   = random_id.suffix.hex
-  
+
   common_labels = {
     project     = "jamfpro-terraform-training"
     environment = var.environment
@@ -560,7 +562,7 @@ provider "jamfpro" {
   auth_method           = "oauth2"
   client_id             = var.jamfpro_client_id
   client_secret         = var.jamfpro_client_secret
-  
+
   # Performance settings
   jamfpro_load_balancer_lock = true
   jamfpro_api_timeout        = 30
@@ -575,7 +577,7 @@ resource "jamfpro_category" "terraform_managed" {
 # Create a smart computer group
 resource "jamfpro_smart_computer_group" "test_devices" {
   name = "Test Devices - ${local.app_name} - ${local.suffix}"
-  
+
   criteria {
     name          = "Computer Name"
     priority      = 0
@@ -596,12 +598,12 @@ resource "jamfpro_policy" "inventory_update" {
   frequency                   = "Once per day"
   target_drive                = "/"
   category_id                 = jamfpro_category.terraform_managed.id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.test_devices.id]
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -640,7 +642,7 @@ variable "environment" {
   description = "Environment name for resource naming"
   type        = string
   default     = "dev"
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be dev, staging, or prod."
@@ -723,6 +725,7 @@ terraform init
 ```
 
 Expected output:
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -749,6 +752,7 @@ terraform validate
 ```
 
 Expected output:
+
 ```
 Success! The configuration is valid.
 ```
@@ -759,6 +763,7 @@ terraform plan
 ```
 
 Expected output:
+
 ```
 Terraform used the selected providers to generate the following execution
 plan. Resource actions are indicated with the following symbols:
@@ -853,6 +858,7 @@ terraform providers
 ```
 
 Expected output:
+
 ```
 Providers required by configuration:
 .
@@ -867,6 +873,7 @@ terraform version
 ```
 
 Expected output:
+
 ```
 Terraform v1.13.1
 on darwin_arm64
@@ -881,6 +888,7 @@ cat .terraform.lock.hcl
 ```
 
 Expected output (truncated):
+
 ```
 # This file is maintained automatically by "terraform init".
 # Manual edits may be lost in future updates.
@@ -1012,6 +1020,7 @@ terraform import jamfpro_category.existing 123
 ```
 
 ### 💻 **Exercise 6.3**: Provider Integration with External Data
+
 **Duration**: 25 minutes
 
 Let's practice integrating the Jamf Pro provider with external data sources using HTTP and local providers.
@@ -1037,7 +1046,7 @@ Create `main.tf`:
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1069,7 +1078,7 @@ provider "jamfpro" {
 # Fetch department list from external API
 data "http" "department_list" {
   url = "https://jsonplaceholder.typicode.com/users"
-  
+
   request_headers = {
     Accept = "application/json"
   }
@@ -1097,7 +1106,7 @@ resource "local_file" "deployment_config" {
 # Create categories for each department
 resource "jamfpro_category" "departments" {
   for_each = local.unique_departments
-  
+
   name     = "${each.value} Department"
   priority = 10
 }
@@ -1105,9 +1114,9 @@ resource "jamfpro_category" "departments" {
 # Create smart computer groups for departments
 resource "jamfpro_smart_computer_group" "dept_computers" {
   for_each = local.unique_departments
-  
+
   name = "${each.value} Computers"
-  
+
   criteria {
     name          = "Department"
     priority      = 0
@@ -1122,18 +1131,18 @@ resource "jamfpro_smart_computer_group" "dept_computers" {
 # Create policies for each department
 resource "jamfpro_policy" "dept_policies" {
   for_each = local.unique_departments
-  
+
   name                = "${each.value} Department Policy"
   enabled             = true
   trigger_checkin     = true
   frequency          = "Once per day"
   category_id        = jamfpro_category.departments[each.key].id
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.dept_computers[each.key].id]
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -1225,6 +1234,7 @@ output "config_file_location" {
 #### 🏭 Enterprise Jamf Pro Provider Considerations
 
 **🔒 Security Best Practices:**
+
 - **🔐 Never hardcode credentials** in configuration files
 - **🔑 Use OAuth2 with scoped permissions** for API access
 - **🔄 Rotate credentials regularly** using automated tools
@@ -1240,16 +1250,16 @@ provider "jamfpro" {
   auth_method           = "oauth2"
   client_id             = var.jamfpro_client_id
   client_secret         = var.jamfpro_client_secret
-  
+
   # Enterprise performance settings
   jamfpro_load_balancer_lock    = true   # Prevent API conflicts
   jamfpro_api_timeout           = 120    # Extended timeout for large operations
   jamfpro_max_retry_attempts    = 5      # Retry failed requests
-  
+
   # Security and logging
   hide_sensitive_data          = true    # Hide credentials in logs
   client_sdk_log_level         = "INFO"  # Appropriate logging level
-  
+
   # Custom headers for enterprise compliance
   custom_cookies = {
     "terraform-managed"     = "true"
@@ -1260,6 +1270,7 @@ provider "jamfpro" {
 ```
 
 ### 💻 **Exercise 6.4**: Provider Commands & Debugging
+
 **Duration**: 20 minutes
 
 Let's practice essential provider commands and troubleshoot common issues with the Jamf Pro provider.
@@ -1275,7 +1286,7 @@ cd ~/terraform-provider-debugging
 cat > main.tf << EOF
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1294,6 +1305,7 @@ terraform init
 ```
 
 Expected output:
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1317,6 +1329,7 @@ terraform providers
 ```
 
 Expected output:
+
 ```
 Providers required by configuration:
 .
@@ -1330,6 +1343,7 @@ terraform version
 ```
 
 Expected output:
+
 ```
 Terraform v1.13.1
 on darwin_arm64
@@ -1343,6 +1357,7 @@ cat .terraform.lock.hcl | grep -A 10 "deploymenttheory/jamfpro"
 ```
 
 Expected output:
+
 ```
 provider "registry.terraform.io/deploymenttheory/jamfpro" {
   version     = "0.24.0"
@@ -1398,6 +1413,7 @@ terraform providers
 ```
 
 Expected output:
+
 ```
 Providers required by configuration:
 .
@@ -1411,6 +1427,7 @@ terraform init -upgrade
 ```
 
 Expected output:
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1428,6 +1445,7 @@ terraform providers lock -platform=darwin_amd64 -platform=linux_amd64
 ```
 
 Expected output:
+
 ```
 - Fetching deploymenttheory/jamfpro 0.24.0 for darwin_amd64...
 - Retrieved deploymenttheory/jamfpro 0.24.0 for darwin_amd64 (self-signed, key ID DB95CA76A94A208C)
@@ -1454,6 +1472,7 @@ terraform providers schema -json | jq '.provider_schemas."registry.terraform.io/
 ```
 
 Expected output (sample):
+
 ```
 "jamfpro_category"
 "jamfpro_computer_group"
@@ -1478,7 +1497,7 @@ resource "jamfpro_api_authentication" "debug" {
 # Test resource creation with validation
 resource "jamfpro_category" "test_validation" {
   name = "Test-${random_id.test.hex}"
-  
+
   # Validation to catch common errors
   validation {
     condition     = length(self.name) > 0 && length(self.name) <= 100
@@ -1533,6 +1552,7 @@ EOF
 ## ✅ Module 6 Summary
 
 ### 🎯 Key Takeaways
+
 - **🔌 Providers** are plugins that enable Terraform to interact with external APIs
 - **🏪 Terraform Registry** is the central hub for finding and using providers
 - **🏷️ Provider aliases** enable multi-region and multi-account deployments
@@ -1547,7 +1567,7 @@ The provider management commands you've learned form the foundation of effective
 
 ```bash
 terraform init              # Download and install providers
-terraform providers         # List installed providers  
+terraform providers         # List installed providers
 terraform providers lock    # Lock provider versions
 terraform init -upgrade     # Update providers
 terraform version          # Show Terraform and provider versions
@@ -1684,11 +1704,12 @@ Test your understanding of Terraform Providers with Jamf Pro:
 </details>
 
 **📁 File: `providers.tf` - Training-Friendly Multi-Provider Setup**
+
 ```hcl
 # 🏗️ Practical multi-provider configuration for learning
 terraform {
   required_version = ">= 1.0"
-  
+
   # 🔌 Required providers - all training-friendly!
   required_providers {
     # 🟠 AWS Provider - Primary cloud provider
@@ -1696,31 +1717,31 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    
+
     # 🎲 Random Provider - Generate random values
     random = {
       source  = "hashicorp/random"
       version = "~> 3.4"
     }
-    
+
     # 🌐 HTTP Provider - Make HTTP requests
     http = {
       source  = "hashicorp/http"
       version = "~> 3.4"
     }
-    
+
     # 📁 Local Provider - Work with local files
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
     }
-    
+
     # 🕒 Time Provider - Time-based resources
     time = {
       source  = "hashicorp/time"
       version = "~> 0.9"
     }
-    
+
     # 🔗 External Provider - Execute external programs
     external = {
       source  = "hashicorp/external"
@@ -1732,7 +1753,7 @@ terraform {
 # 🟠 AWS Provider - Primary provider
 provider "aws" {
   region = var.aws_region
-  
+
   # 🏷️ Default tags for all AWS resources
   default_tags {
     tags = {
@@ -1748,7 +1769,7 @@ provider "aws" {
 provider "aws" {
   alias  = "backup_region"
   region = var.backup_region
-  
+
   default_tags {
     tags = {
       Environment = var.environment
@@ -1762,6 +1783,7 @@ provider "aws" {
 ```
 
 **📁 File: `main.tf` - Practical Multi-Provider Resources**
+
 ```hcl
 # 🎲 Generate random values for unique naming
 resource "random_pet" "app_name" {
@@ -1772,7 +1794,7 @@ resource "random_pet" "app_name" {
 resource "random_password" "db_password" {
   length  = 16
   special = true
-  
+
   # Ensure password meets AWS RDS requirements
   min_lower   = 2
   min_upper   = 2
@@ -1794,7 +1816,7 @@ resource "time_rotating" "monthly_rotation" {
 # 🌐 Fetch current IP address for security groups
 data "http" "current_ip" {
   url = "https://ipv4.icanhazip.com"
-  
+
   # Strip whitespace from response
   lifecycle {
     postcondition {
@@ -1819,7 +1841,7 @@ resource "local_file" "app_config" {
     current_ip      = trimspace(data.http.current_ip.response_body)
   })
   filename = "${path.module}/generated/app-config.json"
-  
+
   # Set file permissions
   file_permission = "0644"
 }
@@ -1897,7 +1919,7 @@ resource "aws_db_instance" "app_database" {
   engine         = "mysql"
   engine_version = "8.0"
   instance_class = "db.t3.micro"
-  
+
   allocated_storage     = 20
   max_allocated_storage = 100
   storage_type          = "gp2"
@@ -1906,14 +1928,14 @@ resource "aws_db_instance" "app_database" {
   db_name  = "appdb"
   username = "admin"
   password = random_password.db_password.result
-  
+
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.app_db.name
-  
+
   backup_window      = "03:00-04:00"
   backup_retention_period = 7
   maintenance_window = "sun:04:00-sun:05:00"
-  
+
   # Prevent accidental deletion
   deletion_protection = false  # Set to false for training
   skip_final_snapshot = true   # Set to true for training
@@ -1953,7 +1975,7 @@ Current IP: ${trimspace(data.http.current_ip.response_body)}
 ## 🕒 Scheduled Actions:
 - Password Rotation: ${time_rotating.monthly_rotation.rfc3339}
 EOT
-  
+
   filename = "${path.module}/generated/deployment-report.md"
 }
 
@@ -1971,6 +1993,7 @@ data "aws_subnets" "default" {
 ```
 
 **📁 File: `templates/config.json.tpl` - JSON Configuration Template**
+
 ```json
 {
   "application": {
@@ -1998,6 +2021,7 @@ data "aws_subnets" "default" {
 ```
 
 **📁 File: `variables.tf` - Training Variables**
+
 ```hcl
 variable "aws_region" {
   description = "🌍 Primary AWS region"
@@ -2015,7 +2039,7 @@ variable "environment" {
   description = "🏷️ Environment name"
   type        = string
   default     = "dev"
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be dev, staging, or prod."
@@ -2032,6 +2056,7 @@ variable "owner_name" {
 ### 🎯 Lab 4: Provider Commands & Debugging
 
 **🔧 Essential Provider Commands:**
+
 ```bash
 # 🚀 Initialize providers
 terraform init
@@ -2055,7 +2080,7 @@ rm -rf .terraform/providers/
 TF_LOG=DEBUG terraform plan
 TF_LOG_PROVIDER=DEBUG terraform apply
 
-# 📊 Validate provider configurations  
+# 📊 Validate provider configurations
 terraform validate
 ```
 
@@ -2079,7 +2104,7 @@ output "jamfpro_debug_info" {
 # 🌐 Test HTTP provider connectivity
 data "http" "connectivity_test" {
   url = "https://httpbin.org/json"
-  
+
   request_headers = {
     Accept = "application/json"
   }
@@ -2108,7 +2133,7 @@ resource "local_file" "test_file" {
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 7: Terraform Language and HashiCorp Language](./module_07_terraform_language_and_hashicorp_language.md)**
+**➡️ [Module 8: Terraform Language and HashiCorp Language](./module_08_terraform_language_and_hashicorp_language.md)**
 
 Deep dive into HCL syntax and Terraform's configuration language.
 

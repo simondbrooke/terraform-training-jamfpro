@@ -1,9 +1,11 @@
-# 📝 Module 07: Terraform Language
-*Duration: 1.5 hours | Labs: 2* | Difficulty: 🟢 Beginner*
----
+# 📝 Module 08: Terraform Language
+
+## _Duration: 1.5 hours | Labs: 2_ | Difficulty: 🟢 Beginner\*
 
 ### 🎯 Learning Objectives
+
 By the end of this module, you will be able to:
+
 - ✅ Understand HCL (HashiCorp Configuration Language) syntax and structure
 - ✅ Use Terraform settings blocks effectively
 - ✅ Work with alternate JSON syntax when needed
@@ -19,6 +21,7 @@ By the end of this module, you will be able to:
 **HCL** is the underlying language that powers Terraform configurations and all HashiCorp products. It's designed to be both **human-readable** and **machine-friendly**.
 
 **🎯 Key Characteristics:**
+
 - **👥 Human-friendly**: Easy to read and write
 - **🤖 Machine-friendly**: Structured and parseable
 - **🔧 Extensible**: Can be extended for different use cases
@@ -30,11 +33,11 @@ By the end of this module, you will be able to:
 
 ```mermaid
 graph LR
-    HCL["🏗️ HCL Foundation<br/>• Syntax & Grammar<br/>• Functions & Types<br/>• Comments & Structure"] 
+    HCL["🏗️ HCL Foundation<br/>• Syntax & Grammar<br/>• Functions & Types<br/>• Comments & Structure"]
     TF["⚙️ Terraform Language<br/>• Infrastructure Blocks<br/>• Resource Management<br/>• Configuration Logic"]
-    
+
     HCL --> TF
-    
+
     style HCL fill:#7B42BC,color:#fff
     style TF fill:#FF6B35,color:#fff
 ```
@@ -52,7 +55,7 @@ graph LR
 
 #### 🔍 Understanding Terraform Language vs HCL
 
-**💡 Important Distinction**: 
+**💡 Important Distinction**:
 The **Terraform Language** is built on top of **HCL (HashiCorp Configuration Language)**. Think of HCL as the foundational syntax and grammar, while the Terraform Language adds specific meaning and functionality for infrastructure management.
 
 **🧩 Terraform Language Elements:**
@@ -60,6 +63,7 @@ The **Terraform Language** is built on top of **HCL (HashiCorp Configuration Lan
 The Terraform language consists of only a few basic elements:
 
 1. **📦 Blocks**: Containers for other content that represent an object
+
    - Each block has a **block type** (like `resource`, `variable`, `terraform`)
    - Can have **zero or more labels** (like `"aws_instance"` and `"web"`)
    - Contain a **body** with arguments and nested blocks
@@ -67,6 +71,7 @@ The Terraform language consists of only a few basic elements:
 2. **🏷️ Block Labels**: Names that identify specific instances of blocks (like `"policy_example_1"` and `"policy_example_2"`)
 
 3. **⚙️ Arguments**: Assign values to names within blocks
+
    - Appear as `name = value` assignments
    - Use identifiers mapped to expressions
 
@@ -81,7 +86,7 @@ In this example, we have a `resource` block with the type `jamfpro_policy` and t
 
 ```hcl
 # BLOCK TYPE: "resource"
-# BLOCK LABELS: "jamfpro_policy" and "demo_policy"  
+# BLOCK LABELS: "jamfpro_policy" and "demo_policy"
 resource "jamfpro_policy" "demo_policy" {
   # ARGUMENTS (identifier = expression)
   name                        = "tf-demo-policy"           # Literal string expression
@@ -89,13 +94,13 @@ resource "jamfpro_policy" "demo_policy" {
   frequency                   = "Once per computer"        # Literal string expression
   trigger_checkin             = true                       # Boolean expression
   category_id                 = jamfpro_category.demo.id   # Reference expression
-  
+
   # NESTED BLOCK
   scope {
     all_computers = false
     computer_ids  = var.target_computer_ids  # References to a list variable
   }
-  
+
   # NESTED BLOCK
   payloads {
     maintenance {
@@ -110,6 +115,7 @@ resource "jamfpro_policy" "demo_policy" {
 #### 🧱 HCL Syntax Fundamentals
 
 **📊 HCL Syntax Components:**
+
 ```mermaid
 graph TB
     subgraph "HCL Syntax Elements"
@@ -118,11 +124,11 @@ graph TB
         E["🔧 Expressions<br/>Values & references<br/>var.example, 'literal'"]
         L["📝 Labels<br/>Block identifiers<br/>resource 'aws_instance' 'web'"]
     end
-    
+
     B --> A
     A --> E
     B --> L
-    
+
     style B fill:#7B42BC,color:#fff
     style A fill:#9B59B6,color:#fff
     style E fill:#8E44AD,color:#fff
@@ -130,6 +136,7 @@ graph TB
 ```
 
 **📝 Basic Structure:**
+
 ```hcl
 # This is a comment
 
@@ -138,7 +145,7 @@ block_type "label" {
   # Arguments (key-value pairs)
   argument_name = "value"
   another_arg   = 123
-  
+
   # Nested block
   nested_block {
     nested_argument = true
@@ -149,6 +156,7 @@ block_type "label" {
 **🔧 HCL Block Examples:**
 
 **1. Terraform Settings Block**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
@@ -160,11 +168,13 @@ terraform {
   }
 }
 ```
-The `terraform` block configures Terraform's behavior and defines the provider requirements for the configuration. It specifies the Terraform version needed and declares which providers versions are required too. LAter we shall look at how to define these using version constraints. 
+
+The `terraform` block configures Terraform's behavior and defines the provider requirements for the configuration. It specifies the Terraform version needed and declares which providers versions are required too. LAter we shall look at how to define these using version constraints.
 
 This block must be present in every Terraform configuration created, it won't work without it. This is also known as the root module.
 
 **2. Provider Block**
+
 ```hcl
 provider "jamfpro" {
   jamfpro_instance_fqdn = var.jamfpro_url
@@ -173,26 +183,32 @@ provider "jamfpro" {
   client_secret         = var.jamfpro_client_secret
 }
 ```
+
 The `provider` block configures connection details for external APIs or services. Here it establishes authentication with a JamfPro server using OAuth2 credentials. Provider blocks tell Terraform how to communicate with the target infrastructure platform. This block must also be present in every Terraform configuration created, it won't work without it. For each provider defined in the `terraform` block, a correlating `provider` block must be present. The specifics of each provider block will vary based on the provider. You should always check the provider documentation in the terraform [registry](https://registry.terraform.io/) for the correct syntax.
 
 **3. Resource Block**
+
 ```hcl
 resource "jamfpro_category" "demo" {
   name     = "Terraform Demo"
   priority = 10
 }
 ```
+
 Resource blocks define infrastructure objects or saas resources that Terraform should create, update, or delete. This example creates a new category in JamfPro with specific properties. Resources are the core building blocks of Terraform configurations.
 
 **4. Data Source Block**
+
 ```hcl
 data "jamfpro_category" "existing" {
   name = "Production"
 }
 ```
+
 Data sources allow Terraform to read information from external systems without managing those resources directly. This block retrieves details about an existing JamfPro category named "Production". Data sources provide read-only access to infrastructure / saas resource information for use in other resources. A common use case for data sources are for referencing pre-existing resources that was implemented outside of Terraform.
 
 **5. Variable Block**
+
 ```hcl
 variable "jamfpro_url" {
   description = "Jamf Pro server URL"
@@ -200,9 +216,11 @@ variable "jamfpro_url" {
   default     = "https://company.jamfcloud.com"
 }
 ```
+
 Variable blocks define input parameters that make configurations flexible and reusable. This variable allows users to specify different JamfPro server URLs without modifying the main configuration. Variables enable parameterization of Terraform configurations and can support validation logic to ensure the correct values are passed in. A common use case for variables are for passing in environment variables or other configuration values that are different for each environment. Another common use case is for passing in sensitive values that should not be stored in the configuration file.
 
 **6. Local Values Block**
+
 ```hcl
 locals {
   common_tags = {
@@ -212,15 +230,18 @@ locals {
   }
 }
 ```
+
 Local values compute and store expressions for reuse throughout the configuration. This example defines common tags that can be applied to multiple resources. Locals help reduce duplication (DRY principle) and improve maintainability by centralizing computed values.
 
 **7. Output Block**
+
 ```hcl
 output "category_id" {
   description = "ID of the created demo category"
   value       = jamfpro_category.demo.id
 }
 ```
+
 Output blocks expose values from your configuration for use by other Terraform configurations or external systems. This output provides the ID of a created category for reference elsewhere. Outputs are essential for sharing data between Terraform modules and configurations.
 
 #### ⚙️ Compilation Process
@@ -234,6 +255,7 @@ Terraform compiles all HCL files at runtime, meaning **file names don't affect f
 While file names are arbitrary, the Terraform community follows these conventional patterns:
 
 **🏗️ Core Configuration Files:**
+
 ```hcl
 # terraform.tf - Terraform settings and requirements
 terraform {
@@ -254,7 +276,7 @@ provider "jamfpro" {
   client_secret        = var.client_secret
 }
 
-# variables.tf - Input variable declarations  
+# variables.tf - Input variable declarations
 variable "jamfpro_instance_fqdn" {
   description = "FQDN of the Jamf Pro instance"
   type        = string
@@ -289,21 +311,22 @@ output "category_id" {
 }
 ```
 
-
 **💡 Key Points:**
+
 - **Runtime Parsing**: All `.tf` files are loaded simultaneously
 - **Order Independence**: Files are processed in alphabetical order, but dependencies determine execution
 - **Naming Freedom**: You could name files `apple.tf`, `banana.tf` - functionality remains identical
 - **Convention Benefits**: Standard naming improves team collaboration and code maintainability
 
 **🔍 Alternative Naming Patterns:**
+
 ```
 # Feature-based naming
 jamfpro-app-installers.tf
 jamfpro-policies.tf
 jamfpro-groups.tf
 
-# Environment-based naming  
+# Environment-based naming
 production.tf
 staging.tf
 development.tf
@@ -329,11 +352,12 @@ In larger Terraform projects, consider additional organizational factors:
 The `terraform` block configures Terraform behavior and requirements.
 
 **📋 Basic Terraform Settings:**
+
 ```hcl
 terraform {
   # Minimum Terraform version
   required_version = ">= 1.0"
-  
+
   # Required providers
   required_providers {
     jamfpro = {
@@ -345,14 +369,14 @@ terraform {
       version = "~> 3.0"
     }
   }
-  
+
   # Backend configuration
   backend "s3" {
     bucket = "jamfpro-terraform-state"
     key    = "jamfpro-infrastructure/terraform.tfstate"
     region = "us-west-2"
   }
-  
+
   # Experimental features
   experiments = [
     example_alt_syntax
@@ -361,10 +385,11 @@ terraform {
 ```
 
 **🔧 Advanced Settings:**
+
 ```hcl
 terraform {
   required_version = ">= 1.0, < 2.0"
-  
+
   required_providers {
     jamfpro = {
       source                = "deploymenttheory/jamfpro"
@@ -372,16 +397,16 @@ terraform {
       configuration_aliases = [jamfpro.prod, jamfpro.staging]
     }
   }
-  
+
   # Cloud backend (Terraform Cloud)
   cloud {
     organization = "jamfpro-org"
-    
+
     workspaces {
       name = "jamfpro-infrastructure"
     }
   }
-  
+
   # Provider metadata
   provider_meta "jamfpro" {
     module_name = "jamfpro-baseline"
@@ -392,6 +417,7 @@ terraform {
 #### 📊 Version Constraint Operators
 
 **🔢 HCL Types in Version Constraints:**
+
 ```mermaid
 graph TB
     subgraph "HCL Type System"
@@ -400,17 +426,17 @@ graph TB
         B["✅ bool<br/>true, false<br/>Feature flags"]
         O["📋 object<br/>{ source = '...', version = '...' }<br/>Provider configurations"]
     end
-    
+
     subgraph "Version Expressions"
         VC["Version Constraints<br/>>=, <, ~>, ="]
         PR["Provider Requirements<br/>source + version"]
     end
-    
+
     S --> VC
     N --> VC
     O --> PR
     B --> PR
-    
+
     style S fill:#3498DB,color:#fff
     style N fill:#E74C3C,color:#fff
     style B fill:#2ECC71,color:#fff
@@ -424,6 +450,7 @@ Understanding version constraints is crucial for managing Terraform provider and
 **🔧 Version Constraint Operators:**
 
 **1. Exact Version (`=`)**
+
 ```hcl
 terraform {
   required_providers {
@@ -434,13 +461,15 @@ terraform {
   }
 }
 ```
+
 Use when you need a specific version for stability or compatibility. Most restrictive option.
 
 **2. Greater Than or Equal (`>=`)**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"  # Terraform 1.0 or higher
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -449,13 +478,15 @@ terraform {
   }
 }
 ```
+
 Ensures minimum version requirements while allowing newer versions. Good for minimum compatibility.
 
 **3. Less Than (`<`)**
+
 ```hcl
 terraform {
   required_version = "< 2.0"  # Below version 2.0
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -464,9 +495,11 @@ terraform {
   }
 }
 ```
+
 Prevents using versions above a certain threshold. Useful to avoid breaking changes.
 
 **4. Pessimistic Constraint (`~>`)**
+
 ```hcl
 terraform {
   required_providers {
@@ -481,13 +514,15 @@ terraform {
   }
 }
 ```
+
 The "pessimistic" operator allows patch-level changes but prevents minor version updates. Most commonly used for stability.
 
 **5. Range Constraints**
+
 ```hcl
 terraform {
   required_version = ">= 1.0, < 2.0"  # Between 1.0 and 2.0
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -496,15 +531,17 @@ terraform {
   }
 }
 ```
+
 Combines multiple constraints for precise version control. Provides flexibility within defined bounds.
 
 **📋 Practical Examples:**
 
 **Conservative Approach (Recommended for Production):**
+
 ```hcl
 terraform {
   required_version = "~> 1.5"  # 1.5.x series
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -515,10 +552,11 @@ terraform {
 ```
 
 **Flexible Development Approach:**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"  # Any version 1.0+
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -529,6 +567,7 @@ terraform {
 ```
 
 **🎯 Best Practices:**
+
 - **Production**: Use `~>` for predictable updates (`~> 0.24.0`)
 - **Development**: Use `>=` for flexibility (`>= 0.20.0`)
 - **Testing**: Use exact versions for reproducibility (`= 0.24.0`)
@@ -537,6 +576,7 @@ terraform {
 #### 💬 Comments and Formatting
 
 **💬 HCL Comment System:**
+
 ```mermaid
 graph LR
     subgraph "Comment Types"
@@ -544,17 +584,17 @@ graph LR
         AL["// Alternative<br/>C-style comments<br/>Developer preference"]
         ML["/* Multi-line */<br/>Documentation blocks<br/>Detailed explanations"]
     end
-    
+
     subgraph "Best Practices"
         DOC["📚 Documentation<br/>Explain complex logic<br/>Resource purposes"]
         ORG["🗂️ Organization<br/>Section separators<br/>File structure"]
     end
-    
+
     SL --> DOC
     AL --> DOC
     ML --> DOC
     ML --> ORG
-    
+
     style SL fill:#3498DB,color:#fff
     style AL fill:#2ECC71,color:#fff
     style ML fill:#E74C3C,color:#fff
@@ -563,6 +603,7 @@ graph LR
 ```
 
 **📝 Comment Styles:**
+
 ```hcl
 # Single line comment
 
@@ -573,7 +614,7 @@ resource "jamfpro_policy" "demo_policy" {
   enabled                     = true           // Alternative inline comment
   frequency                   = "Once per computer"
   trigger_checkin             = true
-  
+
   /*
   Multi-line comment
   Can span multiple lines
@@ -585,7 +626,7 @@ resource "jamfpro_policy" "demo_policy" {
       install_all_cached_packages = var.install_packages
     }
   }
-  
+
   scope {
     all_computers = false
     computer_ids  = var.target_computers
@@ -594,12 +635,13 @@ resource "jamfpro_policy" "demo_policy" {
 ```
 
 **🎨 Formatting Best Practices:**
+
 ```hcl
 # Use consistent indentation (2 spaces recommended)
 resource "jamfpro_building" "headquarters" {
   name            = "Corporate HQ"
   street_address1 = "123 Tech Street"
-  
+
   # Align equals signs for readability
   city            = "San Francisco"
   state_province  = "California"
@@ -627,11 +669,13 @@ variable "jamfpro_environment" {
 ```
 
 **💡 Pro Tip:**
+
 - **Formatting**: You can use the `terraform fmt` command to auto-format your code to ensure consistent formatting.
 
 #### 🔄 Alternate JSON Syntax
 
 **🔄 HCL Functions in Action:**
+
 ```mermaid
 graph TB
     subgraph "HCL Built-in Functions"
@@ -640,14 +684,14 @@ graph TB
         COL["📋 Collection Functions<br/>length(), keys(), values()<br/>merge(), concat()"]
         DT["📅 Date/Time Functions<br/>timestamp(), formatdate()<br/>timeadd()"]
     end
-    
+
     subgraph "Usage Contexts"
         VAR["Variables<br/>default values"]
         RES["Resources<br/>dynamic values"]
         OUT["Outputs<br/>computed values"]
         LOC["Locals<br/>calculations"]
     end
-    
+
     STR --> VAR
     STR --> RES
     MATH --> RES
@@ -655,7 +699,7 @@ graph TB
     COL --> OUT
     COL --> LOC
     DT --> OUT
-    
+
     style STR fill:#3498DB,color:#fff
     style MATH fill:#E74C3C,color:#fff
     style COL fill:#2ECC71,color:#fff
@@ -669,7 +713,8 @@ graph TB
 Terraform supports **JSON syntax** as an alternative to HCL for programmatic generation. This is particularly useful when you need to generate Terraform configurations dynamically using existing JSON libraries or APIs.
 
 **📁 File Extensions:**
-- **HCL files**: `.tf` 
+
+- **HCL files**: `.tf`
 - **JSON files**: `.tf.json`
 
 **⚠️ Important**: Terraform expects JSON syntax files to be named with the `.tf.json` extension, not just `.json`.
@@ -677,6 +722,7 @@ Terraform supports **JSON syntax** as an alternative to HCL for programmatic gen
 **📝 HCL vs JSON Comparison:**
 
 **HCL Syntax:**
+
 ```hcl
 resource "jamfpro_category" "demo" {
   name     = "Terraform Demo"
@@ -685,6 +731,7 @@ resource "jamfpro_category" "demo" {
 ```
 
 **JSON Syntax:**
+
 ```json
 {
   "resource": {
@@ -699,12 +746,14 @@ resource "jamfpro_category" "demo" {
 ```
 
 **🔧 When to Use JSON:**
+
 - **🤖 Programmatic generation**: When generating configs with scripts
 - **🔗 API integration**: When receiving configurations from APIs
 - **📊 Data processing**: When converting from other data formats
 - **🛠️ Tool integration**: When integrating with JSON-based tools
 
 **⚠️ JSON Limitations:**
+
 - **💬 No comments**: JSON doesn't support comments
 - **📖 Less readable**: More verbose than HCL
 - **🔧 Limited expressions**: Some Terraform features work better in HCL
@@ -719,7 +768,7 @@ import json
 
 def generate_terraform_json(categories):
     """Generate Terraform JSON configuration for multiple JamfPro categories"""
-    
+
     terraform_config = {
         "terraform": {
             "required_providers": {
@@ -733,26 +782,26 @@ def generate_terraform_json(categories):
             "jamfpro_category": {}
         }
     }
-    
+
     # Dynamically add categories
     for category in categories:
         terraform_config["resource"]["jamfpro_category"][category["name"]] = {
             "name": category["display_name"],
             "priority": category["priority"]
         }
-    
+
     return terraform_config
 
 # Example usage
 categories_data = [
     {
-        "name": "security_tools", 
-        "display_name": "Security Tools", 
+        "name": "security_tools",
+        "display_name": "Security Tools",
         "priority": 5
     },
     {
-        "name": "productivity_apps", 
-        "display_name": "Productivity Applications", 
+        "name": "productivity_apps",
+        "display_name": "Productivity Applications",
         "priority": 10
     }
 ]
@@ -766,6 +815,7 @@ print("Generated main.tf.json successfully!")
 ```
 
 **📄 Generated `main.tf.json`:**
+
 ```json
 {
   "terraform": {
@@ -796,6 +846,7 @@ print("Generated main.tf.json successfully!")
 **🎯 Goal**: Master HCL syntax through focused, bite-sized exercises
 
 #### **Exercise 1: Terraform Settings Block**
+
 **Duration**: 3 minutes
 
 **Task**: Create a `terraform.tf` file with proper version constraints
@@ -804,7 +855,7 @@ print("Generated main.tf.json successfully!")
 # Create terraform.tf
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -840,15 +891,16 @@ Success! The configuration is valid.
 **Practice**: Try different version constraints (`>=`, `<`, `~>`, exact versions)
 
 **Testing Different Version Constraints:**
-*For each test, update your `terraform.tf` file with the new version constraint, remove existing `.terraform` directory and `.terraform.lock.hcl` file, then run `terraform init` to see the behavior.*
+_For each test, update your `terraform.tf` file with the new version constraint, remove existing `.terraform` directory and `.terraform.lock.hcl` file, then run `terraform init` to see the behavior._
 
 **1. Exact Version (`= 0.24.0`):**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -859,13 +911,16 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```bash
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -879,10 +934,11 @@ Terraform has been successfully initialized!
 **2. Pessimistic Constraint (`~> 0.24`):**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -893,10 +949,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -910,10 +968,11 @@ Terraform has been successfully initialized!
 **3. Greater Than or Equal (`>= 0.20.0`):**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -924,10 +983,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -941,10 +1002,11 @@ Terraform has been successfully initialized!
 **4. Less Than Constraint (`< 0.25.0`):**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -955,10 +1017,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -972,10 +1036,11 @@ Terraform has been successfully initialized!
 **5. Restrictive Less Than (`< 0.20.0`) - Uses Older Version:**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -986,10 +1051,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1003,10 +1070,11 @@ Terraform has been successfully initialized!
 **6. Invalid Version (`= 0.99.0`) - Shows Error:**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1017,10 +1085,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Error: Failed to query available provider packages
 
@@ -1040,10 +1110,11 @@ Initializing provider plugins...
 **7. Range Constraints (Combined `>=` and `<`):**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1054,10 +1125,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1073,10 +1146,11 @@ Terraform has been successfully initialized!
 Let's test pessimistic constraints with AWS provider to see major/minor version behavior:
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1091,10 +1165,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1111,10 +1187,11 @@ Terraform has been successfully initialized!
 Now try with a broader pessimistic constraint:
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -1125,10 +1202,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1144,10 +1223,11 @@ Terraform has been successfully initialized!
 Let's test the `!=` (not equal) operator and more complex constraints:
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -1158,10 +1238,12 @@ terraform {
 ```
 
 Clean and initialize:
+
 ```bash
 $ rm -rf .terraform .terraform.lock.hcl
 $ terraform init
 ```
+
 ```
 Initializing the backend...
 Initializing provider plugins...
@@ -1175,10 +1257,11 @@ Terraform has been successfully initialized!
 **10. Pre-release Version Example:**
 
 Update your `terraform.tf`:
+
 ```hcl
 terraform {
   required_version = "~> 1.5"
-  
+
   required_providers {
     # Note: This is a hypothetical example - most providers don't have pre-release versions available
     example = {
@@ -1188,23 +1271,25 @@ terraform {
   }
 }
 ```
-*Note: Pre-release versions require exact matching with `=` operator*
+
+_Note: Pre-release versions require exact matching with `=` operator_
 
 **📚 Official Documentation:**
 For complete details on version constraints, see: [Terraform Version Constraints Documentation](https://developer.hashicorp.com/terraform/language/expressions/version-constraints)
 
 **🔧 Complete Version Constraint Operator Reference:**
 
-| Operator | Description | Example | Behavior |
-|----------|-------------|---------|----------|
-| `=` or none | Allows only exact version | `= 1.2.0` or `1.2.0` | Installs exactly version 1.2.0 |
-| `!=` | Excludes exact version | `!= 1.2.0` | Any version except 1.2.0 |
-| `>`, `>=` | Greater than (or equal) | `>= 1.2.0` | Version 1.2.0 or newer |
-| `<`, `<=` | Less than (or equal) | `< 2.0.0` | Any version before 2.0.0 |
-| `~>` | Pessimistic constraint | `~> 1.2.0` | Allows 1.2.x but not 1.3.0 |
-| `,` | Multiple constraints | `>= 1.2.0, < 2.0.0` | Version between 1.2.0 and 2.0.0 |
+| Operator    | Description               | Example              | Behavior                        |
+| ----------- | ------------------------- | -------------------- | ------------------------------- |
+| `=` or none | Allows only exact version | `= 1.2.0` or `1.2.0` | Installs exactly version 1.2.0  |
+| `!=`        | Excludes exact version    | `!= 1.2.0`           | Any version except 1.2.0        |
+| `>`, `>=`   | Greater than (or equal)   | `>= 1.2.0`           | Version 1.2.0 or newer          |
+| `<`, `<=`   | Less than (or equal)      | `< 2.0.0`            | Any version before 2.0.0        |
+| `~>`        | Pessimistic constraint    | `~> 1.2.0`           | Allows 1.2.x but not 1.3.0      |
+| `,`         | Multiple constraints      | `>= 1.2.0, < 2.0.0`  | Version between 1.2.0 and 2.0.0 |
 
 **Key Observations:**
+
 - **Exact matching**: `=` and no operator work identically for exact versions
 - **Exclusion**: `!=` excludes specific problematic versions while allowing others
 - **Range constraints** (`>= 0.20.0, < 0.25.0`) allow precise control over acceptable versions
@@ -1219,6 +1304,7 @@ For complete details on version constraints, see: [Terraform Version Constraints
 - Multiple providers with different constraints can be specified in the same block
 
 **🎯 Best Practices from HashiCorp:**
+
 - **Root modules**: Use `~>` constraints to set both lower and upper bounds
 - **Reusable modules**: Constrain only minimum versions (e.g., `>= 0.12.0`) for flexibility
 - **Production environments**: Pin to specific ranges to avoid unexpected updates
@@ -1227,6 +1313,7 @@ For complete details on version constraints, see: [Terraform Version Constraints
 ---
 
 #### **Exercise 2: Provider Configuration**
+
 **Duration**: 5 minutes
 
 **Task**: Create a `providers.tf` file with JamfPro provider setup using official configuration from the [Terraform Registry](https://registry.terraform.io/providers/deploymenttheory/jamfpro/latest/docs)
@@ -1234,6 +1321,7 @@ For complete details on version constraints, see: [Terraform Version Constraints
 **OAuth2 Authentication (Recommended):**
 
 Create `providers.tf`:
+
 ```hcl
 # JamfPro provider configuration using OAuth2 authentication
 provider "jamfpro" {
@@ -1295,17 +1383,18 @@ provider "jamfpro" {
 
 **Key Provider Configuration Options:**
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `jamfpro_instance_fqdn` | Yes | Full URL of your JamfPro instance |
-| `auth_method` | Yes | `"oauth2"` or `"basic_auth"` |
-| `client_id` | OAuth2 only | OAuth2 client identifier |
-| `client_secret` | OAuth2 only | OAuth2 client secret |
-| `username` | Basic Auth only | Username for basic authentication |
-| `password` | Basic Auth only | Password for basic authentication |
-| `jamfpro_load_balancer_lock` | No | `true` (recommended for Jamf Cloud) |
+| Parameter                    | Required        | Description                         |
+| ---------------------------- | --------------- | ----------------------------------- |
+| `jamfpro_instance_fqdn`      | Yes             | Full URL of your JamfPro instance   |
+| `auth_method`                | Yes             | `"oauth2"` or `"basic_auth"`        |
+| `client_id`                  | OAuth2 only     | OAuth2 client identifier            |
+| `client_secret`              | OAuth2 only     | OAuth2 client secret                |
+| `username`                   | Basic Auth only | Username for basic authentication   |
+| `password`                   | Basic Auth only | Password for basic authentication   |
+| `jamfpro_load_balancer_lock` | No              | `true` (recommended for Jamf Cloud) |
 
 **🔧 Important Notes:**
+
 - **OAuth2 is recommended** for production environments
 - **`jamfpro_load_balancer_lock = true`** is recommended for Jamf Cloud instances
 - The provider supports both on-premises and cloud JamfPro instances
@@ -1316,6 +1405,7 @@ provider "jamfpro" {
 ---
 
 #### **Exercise 3: Simple Resource Block**
+
 **Duration**: 5 minutes
 
 **Task**: Create a `category.tf` file with a JamfPro category
@@ -1393,6 +1483,7 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ---
 
 #### **Exercise 4: Data Source Practice**
+
 **Duration**: 5 minutes
 
 **Task**: Create a `data.tf` file to read existing JamfPro data (references the category created in Exercise 3)
@@ -1424,6 +1515,7 @@ and found no differences, so no changes are needed.
 **Practice**: Use the data source in a resource reference
 
 **Example of referencing data source attributes:**
+
 ```hcl
 # Example: Create another resource that references the data source
 resource "jamfpro_policy" "example" {
@@ -1436,6 +1528,7 @@ resource "jamfpro_policy" "example" {
 ```
 
 **Key Observations:**
+
 - Data sources are **read-only** - they retrieve information without managing resources
 - Data sources are evaluated during `terraform plan` and `terraform apply`
 - You can reference data source attributes using `data.<type>.<name>.<attribute>` syntax
@@ -1445,11 +1538,13 @@ resource "jamfpro_policy" "example" {
 ---
 
 #### **Exercise 5: Variables and Outputs**
+
 **Duration**: 7 minutes
 
 **Task**: Create `variables.tf` and `outputs.tf` files, then test variables and view outputs
 
 **Step 1**: Create variables.tf
+
 ```hcl
 # Input variables for JamfPro configuration
 variable "category_name" {
@@ -1462,7 +1557,7 @@ variable "category_priority" {
   description = "Priority level for the category (1-20)"
   type        = number
   default     = 10
-  
+
   validation {
     condition     = var.category_priority >= 1 && var.category_priority <= 20
     error_message = "Category priority must be between 1 and 20."
@@ -1477,6 +1572,7 @@ variable "environment" {
 ```
 
 **Step 2**: Create outputs.tf
+
 ```hcl
 # Output values from JamfPro resources
 output "category_id" {
@@ -1501,6 +1597,7 @@ output "data_source_reference" {
 ```
 
 **Step 3**: Update category.tf to use variables
+
 ```hcl
 # Create a JamfPro category using variables
 resource "jamfpro_category" "security" {
@@ -1510,10 +1607,13 @@ resource "jamfpro_category" "security" {
 ```
 
 **Step 4**: Validate and apply to see outputs
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
@@ -1521,7 +1621,9 @@ Success! The configuration is valid.
 ```bash
 terraform plan
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1540,7 +1642,9 @@ state, without changing any real infrastructure.
 ```bash
 terraform apply -auto-approve
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1566,10 +1670,13 @@ data_source_reference = "Security Tools"
 ```
 
 **Step 5**: Test with custom variable values
+
 ```bash
 terraform plan -var="category_name=Development Tools" -var="category_priority=5"
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1596,30 +1703,36 @@ Changes to Outputs:
 ```
 
 **Step 6**: Test variable validation
+
 ```bash
 terraform plan -var="category_priority=25"
 ```
+
 **Expected Output:**
+
 ```
 ╷
 │ Error: Invalid value for variable
-│ 
+│
 │   on variables.tf line 8:
 │    8: variable "category_priority" {
 │     ├────────────────
 │     │ var.category_priority is 25
-│ 
+│
 │ Category priority must be between 1 and 20.
-│ 
+│
 │ This was checked by the validation rule at variables.tf:13,3-13.
 ╵
 ```
 
 **Step 7**: View outputs
+
 ```bash
 terraform output
 ```
+
 **Expected Output:**
+
 ```
 category_id = "36650"
 category_name = "Security Tools"
@@ -1630,12 +1743,15 @@ data_source_reference = "Security Tools"
 ```bash
 terraform output category_id
 ```
+
 **Expected Output:**
+
 ```
 "36650"
 ```
 
 **Step 8**: Create terraform.tfvars (optional)
+
 ```hcl
 # Example variable values file
 category_name     = "Security Tools"
@@ -1648,28 +1764,31 @@ environment      = "sandbox"
 ---
 
 #### **Exercise 6: Local Values**
+
 **Duration**: 4 minutes
 
 **Task**: Create `locals.tf` for computed values and use them in resources
 
 **Step 1**: Create locals.tf
+
 ```hcl
 # Local values for computed expressions
 locals {
   environment = "production"
-  
+
   common_tags = {
     Environment = local.environment
     ManagedBy   = "terraform"
     Team        = "platform"
   }
-  
+
   category_name = "${local.environment}-${var.category_name}"
   category_full_name = "${local.common_tags.Team}-${local.category_name}"
 }
 ```
 
 **Step 2**: Update category.tf to use local value
+
 ```hcl
 # Create a JamfPro category using variables and locals
 resource "jamfpro_category" "security" {
@@ -1679,6 +1798,7 @@ resource "jamfpro_category" "security" {
 ```
 
 **Step 3**: Update data.tf to use local value
+
 ```hcl
 # Read an existing JamfPro category using data source
 data "jamfpro_category" "existing" {
@@ -1687,6 +1807,7 @@ data "jamfpro_category" "existing" {
 ```
 
 **Step 4**: Add local outputs to outputs.tf
+
 ```hcl
 output "local_environment" {
   description = "Environment from local value"
@@ -1710,10 +1831,13 @@ output "local_category_full_name" {
 ```
 
 **Step 5**: Validate and apply
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
@@ -1721,7 +1845,9 @@ Success! The configuration is valid.
 ```bash
 terraform apply -auto-approve
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1760,10 +1886,13 @@ local_environment = "production"
 ```
 
 **Step 6**: View specific local outputs
+
 ```bash
 terraform output local_environment
 ```
+
 **Expected Output:**
+
 ```
 "production"
 ```
@@ -1771,7 +1900,9 @@ terraform output local_environment
 ```bash
 terraform output local_common_tags
 ```
+
 **Expected Output:**
+
 ```
 {
   "Environment" = "production"
@@ -1785,18 +1916,20 @@ terraform output local_common_tags
 ---
 
 #### **Exercise 7: Comments Practice**
+
 **Duration**: 3 minutes
 
 **Task**: Add all three comment styles to your existing files
 
 **Step 1**: Add comprehensive comments to category.tf
+
 ```hcl
 # Create a JamfPro category using variables and locals
 # This category will be used to organize security-related policies and packages
 resource "jamfpro_category" "security" {
   name     = local.category_name   // Uses computed local value for consistency
   priority = var.category_priority // Inline comment: Priority affects ordering in JamfPro UI
-  
+
   /*
     Multi-line comment explaining the purpose:
     This category serves as an organizational structure for security tools
@@ -1807,6 +1940,7 @@ resource "jamfpro_category" "security" {
 ```
 
 **Step 2**: Add comments to variables.tf demonstrating all three styles
+
 ```hcl
 # Input variables for JamfPro configuration
 # These variables allow customization of the category configuration
@@ -1827,7 +1961,7 @@ variable "category_priority" {
   description = "Priority level for the category (1-20)"
   type        = number
   default     = 10 // Mid-range priority for general security tools
-  
+
   /*
     Validation block ensures the priority value is within JamfPro's
     accepted range. Values outside 1-20 would cause API errors
@@ -1841,6 +1975,7 @@ variable "category_priority" {
 ```
 
 **Step 3**: Add comments to locals.tf
+
 ```hcl
 # Local values for computed expressions
 # These locals centralize string manipulation and tagging logic
@@ -1852,11 +1987,11 @@ variable "category_priority" {
 */
 locals {
   environment = "production" // Override for production deployment
-  
+
   /*
     Standard tags applied to all resources for:
     - Environment identification
-    - Resource ownership tracking  
+    - Resource ownership tracking
     - Team accountability
   */
   common_tags = {
@@ -1864,20 +1999,23 @@ locals {
     ManagedBy   = "terraform"        // Indicates infrastructure as code
     Team        = "platform"         // Responsible team for maintenance
   }
-  
+
   # Computed category name with environment prefix for uniqueness
   category_name = "${local.environment}-${var.category_name}"
-  
+
   # Full category name including team prefix for complete identification
   category_full_name = "${local.common_tags.Team}-${local.category_name}" // Combines team and category info
 }
 ```
 
 **Step 4**: Validate configuration with comments
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
@@ -1885,7 +2023,9 @@ Success! The configuration is valid.
 ```bash
 terraform plan
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1898,20 +2038,23 @@ and found no differences, so no changes are needed.
 ```
 
 **Comment Style Guidelines:**
+
 - **Single-line comments (#)**: Use for brief explanations above blocks
-- **Inline comments (//)**: Use for short clarifications on specific lines  
-- **Multi-line comments (/* */)**: Use for detailed explanations of complex logic
+- **Inline comments (//)**: Use for short clarifications on specific lines
+- **Multi-line comments (/\* \*/)**: Use for detailed explanations of complex logic
 
 **Practice**: Document your configuration with 'why' comments, not 'what' comments. Comments should explain the reasoning and context behind decisions.
 
 ---
 
 #### **Exercise 8: JSON Syntax Conversion**
+
 **Duration**: 8 minutes
 
 **Task**: Convert your category resource to JSON syntax and compare with HCL
 
 **Step 1**: Create JSON variables file (variables.tf.json)
+
 ```json
 {
   "variable": {
@@ -1930,6 +2073,7 @@ and found no differences, so no changes are needed.
 ```
 
 **Step 2**: Create JSON resource file (category.tf.json)
+
 ```json
 {
   "resource": {
@@ -1946,7 +2090,7 @@ and found no differences, so no changes are needed.
       "value": "${jamfpro_category.json_example.id}"
     },
     "json_category_name": {
-      "description": "Name of the JSON-defined category", 
+      "description": "Name of the JSON-defined category",
       "value": "${jamfpro_category.json_example.name}"
     }
   }
@@ -1954,19 +2098,25 @@ and found no differences, so no changes are needed.
 ```
 
 **Step 3**: Validate both HCL and JSON together
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
 
 **Step 4**: Plan to see both resources
+
 ```bash
 terraform plan
 ```
+
 **Expected Output:**
+
 ```
 data.jamfpro_category.existing: Reading...
 jamfpro_category.security: Refreshing state... [id=36650]
@@ -1993,10 +2143,13 @@ Changes to Outputs:
 ```
 
 **Step 5**: Apply to create JSON-defined resource
+
 ```bash
 terraform apply -auto-approve
 ```
+
 **Expected Output:**
+
 ```
 jamfpro_category.json_example: Creating...
 jamfpro_category.json_example: Creation complete after 0s [id=36651]
@@ -2024,6 +2177,7 @@ local_environment = "production"
 **Step 6**: Compare syntax styles
 
 **HCL Syntax (more readable):**
+
 ```hcl
 resource "jamfpro_category" "example" {
   name     = "Security Tools"
@@ -2032,6 +2186,7 @@ resource "jamfpro_category" "example" {
 ```
 
 **JSON Syntax (more verbose):**
+
 ```json
 {
   "resource": {
@@ -2046,6 +2201,7 @@ resource "jamfpro_category" "example" {
 ```
 
 **Key Differences:**
+
 - **HCL**: More readable, supports comments, less quotes
 - **JSON**: More verbose, no comments, strict formatting
 - **Both**: Functionally equivalent, same Terraform behavior
@@ -2055,19 +2211,21 @@ resource "jamfpro_category" "example" {
 ---
 
 #### **Exercise 9: Error Debugging**
+
 **Duration**: 5 minutes
 
 **Task**: Fix these intentional syntax errors and learn debugging techniques
 
 **Step 1**: Create error_demo.tf with intentional errors
+
 ```hcl
 # Error 1: Missing quotes
 resource jamfpro_category demo {
   name = Security Tools
 }
 
-# Error 2: Wrong block structure  
-resource "jamfpro_building" "office" 
+# Error 2: Wrong block structure
+resource "jamfpro_building" "office"
   name = "Branch Office"
   city = "New York"
 
@@ -2078,41 +2236,45 @@ resource "jamfpro_category" "1invalid_name" {
 ```
 
 **Step 2**: Run validation to see errors
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 ╷
 │ Error: Missing newline after argument
-│ 
+│
 │   on error_demo.tf line 3, in resource "jamfpro_category" "demo":
 │    3:   name = Security Tools
-│ 
+│
 │ An argument definition must end with a newline.
 ╵
 ╷
 │ Error: Invalid block definition
-│ 
+│
 │   on error_demo.tf line 7:
-│    7: resource "jamfpro_building" "office" 
+│    7: resource "jamfpro_building" "office"
 │    8:   name = "Branch Office"
-│ 
+│
 │ A block definition must have block content delimited by "{" and "}",
 │ starting on the same line as the block header.
 ╵
 ╷
 │ Error: Invalid resource name
-│ 
+│
 │   on error_demo.tf line 13, in resource "jamfpro_category" "1invalid_name":
 │   13: resource "jamfpro_category" "1invalid_name" {
-│ 
+│
 │ A name must start with a letter or underscore and may contain only letters,
 │ digits, underscores, and dashes.
 ╵
 ```
 
 **Step 3**: Fix Error 1 - Add missing quotes
+
 ```hcl
 # Error 1: Fixed - Added missing quotes
 resource "jamfpro_category" "demo" {
@@ -2121,6 +2283,7 @@ resource "jamfpro_category" "demo" {
 ```
 
 **Step 4**: Fix Error 2 - Add missing braces
+
 ```hcl
 # Error 2: Fixed - Added missing braces
 resource "jamfpro_building" "office" {
@@ -2130,6 +2293,7 @@ resource "jamfpro_building" "office" {
 ```
 
 **Step 5**: Fix Error 3 - Use valid identifier
+
 ```hcl
 # Error 3: Fixed - Valid identifier
 resource "jamfpro_category" "valid_name" {
@@ -2138,16 +2302,20 @@ resource "jamfpro_category" "valid_name" {
 ```
 
 **Step 6**: Validate all fixes
+
 ```bash
 terraform validate
 ```
+
 **Expected Output:**
+
 ```
 Success! The configuration is valid.
 ```
 
 **Step 7**: Demonstrate formatting
 Create a poorly formatted file:
+
 ```hcl
 resource "jamfpro_category"     "poorly_formatted"   {
 name="Test"
@@ -2156,15 +2324,19 @@ name="Test"
 ```
 
 Run terraform fmt:
+
 ```bash
 terraform fmt
 ```
+
 **Expected Output:**
+
 ```
 format_demo.tf
 ```
 
 **After formatting:**
+
 ```hcl
 resource "jamfpro_category" "poorly_formatted" {
   name     = "Test"
@@ -2173,12 +2345,14 @@ resource "jamfpro_category" "poorly_formatted" {
 ```
 
 **Common Error Types:**
+
 - **Syntax Errors**: Missing quotes, braces, or semicolons
 - **Block Structure**: Incorrect resource/data block formatting
 - **Identifier Rules**: Names must start with letter/underscore
 - **Argument Issues**: Invalid or missing required arguments
 
 **Debugging Commands:**
+
 - `terraform validate` - Check syntax and configuration errors
 - `terraform fmt` - Auto-format code for consistency
 - `terraform plan` - Preview changes and catch logic errors
@@ -2190,6 +2364,7 @@ resource "jamfpro_category" "poorly_formatted" {
 #### **🎯 Quick Setup Guide**
 
 **Create Project Structure:**
+
 ```bash
 mkdir ~/jamfpro-hcl-practice
 cd ~/jamfpro-hcl-practice
@@ -2200,6 +2375,7 @@ touch variables.tf outputs.tf locals.tf
 ```
 
 **Validation Commands:**
+
 ```bash
 # Initialize and validate after each exercise
 terraform init
@@ -2209,6 +2385,7 @@ terraform plan -var="category_name=Test"
 ```
 
 **💡 Pro Tips:**
+
 - Complete exercises in order (1-10)
 - Validate syntax after each exercise
 - Experiment with different values
@@ -2220,22 +2397,24 @@ terraform plan -var="category_name=Test"
 **🔧 Common HCL Syntax Errors:**
 
 1. **Missing Quotes:**
+
 ```hcl
 # ❌ Incorrect
 resource jamfpro_category security {
   name = Security Tools
 }
 
-# ✅ Correct  
+# ✅ Correct
 resource "jamfpro_category" "security" {
   name = "Security Tools"
 }
 ```
 
 2. **Incorrect Block Structure:**
+
 ```hcl
 # ❌ Incorrect
-resource "jamfpro_building" "hq" 
+resource "jamfpro_building" "hq"
   name = "Headquarters"
   city = "San Francisco"
 
@@ -2247,6 +2426,7 @@ resource "jamfpro_building" "hq" {
 ```
 
 3. **Invalid Characters in Identifiers:**
+
 ```hcl
 # ❌ Incorrect
 resource "jamfpro_category" "security-tools" {
@@ -2260,6 +2440,7 @@ resource "jamfpro_category" "security_tools" {
 ```
 
 **🛠️ Debugging Commands:**
+
 ```bash
 # Check syntax
 terraform validate
@@ -2278,12 +2459,14 @@ terraform plan
 #### 🎨 Style Guide and Best Practices
 
 **📏 Formatting Standards:**
+
 - **Indentation**: Use 2 spaces (not tabs)
 - **Alignment**: Align equals signs for readability
 - **Spacing**: Use blank lines to separate logical sections
 - **Comments**: Use `#` for single-line, `/* */` for multi-line
 
 **🏗️ Structure Best Practices:**
+
 ```hcl
 # 1. Terraform settings at the top
 terraform {
@@ -2318,6 +2501,7 @@ output "building_id" {
 ```
 
 **📝 Naming Conventions:**
+
 - **Resources**: Use descriptive names (`security_category`, not `category1`)
 - **Variables**: Use snake_case (`jamfpro_url`, not `jamfproUrl`)
 - **Outputs**: Be descriptive (`category_info`, not `category`)
@@ -2328,6 +2512,7 @@ output "building_id" {
 ## ✅ Module 6 Summary
 
 ### 🎯 Key Takeaways
+
 - **📖 HCL** is the human-friendly language that powers Terraform
 - **⚙️ Terraform settings block** configures behavior and requirements
 - **🔄 JSON syntax** is available for programmatic generation
@@ -2337,6 +2522,7 @@ output "building_id" {
 - **🏗️ Structure standards** improve code organization
 
 ### 🔑 Essential Concepts Learned
+
 - HCL syntax fundamentals (blocks, arguments, expressions)
 - Terraform settings block configuration
 - Comment styles and formatting best practices
@@ -2345,6 +2531,7 @@ output "building_id" {
 - Professional style guidelines
 
 ### 💡 Pro Tips Recap
+
 - Always use `terraform fmt` to maintain consistent formatting
 - Add meaningful comments for complex configurations
 - Use descriptive names for resources and variables
@@ -2361,6 +2548,7 @@ output "building_id" {
 ### 🧠 Knowledge Check Questions
 
 **1. What is the relationship between HCL and Terraform Language?**
+
 - a) They are the same thing
 - b) HCL is the foundational syntax, Terraform Language adds infrastructure-specific meaning
 - c) Terraform Language is older than HCL
@@ -2371,13 +2559,15 @@ output "building_id" {
 
 **✅ Correct Answer: b) HCL is the foundational syntax, Terraform Language adds infrastructure-specific meaning**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 HCL (HashiCorp Configuration Language) provides the foundational syntax and grammar, while the Terraform Language builds on top of HCL to add specific meaning and functionality for infrastructure management. HCL is used across multiple HashiCorp tools (Vault, Consul, Nomad, etc.), while Terraform Language is specific to infrastructure configurations.
+
 </details>
 
 ---
 
 **2. Which of the following are the four basic elements of the Terraform Language?**
+
 - a) Resources, Data Sources, Variables, Outputs
 - b) Blocks, Block Labels, Arguments, Expressions
 - c) HCL, JSON, YAML, TOML
@@ -2388,10 +2578,11 @@ HCL (HashiCorp Configuration Language) provides the foundational syntax and gram
 
 **✅ Correct Answer: b) Blocks, Block Labels, Arguments, Expressions**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 According to the Terraform documentation, the language consists of only these four basic elements:
+
 - **Blocks**: Containers for content representing objects
-- **Block Labels**: Names identifying specific block instances  
+- **Block Labels**: Names identifying specific block instances
 - **Arguments**: Name-value assignments within blocks
 - **Expressions**: Values that can be literal or reference other values
 </details>
@@ -2399,6 +2590,7 @@ According to the Terraform documentation, the language consists of only these fo
 ---
 
 **3. What file extension should you use for Terraform files written in JSON syntax?**
+
 - a) `.json`
 - b) `.tf`
 - c) `.tf.json`
@@ -2409,18 +2601,21 @@ According to the Terraform documentation, the language consists of only these fo
 
 **✅ Correct Answer: c) `.tf.json`**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 Terraform expects JSON syntax files to be named with the `.tf.json` extension, not just `.json`. This tells Terraform to parse the file as a Terraform configuration written in JSON syntax rather than HCL syntax.
+
 </details>
 
 ---
 
 **4. In this code block, identify the block type and block labels:**
+
 ```hcl
 resource "jamfpro_category" "security_tools" {
   name = "Security Tools"
 }
 ```
+
 - a) Block type: `jamfpro_category`, Block labels: `security_tools`
 - b) Block type: `resource`, Block labels: `jamfpro_category`, `security_tools`
 - c) Block type: `resource`, Block labels: `jamfpro_category`
@@ -2431,7 +2626,8 @@ resource "jamfpro_category" "security_tools" {
 
 **✅ Correct Answer: b) Block type: `resource`, Block labels: `jamfpro_category`, `security_tools`**
 
-**📝 Explanation**: 
+**📝 Explanation**:
+
 - **Block type**: `resource` (the first identifier)
 - **Block labels**: `"jamfpro_category"` and `"security_tools"` (the quoted strings that follow)
 - The block type defines what kind of object this represents, while the labels identify the specific resource type and instance name.
@@ -2440,8 +2636,9 @@ resource "jamfpro_category" "security_tools" {
 ---
 
 **5. Which comment styles are supported in HCL? (Select all that apply)**
+
 - a) `# Single line comment`
-- b) `// Alternative single line comment` 
+- b) `// Alternative single line comment`
 - c) `/* Multi-line comment */`
 - d) `<!-- XML-style comment -->`
 
@@ -2450,18 +2647,21 @@ resource "jamfpro_category" "security_tools" {
 
 **✅ Correct Answers: a, b, c**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 HCL supports three comment styles:
+
 - `# Single line comment` - Hash-style comments
-- `// Alternative single line comment` - C++-style comments  
+- `// Alternative single line comment` - C++-style comments
 - `/* Multi-line comment */` - C-style multi-line comments
 
 XML-style comments (`<!-- -->`) are not supported in HCL.
+
 </details>
 
 ---
 
 **6. What is a major limitation of using JSON syntax instead of HCL for Terraform configurations?**
+
 - a) JSON syntax doesn't support resources
 - b) JSON files are larger than HCL files
 - c) JSON doesn't support comments
@@ -2472,15 +2672,17 @@ XML-style comments (`<!-- -->`) are not supported in HCL.
 
 **✅ Correct Answer: c) JSON doesn't support comments**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 One of the major limitations of JSON syntax is that it doesn't support comments, making it harder to document your configurations. Other limitations include being more verbose and less readable than HCL, but the lack of comment support is the most significant practical limitation.
+
 </details>
 
 ---
 
 **7. In which scenarios would you choose JSON syntax over HCL? (Select all that apply)**
+
 - a) When writing configurations manually
-- b) When generating configurations programmatically  
+- b) When generating configurations programmatically
 - c) When integrating with APIs that return JSON
 - d) When you need to add detailed comments
 
@@ -2489,18 +2691,21 @@ One of the major limitations of JSON syntax is that it doesn't support comments,
 
 **✅ Correct Answers: b, c**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 JSON syntax is most useful for:
+
 - **Programmatic generation**: When scripts or tools generate configurations
 - **API integration**: When receiving configurations from APIs in JSON format
 - **Data processing**: When converting from other JSON-based data formats
 
 You would not choose JSON for manual writing (HCL is more readable) or when you need comments (JSON doesn't support them).
+
 </details>
 
 ---
 
 **8. What does this Terraform settings block configure?**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
@@ -2512,6 +2717,7 @@ terraform {
   }
 }
 ```
+
 - a) Only the minimum Terraform version
 - b) Only the required providers
 - c) Both minimum Terraform version and required providers
@@ -2522,8 +2728,9 @@ terraform {
 
 **✅ Correct Answer: c) Both minimum Terraform version and required providers**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 This Terraform settings block configures:
+
 - **Required version**: Specifies minimum Terraform version (1.0 or higher)
 - **Required providers**: Specifies the JamfPro provider with source and version constraints
 - It does not configure backend settings (that would require a `backend` block)
@@ -2532,8 +2739,9 @@ This Terraform settings block configures:
 ---
 
 **9. Which HashiCorp tools use HCL as their configuration language? (Select all that apply)**
+
 - a) Terraform
-- b) Vault  
+- b) Vault
 - c) Consul
 - d) Docker
 - e) Packer
@@ -2543,21 +2751,24 @@ This Terraform settings block configures:
 
 **✅ Correct Answers: a, b, c, e**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 HCL is used by multiple HashiCorp tools:
+
 - **Terraform**: Infrastructure as Code configurations
-- **Vault**: Secrets management policies  
+- **Vault**: Secrets management policies
 - **Consul**: Service configuration
 - **Packer**: Template definitions
 - **Nomad**: Job specifications
 - **Waypoint**: Application configuration
 
 Docker is not a HashiCorp product and uses its own configuration formats.
+
 </details>
 
 ---
 
 **10. What makes HCL "human-friendly" compared to other configuration languages?**
+
 - a) It uses XML syntax
 - b) It's designed to be easy to read and write
 - c) It only supports simple data types
@@ -2568,15 +2779,17 @@ Docker is not a HashiCorp product and uses its own configuration formats.
 
 **✅ Correct Answer: b) It's designed to be easy to read and write**
 
-**📝 Explanation**: 
+**📝 Explanation**:
 HCL is considered "human-friendly" because:
+
 - Clean, readable syntax similar to other modern languages
-- Supports both simple and complex data structures  
+- Supports both simple and complex data structures
 - Allows comments for documentation
 - Balances readability with machine-parseability
 - Less verbose than JSON while maintaining structure
 
 It supports complex data types and nested structures, making it more powerful than simpler formats.
+
 </details>
 
 ---
@@ -2604,7 +2817,7 @@ It supports complex data types and nested structures, making it more powerful th
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 8: HCL Style Guide](./module_08_hcl_style_guide.md)**
+**➡️ [Module 9: HCL Style Guide](./module_09_hcl_style_guide.md)**
 
 Learn about how to style your HCL code to make it more readable and maintainable.
 
