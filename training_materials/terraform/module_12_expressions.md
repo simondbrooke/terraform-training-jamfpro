@@ -1,8 +1,6 @@
+# 🧮 Module 12: Expressions
 
-
-# 🧮 Module 11: Expressions
-*Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
----
+## _Duration: 2 hours | Labs: 3_ | Difficulty: 🟡 Intermediate\*
 
 **⏱️ Duration**: 70 minutes  
 **🎯 Difficulty**: Advanced  
@@ -27,6 +25,7 @@ By the end of this module, you will be able to:
 **Expressions** are the building blocks of Terraform configurations that **compute and return values**. They can reference variables, perform calculations, transform data, and implement complex logic.
 
 **🔧 Expression Categories:**
+
 - **🎯 Types and Values** - Data type handling
 - **📝 String Templates** - Dynamic string construction
 - **🔢 Operators** - Mathematical and logical operations
@@ -40,16 +39,16 @@ By the end of this module, you will be able to:
 locals {
   # Simple value expression
   environment = "production"
-  
+
   # Mathematical expression
   instance_count = var.base_count * 2
-  
+
   # Conditional expression
   instance_type = var.environment == "prod" ? "t3.large" : "t2.micro"
-  
+
   # For expression
   subnet_cidrs = [for i in range(3) : "10.0.${i + 1}.0/24"]
-  
+
   # String template
   bucket_name = "${var.project}-${local.environment}-${random_id.suffix.hex}"
 }
@@ -94,12 +93,12 @@ variable "enable_monitoring" {
 # Using primitive types
 resource "aws_instance" "web" {
   count = var.instance_count  # number
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
-  
+
   monitoring = var.enable_monitoring  # bool
-  
+
   tags = {
     Name        = "web-${count.index + 1}"
     Environment = var.environment  # string
@@ -138,18 +137,18 @@ variable "instance_tags" {
 # Using collection types
 resource "aws_subnet" "public" {
   count = length(var.availability_zones)  # list length
-  
+
   vpc_id            = aws_vpc.main.id
   availability_zone = var.availability_zones[count.index]  # list access
   cidr_block        = "10.0.${count.index + 1}.0/24"
-  
+
   tags = var.instance_tags  # map assignment
 }
 
 resource "aws_security_group" "web" {
   name_prefix = "web-sg-"
   vpc_id      = aws_vpc.main.id
-  
+
   # Dynamic ingress using set
   dynamic "ingress" {
     for_each = var.allowed_ports
@@ -178,7 +177,7 @@ variable "database_config" {
     maintenance_window = string
     multi_az          = bool
   })
-  
+
   default = {
     engine_version     = "8.0"
     instance_class     = "db.t3.micro"
@@ -200,21 +199,21 @@ variable "server_specs" {
 # Using structural types
 resource "aws_db_instance" "main" {
   identifier = "main-database"
-  
+
   engine         = "mysql"
   engine_version = var.database_config.engine_version
   instance_class = var.database_config.instance_class
-  
+
   allocated_storage = var.database_config.allocated_storage
   storage_type      = "gp2"
   storage_encrypted = true
-  
+
   backup_retention_period = var.database_config.backup_enabled ? 7 : 0
   backup_window          = var.database_config.backup_window
   maintenance_window     = var.database_config.maintenance_window
-  
+
   multi_az = var.database_config.multi_az
-  
+
   tags = {
     Name = "main-database"
     Type = "mysql"
@@ -244,13 +243,13 @@ locals {
   project_name = "my-app"
   environment  = "production"
   region       = "us-west-2"
-  
+
   # Simple interpolation
   bucket_name = "${local.project_name}-${local.environment}-bucket"
-  
+
   # Complex interpolation with functions
   resource_name = "${upper(local.project_name)}-${lower(local.environment)}-${replace(local.region, "-", "")}"
-  
+
   # Interpolation with expressions
   instance_name = "${local.project_name}-${local.environment}-${formatdate("YYYY-MM-DD", timestamp())}"
 }
@@ -264,12 +263,12 @@ resource "local_file" "config" {
       environment: ${local.environment}
       region: ${local.region}
       version: ${var.app_version}
-      
+
     database:
       host: ${aws_db_instance.main.endpoint}
       port: ${aws_db_instance.main.port}
       name: ${aws_db_instance.main.db_name}
-      
+
     cache:
       host: ${aws_elasticache_cluster.main.cache_nodes[0].address}
       port: ${aws_elasticache_cluster.main.cache_nodes[0].port}
@@ -279,17 +278,17 @@ resource "local_file" "config" {
 # Interpolation in resource arguments
 resource "aws_instance" "web" {
   count = 3
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
-  
+
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     instance_name = "${local.project_name}-web-${count.index + 1}"
     environment   = local.environment
     app_version   = var.app_version
     db_endpoint   = aws_db_instance.main.endpoint
   }))
-  
+
   tags = {
     Name = "${local.project_name}-web-${count.index + 1}"
     FQDN = "${local.project_name}-web-${count.index + 1}.${local.environment}.example.com"
@@ -314,7 +313,7 @@ resource "local_file" "nginx_config" {
     server {
         listen 80;
         server_name example.com;
-        
+
         %{if local.environment == "production"}
         # Production configuration
         access_log /var/log/nginx/access.log;
@@ -324,20 +323,20 @@ resource "local_file" "nginx_config" {
         access_log /dev/stdout;
         error_log /dev/stderr;
         %{endif}
-        
+
         %{if local.debug_mode}
         # Debug headers
         add_header X-Debug-Mode "enabled";
         add_header X-Environment "${local.environment}";
         %{endif}
-        
+
         location / {
             proxy_pass http://backend;
             %{if contains(local.features, "auth")}
             proxy_set_header Authorization $http_authorization;
             %{endif}
         }
-        
+
         %{if contains(local.features, "monitoring")}
         location /health {
             access_log off;
@@ -397,14 +396,14 @@ resource "local_file" "terraform_vars" {
   filename = "auto.tfvars"
   content = <<-EOT
     # Auto-generated Terraform variables for ${local.environment}
-    
+
     %{for env, config in local.environments}
     %{if env == local.environment}
     # Configuration for ${env} environment
     instance_type = "${config.instance_type}"
     min_size      = ${config.min_size}
     max_size      = ${config.max_size}
-    
+
     # Environment-specific settings
     %{if env == "prod"}
     enable_monitoring = true
@@ -434,22 +433,22 @@ locals {
   # Basic arithmetic
   base_count = 5
   multiplier = 2
-  
+
   # Addition and subtraction
   total_instances = local.base_count + 3        # 8
   reduced_count   = local.base_count - 1        # 4
-  
+
   # Multiplication and division
   scaled_count    = local.base_count * local.multiplier  # 10
   half_count      = local.base_count / 2                 # 2.5
-  
+
   # Modulo
   remainder = local.base_count % 3              # 2
-  
+
   # Complex calculations
   memory_gb = var.memory_mb / 1024
   storage_cost = var.storage_gb * var.cost_per_gb * 24 * 30  # Monthly cost
-  
+
   # CPU calculations
   total_cpu = var.instance_count * var.cpu_per_instance
   cpu_utilization = (local.total_cpu / var.max_cpu) * 100
@@ -458,15 +457,15 @@ locals {
 # Using arithmetic in resource configuration
 resource "aws_instance" "web" {
   count = local.total_instances
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = local.memory_gb > 8 ? "t3.large" : "t3.medium"
-  
+
   root_block_device {
     volume_size = var.base_storage + (count.index * 10)  # Increasing storage
     volume_type = "gp3"
   }
-  
+
   tags = {
     Name = "web-${count.index + 1}"
     Cost = "$${local.storage_cost}"
@@ -482,17 +481,17 @@ locals {
   instance_count = 5
   cpu_threshold = 80
   memory_gb = 16
-  
+
   # Equality and inequality
   is_production = local.environment == "production"      # true
   not_dev       = local.environment != "development"     # true
-  
+
   # Numerical comparisons
   high_capacity    = local.instance_count > 3           # true
   low_capacity     = local.instance_count < 10          # true
   meets_minimum    = local.instance_count >= 5          # true
   under_maximum    = local.instance_count <= 20         # true
-  
+
   # Complex comparisons
   needs_scaling = local.cpu_threshold > 75 && local.memory_gb < 32
   is_enterprise = local.instance_count >= 10 || local.memory_gb >= 64
@@ -501,11 +500,11 @@ locals {
 # Using comparisons in conditionals
 resource "aws_autoscaling_group" "web" {
   name = "web-asg"
-  
+
   min_size         = local.is_production ? 3 : 1
   max_size         = local.high_capacity ? 20 : 10
   desired_capacity = local.instance_count
-  
+
   # Conditional scaling policies
   enabled_metrics = local.needs_scaling ? [
     "GroupMinSize",
@@ -514,13 +513,13 @@ resource "aws_autoscaling_group" "web" {
     "GroupInServiceInstances",
     "GroupTotalInstances"
   ] : []
-  
+
   tag {
     key                 = "Environment"
     value               = local.environment
     propagate_at_launch = true
   }
-  
+
   tag {
     key                 = "Tier"
     value               = local.is_enterprise ? "enterprise" : "standard"
@@ -538,28 +537,28 @@ locals {
   enable_monitoring = true
   instance_count  = 5
   region         = "us-west-2"
-  
+
   # AND operator
   production_ready = local.environment == "production" && local.enable_backup
   fully_monitored  = local.enable_monitoring && local.instance_count > 1
-  
+
   # OR operator
   needs_backup = local.environment == "production" || local.instance_count > 3
   multi_region = local.region == "us-west-2" || local.region == "us-east-1"
-  
+
   # NOT operator
   not_development = !startswith(local.environment, "dev")
   backup_disabled = !local.enable_backup
-  
+
   # Complex logical expressions
   high_availability = (
-    local.environment == "production" && 
-    local.instance_count >= 3 && 
+    local.environment == "production" &&
+    local.instance_count >= 3 &&
     local.enable_monitoring
   )
-  
+
   cost_optimized = (
-    local.environment != "production" || 
+    local.environment != "production" ||
     (local.instance_count <= 5 && !local.enable_backup)
   )
 }
@@ -567,25 +566,25 @@ locals {
 # Using logical operators in resource configuration
 resource "aws_db_instance" "main" {
   identifier = "main-database"
-  
+
   engine         = "mysql"
   engine_version = "8.0"
   instance_class = local.high_availability ? "db.t3.medium" : "db.t3.micro"
-  
+
   # Conditional backup configuration
   backup_retention_period = local.needs_backup ? 7 : 0
   backup_window          = local.needs_backup ? "03:00-04:00" : null
-  
+
   # Multi-AZ for high availability
   multi_az = local.high_availability
-  
+
   # Monitoring configuration
   monitoring_interval = local.fully_monitored ? 60 : 0
   monitoring_role_arn = local.fully_monitored ? aws_iam_role.rds_monitoring[0].arn : null
-  
+
   # Performance insights
   performance_insights_enabled = local.production_ready && local.fully_monitored
-  
+
   tags = {
     Environment      = local.environment
     HighAvailability = local.high_availability ? "true" : "false"
@@ -596,9 +595,9 @@ resource "aws_db_instance" "main" {
 # Conditional resources based on logical expressions
 resource "aws_iam_role" "rds_monitoring" {
   count = local.fully_monitored ? 1 : 0
-  
+
   name = "rds-monitoring-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -626,16 +625,16 @@ Conditional expressions implement **if/else logic** using the ternary operator p
 # Basic ternary operator: condition ? true_value : false_value
 locals {
   environment = "production"
-  
+
   # Simple conditionals
   instance_type = var.environment == "prod" ? "t3.large" : "t2.micro"
   storage_size  = var.environment == "prod" ? 100 : 20
   backup_enabled = var.environment == "prod" ? true : false
-  
+
   # String conditionals
   log_level = var.debug_mode ? "DEBUG" : "INFO"
   domain    = var.environment == "prod" ? "example.com" : "dev.example.com"
-  
+
   # Numeric conditionals
   instance_count = var.environment == "prod" ? 5 : 1
   timeout        = var.environment == "prod" ? 300 : 60
@@ -643,16 +642,16 @@ locals {
 
 resource "aws_instance" "web" {
   count = local.instance_count
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = local.instance_type
-  
+
   root_block_device {
     volume_size = local.storage_size
     volume_type = "gp3"
     encrypted   = var.environment == "prod" ? true : false
   }
-  
+
   tags = {
     Name        = "web-${count.index + 1}"
     Environment = var.environment
@@ -668,14 +667,14 @@ locals {
   environment = "staging"
   region      = "us-west-2"
   team_size   = 10
-  
+
   # Nested conditionals
   instance_type = (
     var.environment == "prod" ? "t3.large" :
     var.environment == "staging" ? "t3.medium" :
     "t2.micro"
   )
-  
+
   # Complex nested logic
   backup_retention = (
     var.environment == "prod" ? 30 :
@@ -683,7 +682,7 @@ locals {
     var.environment == "dev" ? 1 :
     0
   )
-  
+
   # Multi-condition evaluation
   monitoring_level = (
     var.environment == "prod" && local.team_size > 5 ? "comprehensive" :
@@ -691,7 +690,7 @@ locals {
     var.environment == "staging" ? "basic" :
     "minimal"
   )
-  
+
   # Region-specific conditionals
   availability_zones = (
     local.region == "us-west-2" ? ["us-west-2a", "us-west-2b", "us-west-2c"] :
@@ -704,10 +703,10 @@ locals {
 # Using nested conditionals in resources
 resource "aws_db_instance" "main" {
   identifier = "main-database"
-  
+
   engine         = "mysql"
   engine_version = "8.0"
-  
+
   # Nested conditional for instance class
   instance_class = (
     var.environment == "prod" && local.team_size > 20 ? "db.r5.xlarge" :
@@ -715,24 +714,24 @@ resource "aws_db_instance" "main" {
     var.environment == "staging" ? "db.t3.small" :
     "db.t3.micro"
   )
-  
+
   allocated_storage = (
     var.environment == "prod" ? 500 :
     var.environment == "staging" ? 100 :
     20
   )
-  
+
   backup_retention_period = local.backup_retention
-  
+
   # Conditional multi-AZ
   multi_az = var.environment == "prod" ? true : false
-  
+
   # Conditional encryption
   storage_encrypted = (
-    var.environment == "prod" || 
+    var.environment == "prod" ||
     (var.environment == "staging" && local.team_size > 10)
   ) ? true : false
-  
+
   tags = {
     Environment     = var.environment
     MonitoringLevel = local.monitoring_level
@@ -748,7 +747,7 @@ locals {
   environment = "production"
   features = ["auth", "monitoring", "backup"]
   regions  = ["us-west-2", "us-east-1"]
-  
+
   # Conditional lists
   security_groups = var.environment == "prod" ? [
     aws_security_group.web.id,
@@ -757,7 +756,7 @@ locals {
   ] : [
     aws_security_group.web.id
   ]
-  
+
   # Conditional maps
   instance_tags = var.environment == "prod" ? {
     Environment = "production"
@@ -769,7 +768,7 @@ locals {
     Backup      = "disabled"
     Monitoring  = "basic"
   }
-  
+
   # Feature-based conditionals
   enabled_services = [
     "web",
@@ -777,7 +776,7 @@ locals {
     contains(local.features, "monitoring") ? "monitoring-service" : null,
     contains(local.features, "backup") ? "backup-service" : null,
   ]
-  
+
   # Filter out null values
   active_services = compact(local.enabled_services)
 }
@@ -785,18 +784,18 @@ locals {
 # Using conditionals with for_each
 resource "aws_instance" "services" {
   for_each = toset(local.active_services)
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = each.key == "web" ? "t3.medium" : "t3.small"
-  
+
   vpc_security_group_ids = each.key == "web" ? local.security_groups : [aws_security_group.internal.id]
-  
+
   user_data = base64encode(templatefile("${path.module}/user_data/${each.key}.sh", {
     environment = var.environment
     service     = each.key
     features    = join(",", local.features)
   }))
-  
+
   tags = merge(local.instance_tags, {
     Name    = "${each.key}-service"
     Service = each.key
@@ -818,29 +817,29 @@ locals {
   environments = ["dev", "staging", "prod"]
   base_ports   = [80, 443, 8080]
   users        = ["alice", "bob", "charlie", "diana"]
-  
+
   # Basic list transformations
   environment_buckets = [
     for env in local.environments : "${var.project}-${env}-bucket"
   ]
-  
+
   # List with conditionals
   production_buckets = [
     for env in local.environments : "${var.project}-${env}-bucket"
     if env == "prod" || env == "staging"
   ]
-  
+
   # Numeric transformations
   https_ports = [
     for port in local.base_ports : port + 8000
     if port != 80
   ]
-  
+
   # String transformations
   user_emails = [
     for user in local.users : "${user}@example.com"
   ]
-  
+
   # Complex transformations
   user_configs = [
     for i, user in local.users : {
@@ -856,9 +855,9 @@ locals {
 # Using transformed lists in resources
 resource "aws_s3_bucket" "environment_buckets" {
   for_each = toset(local.environment_buckets)
-  
+
   bucket = each.key
-  
+
   tags = {
     Environment = regex("-(\\w+)-bucket$", each.key)[0]
     Purpose     = "application-storage"
@@ -869,10 +868,10 @@ resource "aws_iam_user" "users" {
   for_each = {
     for config in local.user_configs : config.username => config
   }
-  
+
   name = each.value.username
   path = "/users/"
-  
+
   tags = {
     Email  = each.value.email
     UserID = each.value.user_id
@@ -902,7 +901,7 @@ locals {
       max_size     = 10
     }
   }
-  
+
   # Transform map values
   environment_configs = {
     for env, config in local.environments : env => {
@@ -913,19 +912,19 @@ locals {
       backup_enabled = env == "prod"
     }
   }
-  
+
   # Filter and transform
   production_configs = {
     for env, config in local.environments : env => config
     if env == "prod" || env == "staging"
   }
-  
+
   # Create new map structure
   instance_types_by_env = {
-    for env, config in local.environments : 
+    for env, config in local.environments :
     upper(env) => config.instance_type
   }
-  
+
   # Complex map transformations
   detailed_configs = {
     for env, config in local.environments : env => {
@@ -936,7 +935,7 @@ locals {
         max_size = config.max_size
         desired  = config.min_size
       }
-      
+
       # Conditional features
       features = {
         monitoring = env == "prod"
@@ -944,11 +943,11 @@ locals {
         encryption = env == "prod"
         multi_az   = env == "prod"
       }
-      
+
       # Computed values
       cost_estimate = (
-        config.min_size * 
-        (config.instance_type == "t3.medium" ? 50 : 
+        config.min_size *
+        (config.instance_type == "t3.medium" ? 50 :
          config.instance_type == "t3.small" ? 25 : 10) *
         24 * 30
       )
@@ -959,15 +958,15 @@ locals {
 # Using transformed maps
 resource "aws_launch_template" "app" {
   for_each = local.detailed_configs
-  
+
   name_prefix   = "${each.key}-app-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = each.value.instance_type
-  
+
   monitoring {
     enabled = each.value.features.monitoring
   }
-  
+
   block_device_mappings {
     device_name = "/dev/sda1"
     ebs {
@@ -976,7 +975,7 @@ resource "aws_launch_template" "app" {
       encrypted   = each.value.features.encryption
     }
   }
-  
+
   tag_specifications {
     resource_type = "instance"
     tags = {
@@ -1010,7 +1009,7 @@ locals {
       replicas    = { prod = 3 }
     }
   }
-  
+
   # Flatten nested structure
   app_instances = flatten([
     for app_name, app_config in local.applications : [
@@ -1023,24 +1022,24 @@ locals {
       }
     ]
   ])
-  
+
   # Convert to map for for_each
   app_instances_map = {
     for instance in local.app_instances : instance.key => instance
   }
-  
+
   # Group by environment
   instances_by_env = {
     for env in distinct([for instance in local.app_instances : instance.environment]) : env => [
       for instance in local.app_instances : instance if instance.environment == env
     ]
   }
-  
+
   # Calculate totals
   total_instances = sum([
     for instance in local.app_instances : instance.replicas
   ])
-  
+
   # Environment summaries
   env_summaries = {
     for env, instances in local.instances_by_env : env => {
@@ -1054,31 +1053,31 @@ locals {
 # Create resources from transformed data
 resource "aws_autoscaling_group" "app_instances" {
   for_each = local.app_instances_map
-  
+
   name                = each.value.key
   vpc_zone_identifier = data.aws_subnets.private.ids
-  
+
   min_size         = each.value.replicas
   max_size         = each.value.replicas * 2
   desired_capacity = each.value.replicas
-  
+
   launch_template {
     id      = aws_launch_template.app[each.value.app].id
     version = "$Latest"
   }
-  
+
   tag {
     key                 = "Name"
     value               = each.value.key
     propagate_at_launch = true
   }
-  
+
   tag {
     key                 = "Application"
     value               = each.value.app
     propagate_at_launch = true
   }
-  
+
   tag {
     key                 = "Environment"
     value               = each.value.environment
@@ -1115,12 +1114,12 @@ locals {
     { name = "api1", ip = "10.0.2.10", type = "api" },
     { name = "api2", ip = "10.0.2.11", type = "api" }
   ]
-  
+
   # Splat expressions - extract single attribute
   server_names = local.servers[*].name    # ["web1", "web2", "api1", "api2"]
   server_ips   = local.servers[*].ip      # ["10.0.1.10", "10.0.1.11", "10.0.2.10", "10.0.2.11"]
   server_types = local.servers[*].type    # ["web", "web", "api", "api"]
-  
+
   # Equivalent for expressions (more verbose)
   server_names_verbose = [for server in local.servers : server.name]
   server_ips_verbose   = [for server in local.servers : server.ip]
@@ -1131,11 +1130,11 @@ resource "aws_instance" "servers" {
   for_each = {
     for server in local.servers : server.name => server
   }
-  
+
   ami           = data.aws_ami.ubuntu.id
   instance_type = each.value.type == "web" ? "t3.small" : "t3.medium"
   private_ip    = each.value.ip
-  
+
   tags = {
     Name = each.value.name
     Type = each.value.type
@@ -1176,20 +1175,20 @@ locals {
       load_balancer = { name = "api-lb", port = 8080 }
     }
   }
-  
+
   # Extract nested values with splat
   all_instance_names = flatten([
     for app in values(local.applications) : app.instances[*].name
   ])
-  
+
   # Load balancer names
   lb_names = values(local.applications)[*].load_balancer.name
-  
+
   # All availability zones used
   all_azs = distinct(flatten([
     for app in values(local.applications) : app.instances[*].az
   ]))
-  
+
   # Instance sizes by application
   instance_sizes_by_app = {
     for app_name, app_config in local.applications :
@@ -1200,11 +1199,11 @@ locals {
 # Create subnets for all AZs
 resource "aws_subnet" "app_subnets" {
   for_each = toset(local.all_azs)
-  
+
   vpc_id            = aws_vpc.main.id
   availability_zone = each.key
   cidr_block        = "10.0.${index(local.all_azs, each.key) + 1}.0/24"
-  
+
   tags = {
     Name = "app-subnet-${each.key}"
     AZ   = each.key
@@ -1217,15 +1216,15 @@ resource "aws_instance" "app_instances" {
     for app_name, app_config in local.applications :
     app_name => app_config
   }
-  
+
   # Use splat to count instances
   count = length(each.value.instances)
-  
+
   ami               = data.aws_ami.ubuntu.id
   instance_type     = each.value.instances[count.index].size == "small" ? "t3.small" : "t3.medium"
   availability_zone = each.value.instances[count.index].az
   subnet_id         = aws_subnet.app_subnets[each.value.instances[count.index].az].id
-  
+
   tags = {
     Name        = each.value.instances[count.index].name
     Application = each.key
@@ -1246,26 +1245,26 @@ locals {
     { name = "cache1", type = "cache", public = false, backup = false },
     { name = "api1", type = "api", public = true, backup = true }
   ]
-  
+
   # Filter then splat
   public_servers = [
     for server in local.all_servers : server if server.public
   ]
   public_server_names = local.public_servers[*].name
-  
+
   # Backup-enabled servers
   backup_servers = [
     for server in local.all_servers : server if server.backup
   ]
   backup_server_names = local.backup_servers[*].name
-  
+
   # Group by type, then use splat
   servers_by_type = {
     for type in distinct(local.all_servers[*].type) : type => [
       for server in local.all_servers : server if server.type == type
     ]
   }
-  
+
   # Extract names by type using splat
   web_server_names = local.servers_by_type["web"][*].name
   db_server_names  = local.servers_by_type["database"][*].name
@@ -1274,11 +1273,11 @@ locals {
 # Create security groups based on server types
 resource "aws_security_group" "server_type_sgs" {
   for_each = local.servers_by_type
-  
+
   name_prefix = "${each.key}-sg-"
   vpc_id      = aws_vpc.main.id
   description = "Security group for ${each.key} servers"
-  
+
   # Dynamic ingress based on server type
   dynamic "ingress" {
     for_each = each.key == "web" ? [80, 443] : each.key == "api" ? [8080] : each.key == "database" ? [3306] : []
@@ -1289,7 +1288,7 @@ resource "aws_security_group" "server_type_sgs" {
       cidr_blocks = each.key == "database" ? ["10.0.0.0/8"] : ["0.0.0.0/0"]
     }
   }
-  
+
   tags = {
     Name        = "${each.key}-security-group"
     ServerCount = length(each.value)
@@ -1324,21 +1323,21 @@ Dynamic blocks enable **programmatic generation** of nested configuration blocks
 resource "aws_security_group" "web_static" {
   name_prefix = "web-static-"
   vpc_id      = aws_vpc.main.id
-  
+
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   ingress {
     from_port   = 22
     to_port     = 22
@@ -1360,7 +1359,7 @@ resource "aws_security_group" "web_dynamic" {
   name_prefix = "web-dynamic-"
   vpc_id      = aws_vpc.main.id
   description = "Dynamic security group for web servers"
-  
+
   dynamic "ingress" {
     for_each = local.ingress_rules
     content {
@@ -1371,14 +1370,14 @@ resource "aws_security_group" "web_dynamic" {
       cidr_blocks = ingress.value.cidr_blocks
     }
   }
-  
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = {
     Name = "web-dynamic-sg"
     Rules = length(local.ingress_rules)
@@ -1437,11 +1436,11 @@ locals {
 # Dynamic security groups for each environment
 resource "aws_security_group" "app" {
   for_each = local.environments
-  
+
   name_prefix = "${each.key}-app-sg-"
   vpc_id      = aws_vpc.main.id
   description = "Security group for ${each.key} application servers"
-  
+
   # Dynamic ingress rules
   dynamic "ingress" {
     for_each = each.value.ports
@@ -1453,14 +1452,14 @@ resource "aws_security_group" "app" {
       cidr_blocks = [ingress.value.source]
     }
   }
-  
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = {
     Name        = "${each.key}-app-sg"
     Environment = each.key
@@ -1471,13 +1470,13 @@ resource "aws_security_group" "app" {
 # Dynamic launch templates
 resource "aws_launch_template" "app" {
   for_each = local.environments
-  
+
   name_prefix   = "${each.key}-app-lt-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = each.value.instance_type
-  
+
   vpc_security_group_ids = [aws_security_group.app[each.key].id]
-  
+
   # Dynamic block device mappings
   dynamic "block_device_mappings" {
     for_each = each.value.block_devices
@@ -1491,7 +1490,7 @@ resource "aws_launch_template" "app" {
       }
     }
   }
-  
+
   # Conditional monitoring
   dynamic "monitoring" {
     for_each = each.value.monitoring ? [1] : []
@@ -1499,12 +1498,12 @@ resource "aws_launch_template" "app" {
       enabled = true
     }
   }
-  
+
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     environment = each.key
     ports       = jsonencode(each.value.ports[*].port)
   }))
-  
+
   tag_specifications {
     resource_type = "instance"
     tags = {
@@ -1514,7 +1513,7 @@ resource "aws_launch_template" "app" {
       Monitoring   = each.value.monitoring ? "enabled" : "disabled"
     }
   }
-  
+
   lifecycle {
     create_before_destroy = true
   }
@@ -1573,15 +1572,15 @@ locals {
 # Application Load Balancers with nested dynamic blocks
 resource "aws_lb" "app" {
   for_each = local.applications
-  
+
   name               = "${each.key}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb[each.key].id]
   subnets            = data.aws_subnets.public.ids
-  
+
   enable_deletion_protection = each.key == "prod" ? true : false
-  
+
   tags = {
     Name        = "${each.key}-alb"
     Application = each.key
@@ -1594,12 +1593,12 @@ resource "aws_lb_target_group" "app" {
     for app_name, app_config in local.applications :
     app_name => app_config
   }
-  
+
   name     = "${each.key}-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
-  
+
   # Dynamic health check configuration
   dynamic "health_check" {
     for_each = [each.value.load_balancer.health_check]
@@ -1615,7 +1614,7 @@ resource "aws_lb_target_group" "app" {
       matcher             = health_check.value.matcher
     }
   }
-  
+
   tags = {
     Name        = "${each.key}-target-group"
     Application = each.key
@@ -1638,11 +1637,11 @@ resource "aws_lb_listener" "app" {
       ]
     ]) : pair.key => pair
   }
-  
+
   load_balancer_arn = aws_lb.app[each.value.app].arn
   port              = each.value.port
   protocol          = each.value.protocol
-  
+
   # Conditional SSL certificate
   dynamic "certificate_arn" {
     for_each = each.value.certificate_arn != null ? [each.value.certificate_arn] : []
@@ -1650,12 +1649,12 @@ resource "aws_lb_listener" "app" {
       certificate_arn = certificate_arn.value
     }
   }
-  
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app[each.value.app].arn
   }
-  
+
   tags = {
     Application = each.value.app
     Port        = each.value.port
@@ -1666,21 +1665,21 @@ resource "aws_lb_listener" "app" {
 # Auto Scaling Groups with dynamic target group attachments
 resource "aws_autoscaling_group" "app" {
   for_each = local.applications
-  
+
   name                = "${each.key}-asg"
   vpc_zone_identifier = data.aws_subnets.private.ids
-  
+
   min_size         = each.value.auto_scaling.min_size
   max_size         = each.value.auto_scaling.max_size
   desired_capacity = each.value.auto_scaling.min_size
-  
+
   target_group_arns = [aws_lb_target_group.app[each.key].arn]
-  
+
   launch_template {
     id      = aws_launch_template.app[each.key].id
     version = "$Latest"
   }
-  
+
   # Dynamic tags
   dynamic "tag" {
     for_each = {
@@ -1694,7 +1693,7 @@ resource "aws_autoscaling_group" "app" {
       propagate_at_launch = true
     }
   }
-  
+
   lifecycle {
     create_before_destroy = true
   }
@@ -1704,11 +1703,13 @@ resource "aws_autoscaling_group" "app" {
 ---
 
 ## 💻 **Exercise 9.1**: Advanced Expressions Implementation
+
 **Duration**: 50 minutes
 
 Let's build a comprehensive multi-environment application using all expression types.
 
 **Step 1: Project Structure**
+
 ```bash
 mkdir terraform-expressions
 cd terraform-expressions
@@ -1719,6 +1720,7 @@ mkdir -p templates
 ```
 
 **Step 2: Variables (`variables.tf`)**
+
 ```hcl
 variable "project_name" {
   description = "Name of the project"
@@ -1742,7 +1744,7 @@ variable "environments" {
       multi_az       = bool
     })
   }))
-  
+
   default = {
     dev = {
       instance_type     = "t2.micro"
@@ -1802,7 +1804,7 @@ variable "team_members" {
     role  = string
     email = string
   }))
-  
+
   default = [
     { name = "alice", role = "admin", email = "alice@example.com" },
     { name = "bob", role = "developer", email = "bob@example.com" },
@@ -1813,15 +1815,16 @@ variable "team_members" {
 ```
 
 **Step 3: Locals with Complex Expressions (`locals.tf`)**
+
 ```hcl
 locals {
   # String template expressions
   timestamp = formatdate("YYYY-MM-DD-hhmm", timestamp())
-  
+
   # Conditional expressions
   primary_region = var.regions[0]
   is_multi_region = length(var.regions) > 1
-  
+
   # For expressions - transform environments
   environment_configs = {
     for env, config in var.environments : env => {
@@ -1832,24 +1835,24 @@ locals {
         max = config.max_instances
         desired = config.min_instances
       }
-      
+
       # Conditional features
       monitoring_enabled = config.enable_monitoring
       backup_enabled = contains(config.features, "backup")
       analytics_enabled = contains(config.features, "analytics")
-      
+
       # Computed values
       estimated_cost = (
-        config.min_instances * 
-        (config.instance_type == "t3.medium" ? 40 : 
+        config.min_instances *
+        (config.instance_type == "t3.medium" ? 40 :
          config.instance_type == "t3.small" ? 20 : 10) *
         24 * 30
       )
-      
+
       # String interpolation
       bucket_name = "${var.project_name}-${env}-${local.timestamp}"
       log_group = "/aws/ec2/${var.project_name}/${env}"
-      
+
       # Database configuration with conditionals
       database = {
         instance_class = config.database_config.instance_class
@@ -1861,30 +1864,30 @@ locals {
       }
     }
   }
-  
+
   # Splat expressions
   all_ports = distinct(flatten(values(var.environments)[*].allowed_ports))
   all_features = distinct(flatten(values(var.environments)[*].features))
   environment_names = keys(var.environments)
-  
+
   # For expression with filtering
   production_envs = [
     for env, config in var.environments : env
     if config.enable_monitoring && config.backup_retention > 7
   ]
-  
+
   # Team member transformations
   team_by_role = {
     for role in distinct(var.team_members[*].role) : role => [
       for member in var.team_members : member if member.role == role
     ]
   }
-  
+
   admin_emails = [
     for member in var.team_members : member.email
     if member.role == "admin"
   ]
-  
+
   # Complex nested expressions
   security_rules = flatten([
     for env, config in var.environments : [
@@ -1907,17 +1910,17 @@ locals {
       }
     ]
   ])
-  
+
   # Map for for_each usage
   security_rules_map = {
     for rule in local.security_rules : rule.key => rule
   }
-  
+
   # Calculate totals using expressions
   total_min_instances = sum(values(var.environments)[*].min_instances)
   total_max_instances = sum(values(var.environments)[*].max_instances)
   total_estimated_cost = sum(values(local.environment_configs)[*].estimated_cost)
-  
+
   # Environment summary with complex expressions
   environment_summary = {
     for env, config in local.environment_configs : env => {
@@ -1940,6 +1943,7 @@ locals {
 ```
 
 **Step 4: Main Configuration with Dynamic Blocks (`main.tf`)**
+
 ```hcl
 # Data sources
 data "aws_availability_zones" "available" {
@@ -1949,7 +1953,7 @@ data "aws_availability_zones" "available" {
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
-  
+
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
@@ -1961,7 +1965,7 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = {
     Name = "${var.project_name}-vpc"
     Environments = join(",", local.environment_names)
@@ -1971,7 +1975,7 @@ resource "aws_vpc" "main" {
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  
+
   tags = {
     Name = "${var.project_name}-igw"
   }
@@ -1980,13 +1984,13 @@ resource "aws_internet_gateway" "main" {
 # Subnets using for expressions
 resource "aws_subnet" "public" {
   count = length(data.aws_availability_zones.available.names)
-  
+
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.${count.index + 1}.0/24"
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  
+
   map_public_ip_on_launch = true
-  
+
   tags = {
     Name = "${var.project_name}-public-${count.index + 1}"
     AZ   = data.aws_availability_zones.available.names[count.index]
@@ -1996,11 +2000,11 @@ resource "aws_subnet" "public" {
 # Security groups with dynamic blocks
 resource "aws_security_group" "app" {
   for_each = var.environments
-  
+
   name_prefix = "${each.key}-app-sg-"
   vpc_id      = aws_vpc.main.id
   description = "Security group for ${each.key} application"
-  
+
   # Dynamic ingress rules using complex expressions
   dynamic "ingress" {
     for_each = {
@@ -2015,14 +2019,14 @@ resource "aws_security_group" "app" {
       cidr_blocks = [ingress.value.source]
     }
   }
-  
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = {
     Name = "${each.key}-app-sg"
     Environment = each.key
@@ -2034,13 +2038,13 @@ resource "aws_security_group" "app" {
 # Launch templates with conditional blocks
 resource "aws_launch_template" "app" {
   for_each = local.environment_configs
-  
+
   name_prefix   = "${each.key}-app-lt-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = each.value.instance_type
-  
+
   vpc_security_group_ids = [aws_security_group.app[each.key].id]
-  
+
   # Conditional monitoring block
   dynamic "monitoring" {
     for_each = each.value.monitoring_enabled ? [1] : []
@@ -2048,7 +2052,7 @@ resource "aws_launch_template" "app" {
       enabled = true
     }
   }
-  
+
   # Dynamic block device mappings
   dynamic "block_device_mappings" {
     for_each = each.key == "prod" ? [
@@ -2067,7 +2071,7 @@ resource "aws_launch_template" "app" {
       }
     }
   }
-  
+
   user_data = base64encode(templatefile("${path.module}/templates/user_data.sh.tpl", {
     environment = each.key
     project     = var.project_name
@@ -2075,7 +2079,7 @@ resource "aws_launch_template" "app" {
     log_group   = each.value.log_group
     bucket_name = each.value.bucket_name
   }))
-  
+
   tag_specifications {
     resource_type = "instance"
     tags = {
@@ -2091,9 +2095,9 @@ resource "aws_launch_template" "app" {
 # S3 buckets using string templates
 resource "aws_s3_bucket" "app" {
   for_each = local.environment_configs
-  
+
   bucket = each.value.bucket_name
-  
+
   tags = {
     Name        = each.value.bucket_name
     Environment = each.key
@@ -2107,10 +2111,10 @@ resource "aws_cloudwatch_log_group" "app" {
     for env, config in local.environment_configs : env => config
     if config.monitoring_enabled
   }
-  
+
   name              = each.value.log_group
   retention_in_days = each.key == "prod" ? 90 : 30
-  
+
   tags = {
     Name        = each.value.log_group
     Environment = each.key
@@ -2120,30 +2124,30 @@ resource "aws_cloudwatch_log_group" "app" {
 # RDS instances with complex conditionals
 resource "aws_db_instance" "app" {
   for_each = local.environment_configs
-  
+
   identifier = each.value.database.identifier
-  
+
   engine         = "mysql"
   engine_version = "8.0"
   instance_class = each.value.database.instance_class
-  
+
   allocated_storage = each.value.database.storage_gb
   storage_type      = "gp2"
   storage_encrypted = each.value.database.encrypted
-  
+
   db_name  = replace(var.project_name, "-", "_")
   username = "admin"
   password = "temporary-password-change-me"
-  
+
   backup_retention_period = each.value.database.backup_retention
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
-  
+
   multi_az = each.value.database.multi_az
-  
+
   skip_final_snapshot = each.key != "prod"
   final_snapshot_identifier = each.key == "prod" ? "${each.value.database.identifier}-final-${local.timestamp}" : null
-  
+
   tags = {
     Name        = each.value.database.identifier
     Environment = each.key
@@ -2154,6 +2158,7 @@ resource "aws_db_instance" "app" {
 ```
 
 **Step 5: Create User Data Template (`templates/user_data.sh.tpl`)**
+
 ```bash
 #!/bin/bash
 # User data script for ${project} ${environment} environment
@@ -2201,7 +2206,7 @@ cat > /var/www/html/index.html << EOF
         <h1>🧮 ${project} - ${upper(environment)} Environment</h1>
         <p>Terraform Expressions Demo Application</p>
     </div>
-    
+
     <div class="info">
         <h2>Environment Information</h2>
         <p><strong>Environment:</strong> ${environment}</p>
@@ -2209,27 +2214,27 @@ cat > /var/www/html/index.html << EOF
         <p><strong>Instance ID:</strong> <span id="instance-id">Loading...</span></p>
         <p><strong>Availability Zone:</strong> <span id="az">Loading...</span></p>
     </div>
-    
+
     <div class="info">
         <h2>Enabled Features</h2>
         %{for feature in split(",", features)}
         <span class="feature">${feature}</span>
         %{endfor}
     </div>
-    
+
     <div class="info">
         <h2>Configuration</h2>
         <p><strong>Log Group:</strong> ${log_group}</p>
         <p><strong>S3 Bucket:</strong> ${bucket_name}</p>
         <p><strong>Deployment Time:</strong> $(date)</p>
     </div>
-    
+
     <script>
         // Fetch instance metadata
         fetch('http://169.254.169.254/latest/meta-data/instance-id')
             .then(response => response.text())
             .then(data => document.getElementById('instance-id').textContent = data);
-            
+
         fetch('http://169.254.169.254/latest/meta-data/placement/availability-zone')
             .then(response => response.text())
             .then(data => document.getElementById('az').textContent = data);
@@ -2252,6 +2257,7 @@ aws cloudwatch put-metric-data --region $(curl -s http://169.254.169.254/latest/
 ```
 
 **Step 6: Outputs with Expression Examples (`outputs.tf`)**
+
 ```hcl
 # Simple outputs
 output "project_info" {
@@ -2303,7 +2309,7 @@ output "infrastructure_details" {
     vpc_id = aws_vpc.main.id
     subnet_ids = aws_subnet.public[*].id
     availability_zones = aws_subnet.public[*].availability_zone
-    
+
     security_groups = {
       for env, sg in aws_security_group.app :
       env => {
@@ -2311,7 +2317,7 @@ output "infrastructure_details" {
         name = sg.name
       }
     }
-    
+
     databases = {
       for env, db in aws_db_instance.app :
       env => {
@@ -2321,9 +2327,9 @@ output "infrastructure_details" {
         multi_az = db.multi_az
       }
     }
-    
+
     s3_buckets = values(aws_s3_bucket.app)[*].bucket
-    
+
     log_groups = {
       for env, lg in aws_cloudwatch_log_group.app :
       env => lg.name
@@ -2346,6 +2352,7 @@ output "monitoring_resources" {
 ```
 
 **Step 7: Deploy and Test**
+
 ```bash
 # Initialize
 terraform init
@@ -2389,6 +2396,7 @@ terraform destroy
 ## ✅ Module 9 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Mastered **Terraform data types** including primitives, collections, and structural types
 - ✅ Created **dynamic string templates** with interpolation and conditional directives
 - ✅ Implemented **conditional logic** using ternary operators and complex nested conditions
@@ -2398,15 +2406,17 @@ terraform destroy
 - ✅ Applied **mathematical and logical operators** for complex calculations and comparisons
 
 **🔑 Key Concepts Covered:**
+
 - **Data Types**: Primitive (string, number, bool), Collection (list, set, map), Structural (object, tuple)
 - **String Templates**: Interpolation with `${}`, conditional directives with `%{if}`, iteration with `%{for}`
-- **Operators**: Arithmetic (+, -, *, /, %), Comparison (==, !=, <, >, <=, >=), Logical (&&, ||, !)
+- **Operators**: Arithmetic (+, -, \*, /, %), Comparison (==, !=, <, >, <=, >=), Logical (&&, ||, !)
 - **Conditional Expressions**: Ternary operators, nested conditionals, feature-based conditions
 - **For Expressions**: List transformations, map transformations, filtering, complex nested operations
 - **Splat Expressions**: Collection value extraction, nested attribute access, filtering patterns
 - **Dynamic Blocks**: Programmatic block generation, conditional block creation, nested dynamic structures
 
 **💼 Professional Skills Developed:**
+
 - **Advanced Configuration Management**: Creating flexible, data-driven infrastructure configurations
 - **Template Engineering**: Building dynamic templates with conditional logic and iteration
 - **Data Transformation**: Converting and manipulating complex data structures efficiently
@@ -2415,6 +2425,7 @@ terraform destroy
 - **Complex Logic Implementation**: Handling sophisticated business requirements in infrastructure code
 
 **🏗️ Technical Achievements:**
+
 - Built comprehensive multi-environment application with all expression types
 - Implemented dynamic security groups with conditional rules based on environment
 - Created complex data transformations with nested for expressions and filtering
@@ -2423,6 +2434,7 @@ terraform destroy
 - Demonstrated advanced splat usage for efficient collection manipulation
 
 **🧮 Advanced Expression Patterns Mastered:**
+
 - **Conditional Resource Creation**: Using expressions to control resource deployment
 - **Dynamic Configuration Generation**: Template-based configuration file creation
 - **Complex Data Structures**: Multi-level nested objects with computed values
@@ -2431,6 +2443,7 @@ terraform destroy
 - **Multi-Environment Scaling**: Expression-based scaling policies across environments
 
 **🎨 Expression Best Practices:**
+
 - **Readability**: Breaking complex expressions into manageable local values
 - **Performance**: Using splat expressions for efficient collection operations
 - **Maintainability**: Organizing expressions logically with clear naming conventions
@@ -2447,7 +2460,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 12: Terraform State](./module_12_terraform_state.md)**
+**➡️ [Module 13: Terraform State](./module_13_terraform_state.md)**
 
 Master state management, the foundation of Terraform operations.
 

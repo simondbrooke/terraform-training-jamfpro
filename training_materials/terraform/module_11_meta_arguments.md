@@ -1,6 +1,6 @@
-# 🔧 Module 10: Meta Arguments
-*Duration: 2 hours | Labs: 3* | Difficulty: 🟡 Intermediate*
----
+# 🔧 Module 11: Meta Arguments
+
+## _Duration: 2 hours | Labs: 3_ | Difficulty: 🟡 Intermediate\*
 
 **⏱️ Duration**: 60 minutes  
 **🎯 Difficulty**: Intermediate  
@@ -24,6 +24,7 @@ By the end of this module, you will be able to:
 **Meta arguments** are special arguments available to **all resource types** that control how Terraform manages resources. They modify resource behavior beyond the resource's own configuration.
 
 **🔧 Available Meta Arguments:**
+
 - **`depends_on`** - Explicit dependencies
 - **`count`** - Multiple instances with numeric indexing
 - **`for_each`** - Multiple instances with key-value mapping
@@ -37,16 +38,16 @@ resource "jamfpro_policy" "security_baseline" {
   name     = "Security Baseline Policy"
   enabled  = true
   category_id = jamfpro_category.security.id
-  
+
   # Meta arguments
   count      = 3                              # Create 3 policies for different environments
   depends_on = [jamfpro_smart_computer_group.targets]  # Wait for target groups
   provider   = jamfpro.production             # Use specific provider
-  
+
   lifecycle {
     create_before_destroy = true              # Lifecycle rule
   }
-  
+
   scope {
     computer_group_ids = [jamfpro_smart_computer_group.targets[count.index].id]
   }
@@ -62,6 +63,7 @@ Terraform automatically handles **implicit dependencies** through resource refer
 ### 🎯 When to Use depends_on in Jamf Pro
 
 **✅ Use depends_on when:**
+
 - Organizational structure must be created before groups and policies
 - Scripts must exist before policies that reference them
 - Categories must be available before resources that use them
@@ -69,6 +71,7 @@ Terraform automatically handles **implicit dependencies** through resource refer
 - Sites must exist before scoped resources
 
 **❌ Avoid depends_on when:**
+
 - You can use resource attribute references instead
 - The dependency is already implicit through resource IDs
 - You're trying to work around configuration issues
@@ -101,7 +104,7 @@ resource "jamfpro_network_segment" "corporate_network" {
   ending_address   = "10.0.0.254"
   building         = jamfpro_building.main_office.name
   department       = jamfpro_department.it_department.name
-  
+
   # Explicit dependency - building and department must exist first
   depends_on = [
     jamfpro_building.main_office,
@@ -113,7 +116,7 @@ resource "jamfpro_network_segment" "corporate_network" {
 resource "jamfpro_smart_computer_group" "corporate_devices" {
   name    = "Corporate Managed Devices"
   site_id = jamfpro_site.headquarters.id
-  
+
   # Multiple explicit dependencies
   depends_on = [
     jamfpro_site.headquarters,
@@ -121,7 +124,7 @@ resource "jamfpro_smart_computer_group" "corporate_devices" {
     jamfpro_department.it_department,
     jamfpro_network_segment.corporate_network
   ]
-  
+
   criteria {
     name        = "Building"
     priority    = 0
@@ -129,7 +132,7 @@ resource "jamfpro_smart_computer_group" "corporate_devices" {
     search_type = "is"
     value       = jamfpro_building.main_office.name
   }
-  
+
   criteria {
     name        = "Department"
     priority    = 1
@@ -161,7 +164,7 @@ resource "jamfpro_script" "security_audit" {
   category_id     = jamfpro_category.security.id
   os_requirements = "13"
   priority        = "BEFORE"
-  
+
   # Explicit dependency on category
   depends_on = [jamfpro_category.security]
 }
@@ -172,7 +175,7 @@ resource "jamfpro_script" "system_cleanup" {
   category_id     = jamfpro_category.maintenance.id
   os_requirements = "13"
   priority        = "AFTER"
-  
+
   depends_on = [jamfpro_category.maintenance]
 }
 
@@ -182,18 +185,18 @@ resource "jamfpro_policy" "security_compliance" {
   enabled     = true
   category_id = jamfpro_category.security.id
   frequency   = "Once per week"
-  
+
   # Wait for all prerequisites
   depends_on = [
     jamfpro_script.security_audit,
     jamfpro_smart_computer_group.corporate_devices,
     jamfpro_category.security
   ]
-  
+
   scope {
     computer_group_ids = [jamfpro_smart_computer_group.corporate_devices.id]
   }
-  
+
   payloads {
     scripts {
       id       = jamfpro_script.security_audit.id
@@ -241,7 +244,7 @@ resource "jamfpro_smart_computer_group" "department_groups" {
   count   = length(var.business_units)
   name    = "${var.business_units[count.index]} Computers"
   site_id = jamfpro_site.offices[0].id  # Use first site as default
-  
+
   criteria {
     name        = "Department"
     priority    = 0
@@ -260,7 +263,7 @@ variable "environment_count" {
   description = "Number of environments to create"
   type        = number
   default     = 2
-  
+
   validation {
     condition     = var.environment_count >= 1 && var.environment_count <= 5
     error_message = "Environment count must be between 1 and 5."
@@ -293,11 +296,11 @@ resource "jamfpro_policy" "environment_testing" {
   enabled     = var.environment_names[count.index] != "production"  # Disable prod by default
   category_id = jamfpro_category.environments[count.index].id
   frequency   = "Ongoing"
-  
+
   scope {
     all_computers = var.environment_names[count.index] == "development"
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -328,10 +331,10 @@ variable "app_names" {
 
 resource "jamfpro_mac_application" "browsers" {
   count = length(var.app_names)
-  
+
   name            = var.app_names[count.index]
   deployment_type = "Make Available in Self Service"
-  
+
   scope {
     all_computers = true
   }
@@ -360,9 +363,9 @@ variable "supported_os_versions" {
 
 resource "jamfpro_smart_computer_group" "os_groups" {
   for_each = var.supported_os_versions
-  
+
   name = "${each.key} Computers"
-  
+
   criteria {
     name        = "Operating System Version"
     priority    = 0
@@ -375,16 +378,16 @@ resource "jamfpro_smart_computer_group" "os_groups" {
 # Create policies for each OS group
 resource "jamfpro_policy" "os_maintenance" {
   for_each = var.supported_os_versions
-  
+
   name        = "${each.key} Maintenance Policy"
   enabled     = true
   frequency   = "Once per week"
   category_id = jamfpro_category.maintenance.id
-  
+
   scope {
     computer_group_ids = [jamfpro_smart_computer_group.os_groups[each.key].id]
   }
-  
+
   payloads {
     maintenance {
       recon       = true
@@ -418,7 +421,7 @@ variable "application_config" {
     self_service    = bool
     required_for    = list(string)  # List of departments
   }))
-  
+
   default = {
     "Google Chrome" = {
       deployment_type = "Install Automatically"
@@ -444,7 +447,7 @@ variable "application_config" {
 # Create categories for applications
 resource "jamfpro_category" "app_categories" {
   for_each = toset([for app in var.application_config : app.category])
-  
+
   name     = each.key
   priority = 5
 }
@@ -452,15 +455,15 @@ resource "jamfpro_category" "app_categories" {
 # Deploy applications with different configurations
 resource "jamfpro_mac_application" "enterprise_apps" {
   for_each = var.application_config
-  
+
   name            = each.key
   deployment_type = each.value.deployment_type
   category_id     = jamfpro_category.app_categories[each.value.category].id
-  
+
   scope {
     all_computers = each.value.deployment_type == "Install Automatically"
   }
-  
+
   # Dynamic self service configuration
   dynamic "self_service" {
     for_each = each.value.self_service ? [1] : []
@@ -477,14 +480,14 @@ resource "jamfpro_mac_application" "enterprise_apps" {
 # Create computer extension attributes for each application
 resource "jamfpro_computer_extension_attribute" "app_versions" {
   for_each = var.application_config
-  
+
   name                   = "${each.key} Version"
   enabled                = true
   description            = "Tracks the installed version of ${each.key}"
   input_type             = "SCRIPT"
   inventory_display_type = "GENERAL"
   data_type              = "STRING"
-  
+
   script_contents = templatefile("${path.module}/scripts/check_app_version.sh", {
     app_name = each.key
   })
@@ -503,7 +506,7 @@ variable "department_config" {
     restrictions  = list(string)
     required_apps = list(string)
   }))
-  
+
   default = {
     "Engineering" = {
       building_name = "Tech Campus"
@@ -529,10 +532,10 @@ variable "department_config" {
 # Create smart groups for each department
 resource "jamfpro_smart_computer_group" "department_computers" {
   for_each = var.department_config
-  
+
   name    = "${each.key} Computers"
   site_id = each.value.site_id
-  
+
   criteria {
     name        = "Department"
     priority    = 0
@@ -540,7 +543,7 @@ resource "jamfpro_smart_computer_group" "department_computers" {
     search_type = "is"
     value       = each.key
   }
-  
+
   criteria {
     name        = "Building"
     priority    = 1
@@ -557,7 +560,7 @@ resource "jamfpro_restricted_software" "department_restrictions" {
     dept => config
     if length(config.restrictions) > 0
   }
-  
+
   name                     = "${each.key} Software Restrictions"
   process_name             = each.value.restrictions[0]  # Use first restriction as example
   match_exact_process_name = false
@@ -565,7 +568,7 @@ resource "jamfpro_restricted_software" "department_restrictions" {
   kill_process             = true
   delete_executable        = false
   display_message          = "This software is not approved for ${each.key} department use."
-  
+
   scope {
     computer_group_ids = [jamfpro_smart_computer_group.department_computers[each.key].id]
   }
@@ -574,16 +577,16 @@ resource "jamfpro_restricted_software" "department_restrictions" {
 # Create policies for required applications
 resource "jamfpro_policy" "department_app_policies" {
   for_each = var.department_config
-  
+
   name        = "${each.key} Required Applications"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.app_categories["Productivity"].id
-  
+
   scope {
     computer_group_ids = [jamfpro_smart_computer_group.department_computers[each.key].id]
   }
-  
+
   self_service {
     use_for_self_service            = true
     self_service_display_name       = "${each.key} App Bundle"
@@ -610,25 +613,25 @@ resource "jamfpro_policy" "security_baseline" {
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.security.id
-  
+
   lifecycle {
     # Create new policy before destroying old one for zero downtime
     create_before_destroy = true
-    
+
     # Prevent accidental deletion of critical security policy
     prevent_destroy = true
-    
+
     # Ignore changes to certain fields that might be managed externally
     ignore_changes = [
       scope.computer_ids,        # Computer assignments might change frequently
       payloads.maintenance,      # Maintenance settings might be adjusted
     ]
   }
-  
+
   scope {
     all_computers = true
   }
-  
+
   payloads {
     maintenance {
       recon       = true
@@ -648,20 +651,20 @@ resource "jamfpro_macos_configuration_profile_plist" "security_profile" {
   distribution_method = "Install Automatically"
   payloads            = file("${path.module}/profiles/security.mobileconfig")
   user_removable      = false
-  
+
   lifecycle {
     # Always create new profile before removing old one
     create_before_destroy = true
-    
+
     # Don't accidentally destroy security profiles
     prevent_destroy = true
-    
+
     # Ignore payload changes if managed through external tools
     ignore_changes = [
       payloads  # Payload might be updated outside Terraform
     ]
   }
-  
+
   scope {
     all_computers = true
   }
@@ -688,21 +691,21 @@ resource "jamfpro_computer_prestage_enrollment" "corporate_prestage" {
   prevent_activation_lock               = true
   enable_device_based_activation_lock   = false
   device_enrollment_program_instance_id = "1"
-  
+
   lifecycle {
     # Never create before destroy for prestage (could cause enrollment issues)
     create_before_destroy = false
-    
+
     # Protect critical enrollment configuration
     prevent_destroy = true
-    
+
     # Ignore frequently changing fields
     ignore_changes = [
       prestage_installed_profile_ids,  # Profiles might be managed separately
       custom_package_ids,              # Packages might be updated frequently
     ]
   }
-  
+
   skip_setup_items {
     biometric          = false
     terms_of_address   = false
@@ -726,7 +729,7 @@ resource "jamfpro_computer_prestage_enrollment" "corporate_prestage" {
     welcome            = false
     wallpaper          = false
   }
-  
+
   account_settings {
     payload_configured                           = true
     local_admin_account_enabled                  = true
@@ -744,21 +747,21 @@ resource "jamfpro_computer_prestage_enrollment" "corporate_prestage" {
 # Application with update management
 resource "jamfpro_mac_application" "critical_apps" {
   for_each = toset(["Security Agent", "Compliance Monitor"])
-  
+
   name            = each.key
   deployment_type = "Install Automatically"
   category_id     = jamfpro_category.security.id
-  
+
   scope {
     all_computers = true
   }
-  
+
   lifecycle {
     create_before_destroy = true
-    
+
     # Don't destroy critical security applications
     prevent_destroy = each.key == "Security Agent"
-    
+
     # Ignore version changes (managed by patch management)
     ignore_changes = [
       version
@@ -792,7 +795,7 @@ provider "jamfpro" {
   auth_method           = "oauth2"
   client_id             = var.prod_client_id
   client_secret         = var.prod_client_secret
-  
+
   default_tags = {
     Environment = "production"
     ManagedBy   = "terraform"
@@ -802,12 +805,12 @@ provider "jamfpro" {
 # Development/Testing Jamf Pro instance
 provider "jamfpro" {
   alias = "development"
-  
+
   jamfpro_instance_fqdn = var.dev_jamf_url
   auth_method           = "oauth2"
   client_id             = var.dev_client_id
   client_secret         = var.dev_client_secret
-  
+
   default_tags = {
     Project     = var.project_name
     Environment = "development"
@@ -819,12 +822,12 @@ provider "jamfpro" {
 # Staging Jamf Pro instance
 provider "jamfpro" {
   alias = "staging"
-  
+
   jamfpro_instance_fqdn = var.staging_jamf_url
   auth_method           = "oauth2"
   client_id             = var.staging_client_id
   client_secret         = var.staging_client_secret
-  
+
   default_tags = {
     Environment = "staging"
     ManagedBy   = "terraform"
@@ -834,7 +837,7 @@ provider "jamfpro" {
 # Resources in production (default provider)
 resource "jamfpro_category" "prod_categories" {
   for_each = toset(["Security", "Productivity", "Development"])
-  
+
   name     = each.key
   priority = 5
 }
@@ -842,9 +845,9 @@ resource "jamfpro_category" "prod_categories" {
 # Resources in development environment
 resource "jamfpro_category" "dev_categories" {
   provider = jamfpro.development
-  
+
   for_each = toset(["Testing", "Development", "Experimental"])
-  
+
   name     = each.key
   priority = 10
 }
@@ -852,9 +855,9 @@ resource "jamfpro_category" "dev_categories" {
 # Resources in staging environment
 resource "jamfpro_category" "staging_categories" {
   provider = jamfpro.staging
-  
+
   for_each = toset(["Pre-Production", "Testing", "Validation"])
-  
+
   name     = each.key
   priority = 8
 }
@@ -862,16 +865,16 @@ resource "jamfpro_category" "staging_categories" {
 # Test policies in development
 resource "jamfpro_policy" "dev_testing" {
   provider = jamfpro.development
-  
+
   name        = "Development Testing Policy"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.dev_categories["Testing"].id
-  
+
   scope {
     all_computers = true
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -885,15 +888,15 @@ resource "jamfpro_policy" "prod_deployment" {
   enabled     = true
   frequency   = "Once per computer"
   category_id = jamfpro_category.prod_categories["Productivity"].id
-  
+
   # This policy depends on successful staging validation
   depends_on = [jamfpro_policy.staging_validation]
-  
+
   scope {
     all_computers = false
     computer_group_ids = [jamfpro_smart_computer_group.production_computers.id]
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -904,12 +907,12 @@ resource "jamfpro_policy" "prod_deployment" {
 # Staging validation policy
 resource "jamfpro_policy" "staging_validation" {
   provider = jamfpro.staging
-  
+
   name        = "Staging Validation Policy"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.staging_categories["Validation"].id
-  
+
   scope {
     all_computers = true
   }
@@ -922,12 +925,12 @@ resource "jamfpro_policy" "staging_validation" {
 # Client A Jamf Pro instance
 provider "jamfpro" {
   alias = "client_a"
-  
+
   jamfpro_instance_fqdn = var.client_a_jamf_url
   auth_method           = "oauth2"
   client_id             = var.client_a_client_id
   client_secret         = var.client_a_client_secret
-  
+
   default_tags = {
     Client      = "ClientA"
     Environment = var.environment
@@ -937,12 +940,12 @@ provider "jamfpro" {
 # Client B Jamf Pro instance
 provider "jamfpro" {
   alias = "client_b"
-  
+
   jamfpro_instance_fqdn = var.client_b_jamf_url
   auth_method           = "oauth2"
   client_id             = var.client_b_client_id
   client_secret         = var.client_b_client_secret
-  
+
   default_tags = {
     Client      = "ClientB"
     Environment = var.environment
@@ -952,7 +955,7 @@ provider "jamfpro" {
 # Shared configuration for both clients
 locals {
   standard_categories = ["Security", "Productivity", "Utilities"]
-  
+
   standard_apps = {
     "Google Chrome" = {
       deployment_type = "Install Automatically"
@@ -968,22 +971,22 @@ locals {
 # Deploy standard configuration to Client A
 resource "jamfpro_category" "client_a_categories" {
   provider = jamfpro.client_a
-  
+
   for_each = toset(local.standard_categories)
-  
+
   name     = each.key
   priority = 5
 }
 
 resource "jamfpro_mac_application" "client_a_apps" {
   provider = jamfpro.client_a
-  
+
   for_each = local.standard_apps
-  
+
   name            = each.key
   deployment_type = each.value.deployment_type
   category_id     = jamfpro_category.client_a_categories[each.value.category].id
-  
+
   scope {
     all_computers = each.value.deployment_type == "Install Automatically"
   }
@@ -992,22 +995,22 @@ resource "jamfpro_mac_application" "client_a_apps" {
 # Deploy standard configuration to Client B
 resource "jamfpro_category" "client_b_categories" {
   provider = jamfpro.client_b
-  
+
   for_each = toset(local.standard_categories)
-  
+
   name     = each.key
   priority = 5
 }
 
 resource "jamfpro_mac_application" "client_b_apps" {
   provider = jamfpro.client_b
-  
+
   for_each = local.standard_apps
-  
+
   name            = each.key
   deployment_type = each.value.deployment_type
   category_id     = jamfpro_category.client_b_categories[each.value.category].id
-  
+
   scope {
     all_computers = each.value.deployment_type == "Install Automatically"
   }
@@ -1016,12 +1019,12 @@ resource "jamfpro_mac_application" "client_b_apps" {
 # Client-specific customizations
 resource "jamfpro_policy" "client_a_custom" {
   provider = jamfpro.client_a
-  
+
   name        = "Client A Custom Security Policy"
   enabled     = true
   frequency   = "Once per week"
   category_id = jamfpro_category.client_a_categories["Security"].id
-  
+
   scope {
     all_computers = true
   }
@@ -1029,12 +1032,12 @@ resource "jamfpro_policy" "client_a_custom" {
 
 resource "jamfpro_policy" "client_b_custom" {
   provider = jamfpro.client_b
-  
+
   name        = "Client B Custom Compliance Policy"
   enabled     = true
   frequency   = "Once per day"
   category_id = jamfpro_category.client_b_categories["Security"].id
-  
+
   scope {
     all_computers = true
   }
@@ -1050,11 +1053,13 @@ Let's build your understanding of meta arguments progressively, starting with si
 ---
 
 ### 🗝️ **Exercise 9.1**: Mastering `for_each` - Dynamic Categories and Applications
+
 **Duration**: 15 minutes | **Difficulty**: 🟡 Intermediate
 
 Start with `for_each` to understand key-value resource creation - the most flexible meta argument for Jamf Pro.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-foreach
 cd terraform-jamfpro-foreach
@@ -1062,6 +1067,7 @@ touch {main,variables,outputs,providers}.tf
 ```
 
 **providers.tf:**
+
 ```hcl
 terraform {
   required_providers {
@@ -1087,6 +1093,7 @@ provider "jamfpro" {
 ```
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -1113,14 +1120,14 @@ variable "app_categories" {
     priority    = number
     description = string
   }))
-  
+
   default = {
     "Security" = {
       priority    = 1
       description = "Security and compliance applications"
     }
     "Productivity" = {
-      priority    = 2  
+      priority    = 2
       description = "Office and productivity tools"
     }
     "Development" = {
@@ -1146,7 +1153,7 @@ variable "standard_applications" {
     featured        = bool
     app_title_name  = string
   }))
-  
+
   default = {
     "Google Chrome" = {
       category        = "Productivity"
@@ -1194,18 +1201,19 @@ variable "standard_applications" {
 ```
 
 **main.tf:**
+
 ```hcl
 # Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # 1. Jamf Pro requires globally unique resource names across the entire instance
 # 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
 # 3. App installer 'app_title_name' must match exactly from the Jamf App Catalog
 # 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
-# 
+#
 # This pattern is essential for any Jamf Pro Terraform configuration used in:
 # - Training environments
-# - Shared sandbox instances  
+# - Shared sandbox instances
 # - Multi-user development scenarios
 resource "random_string" "suffix" {
   length  = 6
@@ -1216,7 +1224,7 @@ resource "random_string" "suffix" {
 # Create categories using for_each with complex data
 resource "jamfpro_category" "app_categories" {
   for_each = var.app_categories
-  
+
   name     = "${each.key}-${random_string.suffix.result}"
   priority = each.value.priority
 }
@@ -1224,7 +1232,7 @@ resource "jamfpro_category" "app_categories" {
 # Create applications using for_each with jamfpro_app_installer
 resource "jamfpro_app_installer" "standard_apps" {
   for_each = var.standard_applications
-  
+
   name            = "${each.key}-${random_string.suffix.result}"
   app_title_name  = each.value.app_title_name
   enabled         = each.value.enabled
@@ -1264,6 +1272,7 @@ resource "jamfpro_app_installer" "standard_apps" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "categories_created" {
   description = "Categories created with for_each"
@@ -1306,10 +1315,11 @@ output "for_each_advantages" {
 ```
 
 **Test the configuration:**
+
 ```bash
 # Set your Jamf credentials
 export JAMFPRO_INSTANCE_NAME=your-instance
-export JAMFPRO_CLIENT_ID=your-client-id  
+export JAMFPRO_CLIENT_ID=your-client-id
 export JAMFPRO_CLIENT_SECRET=your-client-secret
 
 terraform init
@@ -1319,6 +1329,7 @@ terraform output
 ```
 
 **💡 Key Learning Points:**
+
 1. `for_each` uses keys from maps or sets, not numeric indices
 2. Resources can be referenced by their keys: `jamfpro_category.app_categories["Security"]`
 3. Adding/removing items doesn't affect other resources
@@ -1327,11 +1338,13 @@ terraform output
 ---
 
 ### 🔢 **Exercise 9.2**: Understanding `count` - Multiple Departments
+
 **Duration**: 10 minutes | **Difficulty**: 🟢 Beginner
 
 Learn when `count` is the right choice for creating multiple similar resources.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-count
 cd terraform-jamfpro-count
@@ -1341,6 +1354,7 @@ touch {main,variables,outputs,providers}.tf
 **Copy providers.tf from Exercise 9.1**
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -1377,7 +1391,7 @@ variable "create_test_environments" {
   description = "Number of test environments to create"
   type        = number
   default     = 2
-  
+
   validation {
     condition     = var.create_test_environments >= 0 && var.create_test_environments <= 5
     error_message = "Test environments must be between 0 and 5."
@@ -1386,6 +1400,7 @@ variable "create_test_environments" {
 ```
 
 **providers.tf:**
+
 ```hcl
 terraform {
   required_providers {
@@ -1411,17 +1426,18 @@ provider "jamfpro" {
 ```
 
 **main.tf:**
+
 ```hcl
 # Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # 1. Jamf Pro requires globally unique resource names across the entire instance
 # 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
 # 3. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
-# 
+#
 # This pattern is essential for any Jamf Pro Terraform configuration used in:
 # - Training environments
-# - Shared sandbox instances  
+# - Shared sandbox instances
 # - Multi-user development scenarios
 resource "random_string" "suffix" {
   length  = 6
@@ -1446,7 +1462,7 @@ resource "jamfpro_smart_computer_group" "department_groups" {
   count   = length(var.departments)
   name    = "${var.departments[count.index]} Computers-${random_string.suffix.result}"
   site_id = jamfpro_site.office_sites[0].id  # Use first site
-  
+
   criteria {
     name        = "Department"
     priority    = 0
@@ -1459,7 +1475,7 @@ resource "jamfpro_smart_computer_group" "department_groups" {
 # Conditional resource creation using count
 resource "jamfpro_category" "test_categories" {
   count = var.create_test_environments
-  
+
   name     = "Test Environment ${count.index + 1}-${random_string.suffix.result}"
   priority = 1 + count.index
 }
@@ -1467,16 +1483,16 @@ resource "jamfpro_category" "test_categories" {
 # Create policies for test environments
 resource "jamfpro_policy" "test_policies" {
   count = var.create_test_environments
-  
+
   name        = "Test Policy ${count.index + 1}-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.test_categories[count.index].id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -1487,6 +1503,7 @@ resource "jamfpro_policy" "test_policies" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "departments_summary" {
   description = "Departments created with count"
@@ -1560,7 +1577,7 @@ output "when_to_use_count" {
     ]
     use_for_each = [
       "Complex data structures (maps/sets)",
-      "Resources that may be added/removed frequently", 
+      "Resources that may be added/removed frequently",
       "When you need stable resource addressing",
       "When resources reference each other by keys"
     ]
@@ -1570,6 +1587,7 @@ output "when_to_use_count" {
 ```
 
 **Test the configuration:**
+
 ```bash
 terraform init
 
@@ -1584,6 +1602,7 @@ terraform plan -var="create_test_environments=4"
 ```
 
 **💡 Key Learning Points:**
+
 1. `count` is perfect for simple lists and conditional resource creation
 2. Use `count.index` to access the current iteration number
 3. Resources are addressed by index: `jamfpro_department.company_departments[0]`
@@ -1592,11 +1611,13 @@ terraform plan -var="create_test_environments=4"
 ---
 
 ### ⛓️ **Exercise 9.3**: Controlling Dependencies with `depends_on`
+
 **Duration**: 15 minutes | **Difficulty**: 🟡 Intermediate
 
 Master explicit dependency management for proper resource ordering in Jamf Pro.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-dependencies
 cd terraform-jamfpro-dependencies
@@ -1606,17 +1627,18 @@ touch {main,variables,outputs,providers}.tf scripts/security_audit.sh
 **Copy providers.tf from previous exercises**
 
 **main.tf:**
+
 ```hcl
 # Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # 1. Jamf Pro requires globally unique resource names across the entire instance
 # 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
 # 3. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
-# 
+#
 # This pattern is essential for any Jamf Pro Terraform configuration used in:
 # - Training environments
-# - Shared sandbox instances  
+# - Shared sandbox instances
 # - Multi-user development scenarios
 resource "random_string" "suffix" {
   length  = 6
@@ -1636,7 +1658,7 @@ resource "jamfpro_building" "main_office" {
   state_province  = "California"
   zip_postal_code = "94105"
   country         = "United States"
-  
+
   # No explicit dependency needed - this is independent
 }
 
@@ -1651,7 +1673,7 @@ resource "jamfpro_network_segment" "corporate_network" {
   ending_address   = "10.0.0.254"
   building         = jamfpro_building.main_office.name
   department       = jamfpro_department.it_department.name
-  
+
   # Explicit dependency - building and department must exist first
   depends_on = [
     jamfpro_building.main_office,
@@ -1663,7 +1685,7 @@ resource "jamfpro_network_segment" "corporate_network" {
 resource "jamfpro_smart_computer_group" "corporate_devices" {
   name    = "Corporate Managed Devices-${random_string.suffix.result}"
   site_id = jamfpro_site.headquarters.id
-  
+
   criteria {
     name        = "Building"
     priority    = 0
@@ -1671,7 +1693,7 @@ resource "jamfpro_smart_computer_group" "corporate_devices" {
     search_type = "is"
     value       = jamfpro_building.main_office.name
   }
-  
+
   # Multiple explicit dependencies
   depends_on = [
     jamfpro_site.headquarters,
@@ -1699,7 +1721,7 @@ resource "jamfpro_script" "security_audit" {
   category_id     = jamfpro_category.security.id
   os_requirements = "13"
   priority        = "BEFORE"
-  
+
   # Explicit dependency - category must exist first
   depends_on = [jamfpro_category.security]
 }
@@ -1710,7 +1732,7 @@ resource "jamfpro_script" "system_cleanup" {
   category_id     = jamfpro_category.maintenance.id
   os_requirements = "13"
   priority        = "AFTER"
-  
+
   depends_on = [jamfpro_category.maintenance]
 }
 
@@ -1720,25 +1742,25 @@ resource "jamfpro_policy" "security_compliance" {
   enabled     = true
   category_id = jamfpro_category.security.id
   frequency   = "Once every week"
-  
+
   # Wait for all prerequisites - script, group, and categories
   depends_on = [
     jamfpro_script.security_audit,
     jamfpro_smart_computer_group.corporate_devices,
     jamfpro_category.security
   ]
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [jamfpro_smart_computer_group.corporate_devices.id]
   }
-  
+
   payloads {
     scripts {
       id       = jamfpro_script.security_audit.id
       priority = "Before"
     }
-    
+
     maintenance {
       recon = true
     }
@@ -1748,6 +1770,7 @@ resource "jamfpro_policy" "security_compliance" {
 ```
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -1771,6 +1794,7 @@ variable "jamfpro_client_secret" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "dependency_chain" {
   description = "Shows the dependency chain created"
@@ -1780,7 +1804,7 @@ output "dependency_chain" {
       building   = jamfpro_building.main_office.name
       department = jamfpro_department.it_department.name
     }
-    
+
     infrastructure_layer = {
       network_segment = jamfpro_network_segment.corporate_network.name
       categories = [
@@ -1788,12 +1812,12 @@ output "dependency_chain" {
         jamfpro_category.maintenance.name
       ]
     }
-    
+
     application_layer = {
       script         = jamfpro_script.security_audit.name
       computer_group = jamfpro_smart_computer_group.corporate_devices.name
     }
-    
+
     policy_layer = {
       security_policy = jamfpro_policy.security_compliance.name
     }
@@ -1821,13 +1845,13 @@ output "depends_on_best_practices" {
       "✅ Working around provider limitations",
       "✅ Explicit control over creation/destruction order"
     ]
-    
+
     when_not_to_use = [
       "⚠️ Dependencies already expressed in resource attributes",
       "⚠️ Over-constraining parallel resource creation",
       "⚠️ Using it as a workaround for poor resource design"
     ]
-    
+
     alternatives = [
       "🔄 Use resource attribute references when possible",
       "🔄 Consider data sources for external dependencies",
@@ -1844,22 +1868,22 @@ output "dependency_types" {
       "Script references Category ID",
       "Policy references Script ID and Group ID"
     ]
-    
+
     explicit_dependencies = [
       "Network Segment depends_on Building and Department resources",
       "Computer Group depends_on Site, Building, Department, Network",
       "Scripts depend_on their respective Categories",
       "Policy depends_on Script, Group, and Category"
     ]
-    
+
     mixed_approach = "Combines both implicit (attribute references) and explicit (depends_on) dependencies for complete control"
   }
 }
 
 ```
 
-
 **scripts/security_audit.sh:**
+
 ```bash
 #!/bin/bash
 # Basic security audit script for demonstration
@@ -1878,6 +1902,7 @@ echo "Security audit completed"
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "dependency_chain" {
   description = "Shows the dependency chain created"
@@ -1887,7 +1912,7 @@ output "dependency_chain" {
       building   = jamfpro_building.main_office.name
       department = jamfpro_department.it_department.name
     }
-    
+
     infrastructure_layer = {
       network_segment = jamfpro_network_segment.corporate_network.name
       categories = [
@@ -1895,12 +1920,12 @@ output "dependency_chain" {
         jamfpro_category.maintenance.name
       ]
     }
-    
+
     application_layer = {
       script         = jamfpro_script.security_audit.name
       computer_group = jamfpro_smart_computer_group.corporate_devices.name
     }
-    
+
     policy_layer = {
       security_policy = jamfpro_policy.security_compliance.name
     }
@@ -1938,6 +1963,7 @@ output "depends_on_best_practices" {
 ```
 
 **Test the configuration:**
+
 ```bash
 terraform init
 terraform plan
@@ -1948,6 +1974,7 @@ terraform output
 ```
 
 **💡 Key Learning Points:**
+
 1. `depends_on` creates explicit dependencies when implicit ones aren't enough
 2. Resources in `depends_on` arrays are created in parallel, but all must complete before the dependent resource
 3. Use `depends_on` for business logic dependencies beyond technical ones
@@ -1956,11 +1983,13 @@ terraform output
 ---
 
 ### 🌍 **Exercise 9.4**: Multi-Environment with `provider`
+
 **Duration**: 15 minutes | **Difficulty**: 🔴 Advanced
 
 Use provider aliases to manage resources across different Jamf Pro environments safely.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-providers
 cd terraform-jamfpro-providers
@@ -1968,6 +1997,7 @@ touch {main,variables,outputs,providers}.tf
 ```
 
 **providers.tf:**
+
 ```hcl
 terraform {
   required_providers {
@@ -2015,6 +2045,7 @@ provider "jamfpro" {
 ```
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -2066,18 +2097,19 @@ variable "environment_specific_apps" {
 ```
 
 **main.tf:**
+
 ```hcl
 # Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # 1. Jamf Pro requires globally unique resource names across the entire instance
 # 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
 # 3. Provider aliases allow managing multiple environments from single configuration
 # 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
-# 
+#
 # This pattern is essential for any Jamf Pro Terraform configuration used in:
 # - Training environments
-# - Shared sandbox instances  
+# - Shared sandbox instances
 # - Multi-user development scenarios
 resource "random_string" "suffix" {
   length  = 6
@@ -2088,7 +2120,7 @@ resource "random_string" "suffix" {
 # Production resources (default provider)
 resource "jamfpro_category" "prod_categories" {
   for_each = var.shared_categories
-  
+
   name     = "PROD-${each.key}-${random_string.suffix.result}"
   priority = 5
 }
@@ -2098,11 +2130,11 @@ resource "jamfpro_policy" "prod_baseline" {
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.prod_categories["Security"].id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon       = true
@@ -2115,7 +2147,7 @@ resource "jamfpro_policy" "prod_baseline" {
 resource "jamfpro_category" "dev_categories" {
   for_each = var.enable_development ? var.shared_categories : []
   provider = jamfpro.development
-  
+
   name     = "DEV-${each.key}-${random_string.suffix.result}"
   priority = 10
 }
@@ -2123,16 +2155,16 @@ resource "jamfpro_category" "dev_categories" {
 resource "jamfpro_policy" "dev_testing" {
   count    = var.enable_development ? 1 : 0
   provider = jamfpro.development
-  
+
   name        = "Development Testing Policy-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.dev_categories["Testing"].id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -2144,7 +2176,7 @@ resource "jamfpro_policy" "dev_testing" {
 resource "jamfpro_category" "staging_categories" {
   for_each = var.enable_staging ? var.shared_categories : []
   provider = jamfpro.staging
-  
+
   name     = "STAGING-${each.key}-${random_string.suffix.result}"
   priority = 8
 }
@@ -2152,16 +2184,16 @@ resource "jamfpro_category" "staging_categories" {
 resource "jamfpro_policy" "staging_validation" {
   count    = var.enable_staging ? 1 : 0
   provider = jamfpro.staging
-  
+
   name        = "Staging Validation Policy-${random_string.suffix.result}"
   enabled     = true
   frequency   = "Once per computer"
   category_id = jamfpro_category.staging_categories["Testing"].id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -2175,11 +2207,11 @@ resource "jamfpro_policy" "prod_deployment" {
   enabled     = var.enable_staging ? false : true  # Only enable if staging is not used
   frequency   = "Once per computer"
   category_id = jamfpro_category.prod_categories["Productivity"].id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
@@ -2190,6 +2222,7 @@ resource "jamfpro_policy" "prod_deployment" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "environment_summary" {
   description = "Summary of resources in each environment"
@@ -2202,13 +2235,13 @@ output "environment_summary" {
       ]
       provider = "default (production)"
     }
-    
+
     development = var.enable_development ? {
       categories = [for cat in jamfpro_category.dev_categories : cat.name]
       policies   = var.enable_development ? [jamfpro_policy.dev_testing[0].name] : []
       provider   = "jamfpro.development"
     } : null
-    
+
     staging = var.enable_staging ? {
       categories = [for cat in jamfpro_category.staging_categories : cat.name]
       policies   = var.enable_staging ? [jamfpro_policy.staging_validation[0].name] : []
@@ -2252,6 +2285,7 @@ output "provider_meta_argument_demo" {
 ```
 
 **Test the configuration:**
+
 ```bash
 terraform init
 
@@ -2269,6 +2303,7 @@ terraform apply -var="enable_staging=true"
 ```
 
 **💡 Key Learning Points:**
+
 1. Provider aliases enable multi-environment management
 2. Combine with conditional resources (`count`, `for_each`) for flexible deployments
 3. Use explicit dependencies between environments for promotion workflows
@@ -2276,12 +2311,14 @@ terraform apply -var="enable_staging=true"
 
 ---
 
-### ♻️ **Exercise 9.5**: Resource Protection with `lifecycle`  
+### ♻️ **Exercise 9.5**: Resource Protection with `lifecycle`
+
 **Duration**: 10 minutes | **Difficulty**: 🟡 Intermediate
 
 Protect critical Jamf Pro resources and control their lifecycle behavior.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-lifecycle
 cd terraform-jamfpro-lifecycle
@@ -2291,6 +2328,7 @@ touch {main,variables,outputs,providers}.tf
 **Copy providers.tf from previous exercises**
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -2326,18 +2364,19 @@ variable "critical_applications" {
 ```
 
 **main.tf:**
+
 ```hcl
 # Random suffix for unique naming - REQUIRED for Jamf Pro multi-environment testing
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # 1. Jamf Pro requires globally unique resource names across the entire instance
 # 2. Random suffixes prevent naming conflicts when multiple people run the same exercises
 # 3. Lifecycle rules protect critical resources from accidental changes/deletion
 # 4. Use 'terraform destroy' to clean up resources after testing to avoid conflicts
-# 
+#
 # This pattern is essential for any Jamf Pro Terraform configuration used in:
 # - Training environments
-# - Shared sandbox instances  
+# - Shared sandbox instances
 # - Multi-user development scenarios
 resource "random_string" "suffix" {
   length  = 6
@@ -2349,14 +2388,14 @@ resource "random_string" "suffix" {
 resource "jamfpro_category" "critical_security" {
   name     = "Critical Security-${random_string.suffix.result}"
   priority = 1
-  
+
   lifecycle {
     # Prevent accidental deletion of critical category
     prevent_destroy = true
-    
+
     # Create replacement before destroying (zero downtime)
     create_before_destroy = true
-    
+
     # Ignore priority changes that might happen externally
     ignore_changes = [priority]
   }
@@ -2368,11 +2407,11 @@ resource "jamfpro_policy" "critical_security_policy" {
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.critical_security.id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon        = true
@@ -2382,14 +2421,14 @@ resource "jamfpro_policy" "critical_security_policy" {
       byhost       = true
     }
   }
-  
+
   lifecycle {
     # Maximum protection for critical security policy
     prevent_destroy = true
-    
+
     # Always create new before destroying old (zero downtime)
     create_before_destroy = true
-    
+
     # Ignore changes that might be managed externally
     ignore_changes = [
       enabled  # Someone might temporarily disable
@@ -2400,7 +2439,7 @@ resource "jamfpro_policy" "critical_security_policy" {
 # Protected applications using app_installer (adapted from previous exercises)
 resource "jamfpro_app_installer" "critical_apps" {
   for_each = var.critical_applications
-  
+
   name            = "${each.key}-${random_string.suffix.result}"
   app_title_name  = each.key == "Security Agent" ? "Microsoft Defender" : each.key == "Compliance Monitor" ? "Jamf Connect" : "Slack"
   enabled         = true
@@ -2435,14 +2474,14 @@ resource "jamfpro_app_installer" "critical_apps" {
       featured = true
     }
   }
-  
+
   lifecycle {
     create_before_destroy = true
-    
+
     # Note: prevent_destroy must be a literal boolean, cannot use expressions
     # For demonstration, we'll protect all critical apps
     prevent_destroy = true
-    
+
     # Ignore version changes (managed by patch management)
     ignore_changes = [
       latest_available_version,
@@ -2457,26 +2496,26 @@ resource "jamfpro_policy" "test_policy" {
   enabled     = false  # Start disabled for testing
   frequency   = "Once per computer"
   category_id = jamfpro_category.critical_security.id
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
     }
   }
-  
+
   lifecycle {
     # Moderate protection - create before destroy but allow deletion
     create_before_destroy = true
-    
+
     # Allow external changes to these fields
     ignore_changes = [
       enabled  # Admins might enable/disable for testing
     ]
-    
+
     # No prevent_destroy - this can be deleted if needed
   }
 }
@@ -2485,7 +2524,7 @@ resource "jamfpro_policy" "test_policy" {
 resource "jamfpro_category" "standard_category" {
   name     = "Standard Applications-${random_string.suffix.result}"
   priority = 50
-  
+
   # No lifecycle block = default Terraform behavior
   # Can be modified and destroyed normally
 }
@@ -2497,13 +2536,13 @@ resource "jamfpro_script" "maintenance_script" {
   category_id     = jamfpro_category.standard_category.id
   os_requirements = "13"
   priority        = "AFTER"
-  
+
   lifecycle {
     # Force replacement when script content changes significantly
     replace_triggered_by = [
       jamfpro_category.standard_category.id
     ]
-    
+
     create_before_destroy = true
   }
 }
@@ -2511,6 +2550,7 @@ resource "jamfpro_script" "maintenance_script" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 output "lifecycle_protection_summary" {
   description = "Summary of lifecycle protection applied"
@@ -2521,13 +2561,13 @@ output "lifecycle_protection_summary" {
         prevent_destroy = true
         protections     = ["prevent_destroy", "create_before_destroy", "ignore_changes"]
       }
-      
+
       policy = {
         name            = jamfpro_policy.critical_security_policy.name
         prevent_destroy = true
         protections     = ["prevent_destroy", "create_before_destroy", "ignore_changes"]
       }
-      
+
       applications = {
         for app_name, app in jamfpro_app_installer.critical_apps :
         app_name => {
@@ -2537,20 +2577,20 @@ output "lifecycle_protection_summary" {
         }
       }
     }
-    
+
     test_resources = {
       policy = {
         name        = jamfpro_policy.test_policy.name
         protections = ["create_before_destroy", "ignore_changes"]
         note        = "Can be destroyed if needed"
       }
-      
+
       category = {
         name        = jamfpro_category.standard_category.name
         protections = []
         note        = "Standard Terraform lifecycle - no special protection"
       }
-      
+
       script = {
         name        = jamfpro_script.maintenance_script.name
         protections = ["create_before_destroy", "replace_triggered_by"]
@@ -2567,13 +2607,13 @@ output "lifecycle_rules_guide" {
       description = "Prevents Terraform from destroying the resource"
       use_when = [
         "Critical security policies",
-        "Production enrollment configurations", 
+        "Production enrollment configurations",
         "Essential categories and groups",
         "Resources that would cause service disruption"
       ]
       warning = "Must be removed or set to false before resource can be destroyed"
     }
-    
+
     create_before_destroy = {
       description = "Creates new resource before destroying old one"
       use_when = [
@@ -2584,7 +2624,7 @@ output "lifecycle_rules_guide" {
       ]
       note = "Requires extra capacity during updates"
     }
-    
+
     ignore_changes = {
       description = "Ignores changes to specified attributes"
       use_when = [
@@ -2595,7 +2635,7 @@ output "lifecycle_rules_guide" {
       ]
       warning = "Use carefully - can mask important configuration drift"
     }
-    
+
     replace_triggered_by = {
       description = "Forces replacement when referenced resources change"
       use_when = [
@@ -2614,12 +2654,12 @@ output "protection_status" {
     protection_enabled = true
     protected_resources = [
       "Critical Security Category",
-      "Critical Security Policy", 
+      "Critical Security Policy",
       "Security Agent Application",
       "Compliance Monitor Application",
       "Antivirus Application"
     ]
-    
+
     next_steps = [
       "✅ Critical resources are protected from accidental deletion",
       "⚠️  To destroy protected resources, edit lifecycle blocks to set prevent_destroy=false",
@@ -2643,6 +2683,7 @@ output "lifecycle_meta_argument_demo" {
 ```
 
 **Test the configuration:**
+
 ```bash
 terraform init
 terraform plan
@@ -2658,6 +2699,7 @@ terraform destroy -var="enable_protection=false"
 ```
 
 **💡 Key Learning Points:**
+
 1. `lifecycle` provides fine-grained control over resource behavior
 2. `prevent_destroy` stops accidental deletion of critical resources
 3. `create_before_destroy` ensures zero-downtime updates
@@ -2667,11 +2709,13 @@ terraform destroy -var="enable_protection=false"
 ---
 
 ### 🏢 **Exercise 9.6**: Complete Enterprise Mobile Device Management
+
 **Duration**: 45 minutes | **Difficulty**: 🔴 Advanced
 
 Now combine all meta arguments in a comprehensive enterprise Mobile Device Management deployment showcasing modern iOS/iPad enterprise patterns.
 
 **Project Setup:**
+
 ```bash
 mkdir terraform-jamfpro-enterprise-mdm
 cd terraform-jamfpro-enterprise-mdm
@@ -2682,10 +2726,11 @@ mkdir -p {scripts,profiles,certificates}
 ```
 
 **providers.tf:**
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -2730,6 +2775,7 @@ provider "random" {}
 ```
 
 **variables.tf:**
+
 ```hcl
 variable "jamfpro_instance_fqdn" {
   description = "The Jamf Pro instance FQDN"
@@ -2781,10 +2827,10 @@ variable "organization_structure" {
     }))
     departments = list(string)
   })
-  
+
   default = {
     sites = ["Corporate HQ", "Regional Office", "Remote Workers"]
-    
+
     buildings = {
       "Main Campus" = {
         site    = "Corporate HQ"
@@ -2801,7 +2847,7 @@ variable "organization_structure" {
         zip     = "73301"
       }
     }
-    
+
     departments = ["Executive", "Sales", "Marketing", "Engineering", "Support"]
   }
 }
@@ -2815,7 +2861,7 @@ variable "mobile_applications" {
     required_for    = list(string)
     featured        = bool
   }))
-  
+
   default = {
     "Microsoft Outlook" = {
       app_title_name  = "Microsoft Outlook"
@@ -2848,7 +2894,7 @@ variable "smart_groups_config" {
     criteria_value = string
     search_type    = string
   }))
-  
+
   default = {
     "iOS Devices" = {
       criteria_name  = "Operating System Version"
@@ -2871,26 +2917,27 @@ variable "smart_groups_config" {
 ```
 
 **main.tf:**
+
 ```hcl
 # ==================================================================================
 # ENTERPRISE MOBILE DEVICE MANAGEMENT - COMPREHENSIVE META-ARGUMENTS DEMONSTRATION
 # ==================================================================================
-# 
+#
 # This configuration demonstrates ALL Terraform meta-arguments in a real-world
 # enterprise mobile device management scenario:
-# 
+#
 # 1. for_each    - Dynamic resource creation from complex data structures
 # 2. count       - Simple iteration for lists and conditional creation
 # 3. depends_on  - Explicit dependency management for complex workflows
 # 4. provider    - Multi-environment deployment with provider aliases
 # 5. lifecycle   - Resource protection and behavior control
-# 
+#
 # IMPORTANT NOTES for Jamf Pro Terraform exercises:
 # - Jamf Pro requires globally unique resource names across the entire instance
 # - Random suffixes prevent naming conflicts in shared sandbox environments
 # - Lifecycle rules protect critical resources from accidental changes/deletion
 # - Provider aliases enable multi-environment management from single configuration
-# 
+#
 # This pattern is essential for enterprise Jamf Pro Terraform deployments in:
 # - Production environments with strict change control
 # - Multi-environment CI/CD pipelines
@@ -2902,7 +2949,7 @@ resource "random_string" "enterprise_suffix" {
   length  = 8
   upper   = false
   special = false
-  
+
   lifecycle {
     # Prevent suffix changes that would break all resource names
     prevent_destroy = true
@@ -2916,9 +2963,9 @@ resource "random_string" "enterprise_suffix" {
 # Sites using for_each - Dynamic creation from variable list
 resource "jamfpro_site" "enterprise_sites" {
   for_each = toset(var.organization_structure.sites)
-  
+
   name = "${each.key}-${random_string.enterprise_suffix.result}"
-  
+
   lifecycle {
     # Sites are foundational - protect from accidental deletion
     prevent_destroy = true
@@ -2929,17 +2976,17 @@ resource "jamfpro_site" "enterprise_sites" {
 # Buildings using for_each - Complex object iteration with explicit dependencies
 resource "jamfpro_building" "enterprise_buildings" {
   for_each = var.organization_structure.buildings
-  
+
   name            = "${each.key}-${random_string.enterprise_suffix.result}"
   street_address1 = each.value.address
   city            = each.value.city
   state_province  = each.value.state
   zip_postal_code = each.value.zip
   country         = "United States"
-  
+
   # Explicit dependency - buildings must be created after sites
   depends_on = [jamfpro_site.enterprise_sites]
-  
+
   lifecycle {
     # Buildings are critical infrastructure
     prevent_destroy = true
@@ -2952,9 +2999,9 @@ resource "jamfpro_building" "enterprise_buildings" {
 # Departments using count - Simple list iteration
 resource "jamfpro_department" "enterprise_departments" {
   count = length(var.organization_structure.departments)
-  
+
   name = "${var.organization_structure.departments[count.index]}-${random_string.enterprise_suffix.result}"
-  
+
   lifecycle {
     # Departments are organizational foundation
     prevent_destroy = true
@@ -2970,20 +3017,20 @@ resource "jamfpro_department" "enterprise_departments" {
 locals {
   # Extract unique categories from mobile applications
   mobile_app_categories = toset([for app in var.mobile_applications : app.category])
-  
+
   # Additional system categories
   system_categories = toset(["Security", "Management", "Compliance"])
-  
+
   # Combined categories
   all_categories = setunion(local.mobile_app_categories, local.system_categories)
 }
 
 resource "jamfpro_category" "enterprise_categories" {
   for_each = local.all_categories
-  
+
   name     = "${each.key}-${random_string.enterprise_suffix.result}"
   priority = each.key == "Security" ? 1 : each.key == "Management" ? 2 : each.key == "Compliance" ? 3 : 10
-  
+
   lifecycle {
     # Categories are foundational - protect all for demonstration
     prevent_destroy = true
@@ -3000,23 +3047,23 @@ resource "jamfpro_category" "enterprise_categories" {
 # Smart computer groups using for_each - Complex criteria configuration
 resource "jamfpro_smart_computer_group" "enterprise_device_groups" {
   for_each = var.smart_groups_config
-  
+
   name    = "${each.key}-${random_string.enterprise_suffix.result}"
   site_id = jamfpro_site.enterprise_sites[var.organization_structure.sites[0]].id
-  
+
   # Complex dependency chain
   depends_on = [
     jamfpro_site.enterprise_sites,
     jamfpro_building.enterprise_buildings,
     jamfpro_department.enterprise_departments
   ]
-  
+
   criteria {
     name        = each.value.criteria_name
     search_type = each.value.search_type
     value       = each.value.criteria_value
   }
-  
+
   lifecycle {
     create_before_destroy = true
     # Protect all device groups for demonstration
@@ -3029,22 +3076,22 @@ resource "jamfpro_smart_computer_group" "enterprise_device_groups" {
 # Department-specific computer groups using count - Simple department iteration
 resource "jamfpro_smart_computer_group" "department_groups" {
   count = length(var.organization_structure.departments)
-  
+
   name    = "${var.organization_structure.departments[count.index]} Computers-${random_string.enterprise_suffix.result}"
   site_id = jamfpro_site.enterprise_sites[var.organization_structure.sites[0]].id
-  
+
   # Explicit dependencies for proper creation order
   depends_on = [
     jamfpro_site.enterprise_sites,
     jamfpro_department.enterprise_departments
   ]
-  
+
   criteria {
     name        = "Department"
     search_type = "is"
     value       = "${var.organization_structure.departments[count.index]}-${random_string.enterprise_suffix.result}"
   }
-  
+
   lifecycle {
     create_before_destroy = true
     # Protect all department groups for demonstration
@@ -3059,7 +3106,7 @@ resource "jamfpro_smart_computer_group" "department_groups" {
 # Mobile applications using for_each - Complex app configuration
 resource "jamfpro_app_installer" "enterprise_mobile_apps" {
   for_each = var.mobile_applications
-  
+
   name            = "${each.key}-${random_string.enterprise_suffix.result}"
   app_title_name  = each.value.app_title_name
   enabled         = true
@@ -3094,13 +3141,13 @@ resource "jamfpro_app_installer" "enterprise_mobile_apps" {
       featured = each.value.featured
     }
   }
-  
+
   # Complex dependencies on categories and sites
   depends_on = [
     jamfpro_category.enterprise_categories,
     jamfpro_site.enterprise_sites
   ]
-  
+
   lifecycle {
     create_before_destroy = true
     # Protect all applications for demonstration
@@ -3123,14 +3170,14 @@ resource "jamfpro_policy" "enterprise_security_baseline" {
   enabled     = true
   frequency   = "Ongoing"
   category_id = jamfpro_category.enterprise_categories["Security"].id
-  
+
   # Complex dependency chain for security policy
   depends_on = [
     jamfpro_category.enterprise_categories,
     jamfpro_smart_computer_group.enterprise_device_groups,
     jamfpro_smart_computer_group.department_groups
   ]
-  
+
   scope {
     all_computers      = false
     computer_group_ids = [
@@ -3138,7 +3185,7 @@ resource "jamfpro_policy" "enterprise_security_baseline" {
       group.id
     ]
   }
-  
+
   payloads {
     maintenance {
       recon        = true
@@ -3148,7 +3195,7 @@ resource "jamfpro_policy" "enterprise_security_baseline" {
       byhost       = true
     }
   }
-  
+
   lifecycle {
     # Maximum protection for critical security policy
     prevent_destroy = true
@@ -3163,27 +3210,27 @@ resource "jamfpro_policy" "enterprise_security_baseline" {
 # Compliance monitoring policy using conditional count
 resource "jamfpro_policy" "compliance_monitoring" {
   count = var.enable_staging ? 1 : 0  # Only create in staging for testing
-  
+
   name        = "Compliance Monitoring Policy-${random_string.enterprise_suffix.result}"
   enabled     = false  # Start disabled for testing
   frequency   = "Once every week"
   category_id = jamfpro_category.enterprise_categories["Compliance"].id
-  
+
   depends_on = [
     jamfpro_category.enterprise_categories,
     jamfpro_policy.enterprise_security_baseline
   ]
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
     }
   }
-  
+
   lifecycle {
     create_before_destroy = true
     # Allow modification for testing
@@ -3198,10 +3245,10 @@ resource "jamfpro_policy" "compliance_monitoring" {
 # Production environment resources (default provider)
 resource "jamfpro_category" "prod_categories" {
   for_each = toset(["Production-Apps", "Production-Security"])
-  
+
   name     = "${each.key}-${random_string.enterprise_suffix.result}"
   priority = each.key == "Production-Security" ? 1 : 5
-  
+
   lifecycle {
     prevent_destroy = true
     create_before_destroy = true
@@ -3212,10 +3259,10 @@ resource "jamfpro_category" "prod_categories" {
 resource "jamfpro_category" "dev_categories" {
   for_each = var.enable_development ? toset(["Dev-Testing", "Dev-Staging"]) : []
   provider = jamfpro.development
-  
+
   name     = "${each.key}-${random_string.enterprise_suffix.result}"
   priority = 10
-  
+
   lifecycle {
     create_before_destroy = true
     # Development resources can be destroyed
@@ -3226,25 +3273,25 @@ resource "jamfpro_category" "dev_categories" {
 resource "jamfpro_policy" "staging_validation" {
   count    = var.enable_staging ? 1 : 0
   provider = jamfpro.staging
-  
+
   name        = "Staging Validation Policy-${random_string.enterprise_suffix.result}"
   enabled     = true
   frequency   = "Once per computer"
   category_id = var.enable_staging ? jamfpro_category.prod_categories["Production-Apps"].id : null
-  
+
   # Cross-provider dependency (production category used in staging)
   depends_on = [jamfpro_category.prod_categories]
-  
+
   scope {
     all_computers = false
   }
-  
+
   payloads {
     maintenance {
       recon = true
     }
   }
-  
+
   lifecycle {
     create_before_destroy = true
     # Staging can be modified freely
@@ -3273,15 +3320,15 @@ locals {
 
 resource "jamfpro_script" "enterprise_management_scripts" {
   for_each = local.management_scripts
-  
+
   name            = "${each.key}-${random_string.enterprise_suffix.result}"
   script_contents = each.value.content
   category_id     = jamfpro_category.enterprise_categories[each.value.category].id
   os_requirements = "13"
   priority        = each.value.priority
-  
+
   depends_on = [jamfpro_category.enterprise_categories]
-  
+
   lifecycle {
     create_before_destroy = true
     # Note: replace_triggered_by with each references not supported
@@ -3293,6 +3340,7 @@ resource "jamfpro_script" "enterprise_management_scripts" {
 ```
 
 **outputs.tf:**
+
 ```hcl
 # ==================================================================================
 # ENTERPRISE MDM DEPLOYMENT OUTPUTS - META-ARGUMENTS DEMONSTRATION
@@ -3312,7 +3360,7 @@ output "meta_arguments_demonstration_summary" {
         "jamfpro_script.enterprise_management_scripts - Created from local scripts map"
       ]
     }
-    
+
     count_examples = {
       description = "Simple iteration and conditional resource creation"
       resources = [
@@ -3321,7 +3369,7 @@ output "meta_arguments_demonstration_summary" {
         "jamfpro_policy.compliance_monitoring - Conditional count based on staging flag"
       ]
     }
-    
+
     depends_on_examples = {
       description = "Explicit dependency management for complex workflows"
       dependencies = [
@@ -3332,7 +3380,7 @@ output "meta_arguments_demonstration_summary" {
         "Scripts depend on categories for proper categorization"
       ]
     }
-    
+
     provider_examples = {
       description = "Multi-environment deployment with provider aliases"
       environments = {
@@ -3341,7 +3389,7 @@ output "meta_arguments_demonstration_summary" {
         staging     = "jamfpro.staging alias - Validation resources"
       }
     }
-    
+
     lifecycle_examples = {
       description = "Resource protection and behavior control"
       protections = {
@@ -3385,7 +3433,7 @@ output "enterprise_infrastructure_summary" {
           name = site.name
         }
       }
-      
+
       buildings = {
         for building_name, building in jamfpro_building.enterprise_buildings :
         building_name => {
@@ -3394,7 +3442,7 @@ output "enterprise_infrastructure_summary" {
           address = "${building.street_address1}, ${building.city}, ${building.state_province}"
         }
       }
-      
+
       departments = [
         for dept in jamfpro_department.enterprise_departments :
         {
@@ -3403,7 +3451,7 @@ output "enterprise_infrastructure_summary" {
         }
       ]
     }
-    
+
     categories = {
       for category_name, category in jamfpro_category.enterprise_categories :
       category_name => {
@@ -3412,7 +3460,7 @@ output "enterprise_infrastructure_summary" {
         priority = category.priority
       }
     }
-    
+
     smart_groups = {
       device_groups = {
         for group_name, group in jamfpro_smart_computer_group.enterprise_device_groups :
@@ -3421,7 +3469,7 @@ output "enterprise_infrastructure_summary" {
           name = group.name
         }
       }
-      
+
       department_groups = [
         for group in jamfpro_smart_computer_group.department_groups :
         {
@@ -3430,7 +3478,7 @@ output "enterprise_infrastructure_summary" {
         }
       ]
     }
-    
+
     applications = {
       for app_name, app in jamfpro_app_installer.enterprise_mobile_apps :
       app_name => {
@@ -3453,7 +3501,7 @@ output "security_and_compliance_status" {
       enabled = jamfpro_policy.enterprise_security_baseline.enabled
       protected = "✅ Protected by prevent_destroy = true"
     }
-    
+
     compliance_monitoring = var.enable_staging ? {
       enabled = "✅ Compliance monitoring enabled in staging"
       policy_count = length(jamfpro_policy.compliance_monitoring)
@@ -3461,7 +3509,7 @@ output "security_and_compliance_status" {
       enabled = "❌ Compliance monitoring disabled (staging not enabled)"
       policy_count = 0
     }
-    
+
     management_scripts = {
       for script_name, script in jamfpro_script.enterprise_management_scripts :
       script_name => {
@@ -3489,7 +3537,7 @@ output "multi_environment_status" {
         }
       }
     }
-    
+
     development = {
       enabled = var.enable_development
       provider = "jamfpro.development"
@@ -3501,7 +3549,7 @@ output "multi_environment_status" {
         }
       } : {}
     }
-    
+
     staging = {
       enabled = var.enable_staging
       provider = "jamfpro.staging"
@@ -3532,13 +3580,13 @@ output "lifecycle_protection_report" {
       "jamfpro_category.prod_categories - Production categories",
       "jamfpro_script.enterprise_management_scripts[Security Compliance Check] - Security script"
     ]
-    
+
     create_before_destroy_resources = [
       "All foundation resources for zero-downtime updates",
       "All application and policy resources for service continuity",
       "All smart groups and categories for dependency management"
     ]
-    
+
     ignore_changes_applied = {
       buildings = ["street_address1", "city", "state_province", "zip_postal_code"],
       categories = ["priority"],
@@ -3546,7 +3594,7 @@ output "lifecycle_protection_report" {
       applications = ["latest_available_version", "selected_version"],
       policies = ["enabled", "scope.computer_ids"]
     }
-    
+
     replace_triggered_by_resources = [
       "jamfpro_script.enterprise_management_scripts - Replaced when categories change"
     ]
@@ -3564,7 +3612,7 @@ output "deployment_recommendations" {
       "🔒 Critical resources are protected from accidental deletion",
       "⚠️ To modify protected resources, adjust lifecycle blocks carefully"
     ]
-    
+
     best_practices = [
       "Use for_each for complex data structures and dynamic resource creation",
       "Use count for simple lists and conditional resource creation",
@@ -3574,7 +3622,7 @@ output "deployment_recommendations" {
       "Always use unique naming with random suffixes in shared environments",
       "Document all lifecycle protections and their business justifications"
     ]
-    
+
     meta_arguments_mastery = {
       for_each = "✅ Mastered - Dynamic resource creation from complex data",
       count = "✅ Mastered - Simple iteration and conditional creation",
@@ -3593,6 +3641,7 @@ output "enterprise_suffix" {
 ```
 
 **Test the configuration:**
+
 ```bash
 # Set environment variables
 export JAMFPRO_INSTANCE_NAME=your-instance
@@ -3623,7 +3672,8 @@ terraform output meta_arguments_demonstrated
 
 ### **All Meta Arguments in Complex Enterprise Scenarios:**
 
-1. **`for_each`**: 
+1. **`for_each`**:
+
    - Sites, buildings, categories (maps and sets)
    - Enrollment customizations with complex branding
    - Mobile device prestages with conditional configurations
@@ -3632,26 +3682,29 @@ terraform output meta_arguments_demonstrated
    - API roles and account groups
    - Extension attributes with conditional popup menus
 
-2. **`count`**: 
+2. **`count`**:
+
    - Departments (simple list iteration)
    - Mobile device groups (department-based)
    - File extensions (security restrictions)
    - Conditional security features (FileVault, LAPS)
    - Environment-specific admin accounts
 
-3. **`depends_on`**: 
+3. **`depends_on`**:
+
    - Complex dependency chains: Sites → Buildings → Departments
    - Prestages depend on sites, customizations, and departments
    - Mobile groups depend on foundational organizational structure
    - Applications depend on categories and groups
 
-4. **`provider`**: 
+4. **`provider`**:
+
    - Production resources (default provider)
    - Development API integrations (development provider)
    - Staging admin accounts (staging provider)
    - Environment-specific SMTP configurations
 
-5. **`lifecycle`**: 
+5. **`lifecycle`**:
    - Critical security configurations (prevent_destroy)
    - Production API access protection
    - Executive prestage enrollment protection
@@ -3675,6 +3728,7 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 ## ✅ Module 9 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Mastered **explicit dependencies** with `depends_on` for Jamf Pro resource ordering
 - ✅ Implemented **multiple resource creation** using `count` and `for_each` for enterprise scale
 - ✅ Configured **resource lifecycle management** with lifecycle blocks for production safety
@@ -3682,6 +3736,7 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 - ✅ Built **complex Jamf Pro infrastructure patterns** using all meta arguments
 
 **🔑 Key Concepts Covered:**
+
 - **Meta Arguments**: Special arguments available to all Jamf Pro resource types
 - **depends_on**: Explicit dependency management for organizational structure
 - **count**: Numeric indexing for departments, groups, and policies
@@ -3690,6 +3745,7 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 - **lifecycle**: Resource creation, update, and destruction control for production safety
 
 **💼 Professional Skills Developed:**
+
 - **Dependency Management**: Understanding implicit vs explicit dependencies in MDM
 - **Resource Scaling**: Creating multiple Jamf Pro resources efficiently
 - **Multi-Environment Strategy**: Managing resources across development and production Jamf Pro instances
@@ -3697,6 +3753,7 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 - **Enterprise Patterns**: Implementing large-scale device management configurations
 
 **🏗️ Technical Achievements:**
+
 - Built comprehensive Jamf Pro organizational structure with all meta arguments
 - Implemented multi-environment testing across development and production instances
 - Created dynamic application deployment based on department requirements
@@ -3704,6 +3761,7 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 - Developed enterprise-grade policies with lifecycle protection
 
 **🔧 Advanced Patterns Mastered:**
+
 - **Conditional Resources**: Using `count` for optional development environment resources
 - **Dynamic Configuration**: Using `for_each` with complex Jamf Pro data structures
 - **Multi-Instance Deployment**: Provider configurations for different Jamf Pro environments
@@ -3718,9 +3776,8 @@ This exercise showcases a **real-world enterprise mobile device management deplo
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 11: Expressions](./module_11_expressions.md)**
+**➡️ [Module 12: Expressions](./module_12_expressions.md)**
 
 Learn powerful meta-arguments like count, for_each, and lifecycle rules.
 
 ---
-

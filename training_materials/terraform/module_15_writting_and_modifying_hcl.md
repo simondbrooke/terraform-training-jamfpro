@@ -1,6 +1,4 @@
-
-
-# ✍️ Module 14: Writing and Modifying HCL
+# ✍️ Module 15: Writing and Modifying HCL
 
 **⏱️ Duration**: 35 minutes  
 **🎯 Difficulty**: Beginner to Intermediate  
@@ -48,12 +46,14 @@ terraform fmt -write=false main.tf
 ### 📋 What terraform fmt Does
 
 **🎯 Indentation and Spacing:**
+
 - Standardizes indentation (2 spaces)
 - Removes trailing whitespace
 - Ensures consistent spacing around operators
 - Aligns resource arguments properly
 
 **🔤 Formatting Rules:**
+
 - Sorts argument assignments alphabetically within blocks
 - Normalizes string quotation (removes unnecessary quotes)
 - Formats multi-line strings consistently
@@ -62,6 +62,7 @@ terraform fmt -write=false main.tf
 ### 💻 Before and After Examples
 
 **Before formatting:**
+
 ```hcl
 resource "aws_instance"   "web" {
 ami= "ami-12345"
@@ -89,6 +90,7 @@ error_message="Instance count must be between 1 and 10."
 ```
 
 **After `terraform fmt`:**
+
 ```hcl
 resource "aws_instance" "web" {
   ami                    = "ami-12345"
@@ -161,18 +163,21 @@ terraform validate -no-color
 ### 📋 What terraform validate Checks
 
 **✅ Syntax Validation:**
+
 - HCL syntax correctness
 - Block structure validity
 - Argument name spelling
 - Proper quotation and brackets
 
 **🔍 Semantic Validation:**
+
 - Resource type existence
 - Required argument presence
 - Argument type correctness
 - Reference validity (local scope only)
 
 **⚠️ What validate Does NOT Check:**
+
 - Provider availability (requires `terraform init`)
 - Resource existence in real infrastructure
 - Cross-resource dependencies outside current configuration
@@ -181,6 +186,7 @@ terraform validate -no-color
 ### 💻 Validation Examples
 
 **Valid Configuration:**
+
 ```hcl
 terraform {
   required_providers {
@@ -199,7 +205,7 @@ variable "aws_region" {
   type        = string
   description = "AWS region"
   default     = "us-west-2"
-  
+
   validation {
     condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]$", var.aws_region))
     error_message = "AWS region must be in the format xx-xxxx-x."
@@ -210,7 +216,7 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = {
     Name = "main-vpc"
   }
@@ -353,6 +359,7 @@ echo 'length(["a", "b", "c"])' | terraform console
 ### 💻 Console Examples
 
 **Testing Variables and Locals:**
+
 ```bash
 $ terraform console
 > var.environment
@@ -370,6 +377,7 @@ $ terraform console
 ```
 
 **Testing Functions:**
+
 ```bash
 > length(["web", "app", "db"])
 3
@@ -383,7 +391,7 @@ $ terraform console
 > split(",", "apple,banana,cherry")
 [
   "apple",
-  "banana", 
+  "banana",
   "cherry",
 ]
 
@@ -395,6 +403,7 @@ $ terraform console
 ```
 
 **Testing Expressions:**
+
 ```bash
 > var.environment == "production" ? "prod" : "dev"
 "prod"
@@ -402,7 +411,7 @@ $ terraform console
 > [for i in range(3) : "server-${i + 1}"]
 [
   "server-1",
-  "server-2", 
+  "server-2",
   "server-3",
 ]
 
@@ -416,12 +425,13 @@ $ terraform console
 [
   "a",
   "b",
-  "c", 
+  "c",
   "d",
 ]
 ```
 
 **Testing Resource References:**
+
 ```bash
 > aws_vpc.main.id
 "vpc-12345678"
@@ -443,6 +453,7 @@ $ terraform console
 ### 🔧 Advanced Console Usage
 
 **Complex Expression Testing:**
+
 ```bash
 > local.subnet_configs = {
 >   for az in data.aws_availability_zones.available.names :
@@ -459,7 +470,7 @@ $ terraform console
     "cidr" = "10.0.0.0/24"
   }
   "us-west-2b" = {
-    "az" = "us-west-2b" 
+    "az" = "us-west-2b"
     "cidr" = "10.0.1.0/24"
   }
   "us-west-2c" = {
@@ -470,6 +481,7 @@ $ terraform console
 ```
 
 **Function Exploration:**
+
 ```bash
 # Test JSON encoding/decoding
 > jsonencode({name = "test", count = 3})
@@ -496,17 +508,20 @@ false
 ---
 
 ## 💻 **Exercise 12.1**: Code Quality Workflow
+
 **Duration**: 20 minutes
 
 Let's practice a complete code quality workflow with formatting, validation, and interactive debugging.
 
 **Step 1: Create Poorly Formatted Configuration**
+
 ```bash
 mkdir terraform-quality-demo
 cd terraform-quality-demo
 ```
 
 Create `main.tf` with intentional formatting issues:
+
 ```hcl
 terraform{
 required_providers{
@@ -589,6 +604,7 @@ value=aws_subnet.public[*].id
 ```
 
 **Step 2: Check Current Formatting**
+
 ```bash
 # Check if formatting is needed
 terraform fmt -check
@@ -599,6 +615,7 @@ terraform fmt -diff
 ```
 
 **Step 3: Format the Code**
+
 ```bash
 # Format all files
 terraform fmt
@@ -612,6 +629,7 @@ cat main.tf
 ```
 
 **Step 4: Validate Configuration**
+
 ```bash
 # Initialize first (required for validation with providers)
 terraform init
@@ -624,6 +642,7 @@ terraform validate -json | jq
 ```
 
 **Step 5: Interactive Console Testing**
+
 ```bash
 # Start console
 terraform console
@@ -651,6 +670,7 @@ terraform console
 
 **Step 6: Add Validation Error for Testing**
 Add this to `main.tf`:
+
 ```hcl
 # Intentional error for testing
 resource "aws_instance" "invalid" {
@@ -669,6 +689,7 @@ terraform validate -json | jq '.diagnostics'
 ```
 
 **Step 7: Fix Error and Final Validation**
+
 ```bash
 # Remove the invalid resource
 # Edit main.tf to remove the invalid resource block
@@ -686,6 +707,7 @@ terraform console
 
 **Step 8: CI/CD Integration Script**
 Create `validate.sh`:
+
 ```bash
 #!/bin/bash
 set -e
@@ -716,6 +738,7 @@ chmod +x validate.sh
 
 **Step 9: VS Code Integration**
 Create `.vscode/settings.json`:
+
 ```json
 {
   "terraform.format.enable": true,
@@ -736,6 +759,7 @@ Create `.vscode/settings.json`:
 ## ✅ Module 12 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Mastered **code formatting** with `terraform fmt` for consistent style
 - ✅ Implemented **configuration validation** using `terraform validate`
 - ✅ Learned **interactive debugging** with `terraform console`
@@ -744,6 +768,7 @@ Create `.vscode/settings.json`:
 - ✅ Developed **troubleshooting skills** for configuration issues
 
 **🔑 Key Concepts Covered:**
+
 - **Code Formatting**: Automatic formatting, style consistency, CI/CD integration
 - **Configuration Validation**: Syntax checking, semantic validation, error reporting
 - **Interactive Console**: Expression testing, function exploration, debugging
@@ -751,6 +776,7 @@ Create `.vscode/settings.json`:
 - **IDE Integration**: VS Code configuration, automatic formatting, real-time validation
 
 **💼 Professional Skills Developed:**
+
 - **Code Quality**: Maintaining consistent, readable Terraform code
 - **Debugging Techniques**: Using console for expression testing and troubleshooting
 - **Workflow Integration**: Automating quality checks in development pipelines
@@ -767,7 +793,7 @@ Create `.vscode/settings.json`:
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 15: Plan and Apply](./module_15_plan_and_apply.md)**
+**➡️ [Module 16: Plan and Apply](./module_16_plan_and_apply.md)**
 
 Master the core Terraform workflow for safe infrastructure changes.
 
