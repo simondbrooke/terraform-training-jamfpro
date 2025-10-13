@@ -1,6 +1,4 @@
-
-
-# 🚀 Module 13: TF Initialization
+# 🚀 Module 14: TF Initialization
 
 **⏱️ Duration**: 30 minutes  
 **🎯 Difficulty**: Beginner to Intermediate  
@@ -26,21 +24,25 @@ The `terraform init` command **initializes a Terraform working directory** and i
 ### 🔧 What terraform init Does
 
 **📦 Provider Installation:**
+
 - Downloads and installs required providers
 - Verifies provider signatures and checksums
 - Creates `.terraform` directory with provider binaries
 
 **📁 Module Installation:**
+
 - Downloads modules from various sources
 - Caches modules locally for performance
 - Resolves module dependencies
 
 **🔧 Backend Configuration:**
+
 - Initializes the configured backend
 - Migrates state between backends if needed
 - Sets up remote state storage and locking
 
 **📋 Working Directory Setup:**
+
 - Creates `.terraform.lock.hcl` for dependency locking
 - Validates configuration syntax
 - Prepares directory for other Terraform operations
@@ -100,7 +102,7 @@ you to do so if necessary.
 # terraform block with provider requirements
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -161,6 +163,7 @@ provider "registry.terraform.io/hashicorp/random" {
 ```
 
 **🔑 Lock File Management:**
+
 ```bash
 # Upgrade providers to latest allowed versions
 terraform init -upgrade
@@ -183,19 +186,19 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    
+
     # Community provider
     github = {
       source  = "integrations/github"
       version = "~> 5.0"
     }
-    
+
     # Custom/private provider
     custom = {
       source  = "company.com/team/custom"
       version = "~> 1.0"
     }
-    
+
     # Local provider (development)
     local-dev = {
       source  = "local/company/dev"
@@ -218,14 +221,14 @@ The `terraform get` command downloads and updates modules referenced in your con
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  
+
   name = "my-vpc"
   cidr = "10.0.0.0/16"
-  
+
   azs             = ["us-west-2a", "us-west-2b", "us-west-2c"]
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
-  
+
   enable_nat_gateway = true
   enable_vpn_gateway = true
 }
@@ -233,11 +236,11 @@ module "vpc" {
 module "security_group" {
   source = "terraform-aws-modules/security-group/aws"
   version = "~> 4.0"
-  
+
   name        = "web-server-sg"
   description = "Security group for web servers"
   vpc_id      = module.vpc.vpc_id
-  
+
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_rules       = ["http-80-tcp", "https-443-tcp"]
 }
@@ -312,7 +315,7 @@ cat .terraform/modules/modules.json
       "Dir": ".terraform/modules/vpc"
     },
     {
-      "Key": "security_group", 
+      "Key": "security_group",
       "Source": "terraform-aws-modules/security-group/aws",
       "Version": "4.17.2",
       "Dir": ".terraform/modules/security_group"
@@ -358,7 +361,7 @@ terraform {
 terraform {
   backend "remote" {
     organization = "my-org"
-    
+
     workspaces {
       name = "my-workspace"
     }
@@ -396,11 +399,13 @@ terraform init -force-copy
 ---
 
 ## 💻 **Exercise 11.1**: Complete Initialization Workflow
+
 **Duration**: 20 minutes
 
 Let's practice the complete initialization process with providers, modules, and backends.
 
 **Step 1: Project Setup**
+
 ```bash
 mkdir terraform-init-demo
 cd terraform-init-demo
@@ -408,10 +413,11 @@ cd terraform-init-demo
 
 **Step 2: Create Configuration with Providers and Modules**
 Create `main.tf`:
+
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -437,17 +443,17 @@ resource "random_id" "suffix" {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  
+
   name = "init-demo-${random_id.suffix.hex}"
   cidr = "10.0.0.0/16"
-  
+
   azs             = ["us-west-2a", "us-west-2b"]
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
-  
+
   enable_nat_gateway = true
   enable_vpn_gateway = false
-  
+
   tags = {
     Environment = "demo"
     Purpose     = "initialization-demo"
@@ -458,16 +464,16 @@ module "vpc" {
 module "web_security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
-  
+
   name        = "web-sg-${random_id.suffix.hex}"
   description = "Security group for web servers"
   vpc_id      = module.vpc.vpc_id
-  
+
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_rules       = ["http-80-tcp", "https-443-tcp"]
-  
+
   egress_rules = ["all-all"]
-  
+
   tags = {
     Environment = "demo"
   }
@@ -486,6 +492,7 @@ output "security_group_id" {
 ```
 
 **Step 3: Initial Initialization**
+
 ```bash
 # Initialize with verbose output
 terraform init -verbose
@@ -503,6 +510,7 @@ cat .terraform/modules/modules.json | jq
 ```
 
 **Step 4: Module Management**
+
 ```bash
 # Update modules to latest versions
 terraform get -update
@@ -517,6 +525,7 @@ terraform plan
 
 **Step 5: Backend Migration**
 Create `backend.tf`:
+
 ```hcl
 terraform {
   backend "s3" {
@@ -536,6 +545,7 @@ terraform init -reconfigure
 ```
 
 **Step 6: Troubleshooting Common Issues**
+
 ```bash
 # Clear and reinitialize if needed
 rm -rf .terraform/
@@ -550,6 +560,7 @@ terraform init -verbose 2>&1 | tee init.log
 ```
 
 **Step 7: Apply and Cleanup**
+
 ```bash
 # Apply configuration
 terraform apply
@@ -565,6 +576,7 @@ terraform destroy
 ## ✅ Module 11 Summary
 
 **🎯 Learning Objectives Achieved:**
+
 - ✅ Mastered **terraform init** and all its initialization functions
 - ✅ Managed **provider installation** with version constraints and lock files
 - ✅ Worked with **terraform get** for efficient module management
@@ -573,6 +585,7 @@ terraform destroy
 - ✅ Implemented **initialization best practices** for team collaboration
 
 **🔑 Key Concepts Covered:**
+
 - **Initialization Process**: Provider download, module installation, backend setup
 - **Provider Management**: Version constraints, lock files, upgrade procedures
 - **Module Sources**: Registry, Git, local, and HTTP module sources
@@ -580,6 +593,7 @@ terraform destroy
 - **Troubleshooting**: Common initialization issues and resolution strategies
 
 **💼 Professional Skills Developed:**
+
 - **Project Setup**: Efficient Terraform project initialization workflows
 - **Dependency Management**: Provider and module version control
 - **Team Collaboration**: Consistent initialization across team members
@@ -596,7 +610,7 @@ terraform destroy
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 14: Writing and Modifying HCL](./module_14_writting_and_modifying_hcl.md)**
+**➡️ [Module 15: Writing and Modifying HCL](./module_15_writting_and_modifying_hcl.md)**
 
 Best practices for writing maintainable Terraform code.
 

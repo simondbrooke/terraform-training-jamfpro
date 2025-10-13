@@ -2176,7 +2176,7 @@ resource "jamfpro_policy" "add_printers" {
 - **Flexibility**: Creating reusable expression patterns for common operations
 - **Documentation**: Using descriptive variable names and comments for complex logic
 
-**➡️ Next Steps**: Ready to explore **Terraform State Management** where you'll learn about state files, state commands, and state best practices!
+**➡️ Next Steps**: Ready to explore **Terraform importing**? Learn how to import existing configuration into your state file.
 
 ---
 
@@ -2186,8 +2186,8 @@ resource "jamfpro_policy" "add_printers" {
 
 Ready to continue your Terraform journey? Proceed to the next module:
 
-**➡️ [Module 6: Terraform Providers](./module_06_terraform_providers.md)**
+**➡️ [Module 6: State Import] (./module_06_state_import.md)**
 
-Learn more about different Terraform Providers.
+Learn more about the import command and block.
 
 ---

@@ -1,9 +1,11 @@
-# Module 08: Terraform Style Guide
-*Duration: 1 hour | Labs: 1 | Difficulty: 🟢 Beginner*
----
+# Module 09: Terraform Style Guide
+
+## _Duration: 1 hour | Labs: 1 | Difficulty: 🟢 Beginner_
 
 ## 🎯 Learning Objectives
+
 By the end of this module, you will:
+
 - Apply HashiCorp's official Terraform style conventions
 - Organize JamfPro infrastructure code using best practices
 - Implement consistent naming conventions and formatting
@@ -21,6 +23,7 @@ This module follows the [official HashiCorp Terraform Style Guide](https://devel
 ### Indentation and Alignment
 
 **Use two spaces for each nesting level:**
+
 ```hcl
 resource "jamfpro_category" "security" {
   name     = "Security Tools"
@@ -34,6 +37,7 @@ resource "jamfpro_category" "security" {
 ```
 
 **Align equals signs for consecutive single-line arguments:**
+
 ```hcl
 # ✅ Good - Aligned equals signs
 resource "jamfpro_computer_group" "mobile_devices" {
@@ -51,7 +55,7 @@ resource "jamfpro_computer_group" "mobile_devices" {
   }
 }
 
-# ❌ Bad - Unaligned equals signs  
+# ❌ Bad - Unaligned equals signs
 resource "jamfpro_computer_group" "mobile_devices" {
   name = "Mobile Devices"
   is_smart = true
@@ -63,28 +67,29 @@ resource "jamfpro_computer_group" "mobile_devices" {
 ### Blank Lines and Organization
 
 **Use blank lines to separate logical groups:**
+
 ```hcl
 resource "jamfpro_policy" "security_updates" {
   # Basic policy configuration
   name        = "Security Updates"
   enabled     = true
   trigger_checkin = true
-  
+
   # Frequency settings
   frequency   = "Ongoing"
   retry_event = "none"
   retry_attempts = -1
-  
+
   # Scope configuration
   scope {
     all_computers = false
-    
+
     computer_groups = [
       jamfpro_computer_group.workstations.id,
       jamfpro_computer_group.servers.id
     ]
   }
-  
+
   # Package deployment
   package_configuration {
     packages {
@@ -96,12 +101,13 @@ resource "jamfpro_policy" "security_updates" {
 ```
 
 **Place meta-arguments first:**
+
 ```hcl
 resource "jamfpro_building" "headquarters" {
   # Meta-arguments first
   count      = var.multi_site ? 1 : 0
   depends_on = [jamfpro_site.primary]
-  
+
   # Regular arguments
   name    = "Headquarters"
   street_address1 = "123 Main St"
@@ -118,6 +124,7 @@ resource "jamfpro_building" "headquarters" {
 ### Resource Names
 
 **Use descriptive nouns, avoid including resource type:**
+
 ```hcl
 # ✅ Good - Descriptive noun
 resource "jamfpro_category" "security_tools" {
@@ -148,6 +155,7 @@ resource "jamfpro_computer_group" "compliance-workstations" {
 ### Variable Naming
 
 **Use descriptive names with type and description:**
+
 ```hcl
 # ✅ Good - Clear description and appropriate type
 variable "jamfpro_instance_url" {
@@ -188,6 +196,7 @@ variable "url" {
 ### Output Naming
 
 **Include clear descriptions for all outputs:**
+
 ```hcl
 # ✅ Good - Descriptive names and descriptions
 output "security_category_id" {
@@ -232,7 +241,7 @@ Organize your JamfPro Terraform configuration using this structure:
 ```
 jamfpro-infrastructure/
 ├── backend.tf              # Backend configuration
-├── main.tf                 # Primary resource definitions  
+├── main.tf                 # Primary resource definitions
 ├── variables.tf            # Input variable declarations
 ├── outputs.tf              # Output value declarations
 ├── locals.tf               # Local value definitions
@@ -243,6 +252,7 @@ jamfpro-infrastructure/
 ```
 
 ### backend.tf
+
 ```hcl
 # Backend configuration for state management
 terraform {
@@ -257,11 +267,12 @@ terraform {
 ```
 
 ### terraform.tf
+
 ```hcl
 # Terraform and provider version requirements
 terraform {
   required_version = ">= 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -280,6 +291,7 @@ terraform {
 ```
 
 ### providers.tf
+
 ```hcl
 # JamfPro provider configuration
 provider "jamfpro" {
@@ -298,12 +310,13 @@ provider "tls" {}
 ```
 
 ### variables.tf
+
 ```hcl
 # JamfPro instance configuration
 variable "jamfpro_instance_url" {
   description = "The FQDN of the JamfPro instance (e.g., https://company.jamfcloud.com)"
   type        = string
-  
+
   validation {
     condition     = can(regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.jamfpro_instance_url))
     error_message = "JamfPro instance URL must be a valid HTTPS URL."
@@ -314,7 +327,7 @@ variable "jamfpro_auth_method" {
   description = "Authentication method for JamfPro API (oauth2 or basic_auth)"
   type        = string
   default     = "oauth2"
-  
+
   validation {
     condition     = contains(["oauth2", "basic_auth"], var.jamfpro_auth_method)
     error_message = "Auth method must be either 'oauth2' or 'basic_auth'."
@@ -328,7 +341,7 @@ variable "jamfpro_client_id" {
 }
 
 variable "jamfpro_client_secret" {
-  description = "Client secret for JamfPro API authentication"  
+  description = "Client secret for JamfPro API authentication"
   type        = string
   sensitive   = true
 }
@@ -343,7 +356,7 @@ variable "enable_load_balancer_lock" {
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be one of: dev, staging, prod."
@@ -385,12 +398,13 @@ variable "department_structure" {
 ```
 
 ### locals.tf
+
 ```hcl
 # Local values for computed expressions and reusable data
 locals {
   # Environment-specific naming prefix
   name_prefix = "${var.organization_name}-${var.environment}"
-  
+
   # Common tags for all resources
   common_tags = {
     Environment   = var.environment
@@ -399,7 +413,7 @@ locals {
     Project      = "jamfpro-infrastructure"
     CreatedDate  = timestamp()
   }
-  
+
   # Standard categories for JamfPro organization
   standard_categories = {
     security = {
@@ -419,7 +433,7 @@ locals {
       priority = 40
     }
   }
-  
+
   # Smart group criteria templates
   smart_group_criteria = {
     macos_workstations = {
@@ -443,7 +457,7 @@ locals {
       ]
     }
   }
-  
+
   # Policy configuration templates
   policy_defaults = {
     frequency             = "Ongoing"
@@ -457,6 +471,7 @@ locals {
 ```
 
 ### main.tf
+
 ```hcl
 # Primary JamfPro infrastructure resources
 
@@ -468,7 +483,7 @@ resource "random_id" "suffix" {
 # JamfPro Buildings
 resource "jamfpro_building" "locations" {
   count = length(var.building_locations)
-  
+
   name            = var.building_locations[count.index].name
   street_address1 = var.building_locations[count.index].street_address1
   city            = var.building_locations[count.index].city
@@ -480,14 +495,14 @@ resource "jamfpro_building" "locations" {
 # JamfPro Departments
 resource "jamfpro_department" "organizational" {
   count = length(var.department_structure)
-  
+
   name = var.department_structure[count.index].name
 }
 
 # JamfPro Categories
 resource "jamfpro_category" "standard" {
   for_each = local.standard_categories
-  
+
   name     = "${local.name_prefix}-${each.value.name}"
   priority = each.value.priority
 }
@@ -505,7 +520,7 @@ resource "jamfpro_computer_group" "macos_workstations" {
   is_smart     = true
   site_id      = -1
   criteria_set = local.smart_group_criteria.macos_workstations.criteria_set
-  
+
   dynamic "criteria" {
     for_each = local.smart_group_criteria.macos_workstations.criteria
     content {
@@ -522,13 +537,13 @@ resource "jamfpro_computer_group" "macos_workstations" {
 resource "jamfpro_policy" "security_baseline" {
   name    = "${local.name_prefix}-Security Baseline"
   enabled = true
-  
+
   # Meta-arguments
   depends_on = [
     jamfpro_category.standard,
     jamfpro_computer_group.macos_workstations
   ]
-  
+
   # Policy configuration using defaults
   frequency                      = local.policy_defaults.frequency
   trigger_checkin               = local.policy_defaults.trigger_checkin
@@ -536,27 +551,27 @@ resource "jamfpro_policy" "security_baseline" {
   retry_event                   = local.policy_defaults.retry_event
   retry_attempts                = local.policy_defaults.retry_attempts
   notify_on_each_failed_retry   = local.policy_defaults.notify_on_each_failed_retry
-  
+
   # Categorization
   category_id = jamfpro_category.standard["security"].id
-  
+
   # Scope
   scope {
     all_computers = false
-    
+
     computer_groups = [
       jamfpro_computer_group.macos_workstations.id
     ]
-    
+
     buildings = [
       for building in jamfpro_building.locations : building.id
     ]
-    
+
     departments = [
       for dept in jamfpro_department.organizational : dept.id
     ]
   }
-  
+
   # General settings
   general {
     name = "${local.name_prefix}-Security Baseline"
@@ -568,7 +583,7 @@ resource "jamfpro_policy" "security_baseline" {
     retry_attempts = -1
     notify_on_each_failed_retry = false
     category_id = jamfpro_category.standard["security"].id
-    
+
     # Network limitations
     network_limitations {
       minimum_network_connection = "No Minimum"
@@ -579,6 +594,7 @@ resource "jamfpro_policy" "security_baseline" {
 ```
 
 ### data.tf
+
 ```hcl
 # Data sources for existing JamfPro resources
 
@@ -598,6 +614,7 @@ data "jamfpro_computer_group" "existing_groups" {
 ```
 
 ### outputs.tf
+
 ```hcl
 # Infrastructure outputs for reference and integration
 
@@ -685,6 +702,7 @@ output "environment_summary" {
 ### Resource Dependencies
 
 **Define dependent resources after the resources they reference:**
+
 ```hcl
 # ✅ Good - Category defined before policy that uses it
 resource "jamfpro_category" "security" {
@@ -696,7 +714,7 @@ resource "jamfpro_policy" "antivirus_installation" {
   name        = "Install Antivirus"
   enabled     = true
   category_id = jamfpro_category.security.id  # References category above
-  
+
   scope {
     all_computers = true
   }
@@ -704,7 +722,7 @@ resource "jamfpro_policy" "antivirus_installation" {
 
 # ❌ Bad - Policy references category defined later
 resource "jamfpro_policy" "antivirus_installation" {
-  name        = "Install Antivirus" 
+  name        = "Install Antivirus"
   category_id = jamfpro_category.security.id  # Forward reference
 }
 
@@ -717,6 +735,7 @@ resource "jamfpro_category" "security" {
 ### Variable Usage
 
 **Avoid overusing variables - use them strategically:**
+
 ```hcl
 # ✅ Good - Variables for values that change between environments
 variable "jamfpro_instance_url" {
@@ -739,7 +758,7 @@ variable "default_policy_frequency" {
 # ❌ Bad - Unnecessary variable for static value
 variable "antivirus_policy_name" {
   description = "Name of antivirus policy"
-  type        = string  
+  type        = string
   default     = "Install Antivirus"  # This never changes
 }
 
@@ -752,6 +771,7 @@ resource "jamfpro_policy" "antivirus" {
 ### Provider Configuration
 
 **Always include a default provider configuration:**
+
 ```hcl
 # ✅ Good - Default provider with all required settings
 provider "jamfpro" {
@@ -769,6 +789,7 @@ provider "jamfpro" {}
 ### Count and For_Each Usage
 
 **Use count and for_each sparingly and appropriately:**
+
 ```hcl
 # ✅ Good - for_each with known map structure
 resource "jamfpro_category" "standard_categories" {
@@ -777,7 +798,7 @@ resource "jamfpro_category" "standard_categories" {
     productivity = { name = "Productivity", priority = 20 }
     utilities    = { name = "Utilities", priority = 30 }
   }
-  
+
   name     = each.value.name
   priority = each.value.priority
 }
@@ -785,7 +806,7 @@ resource "jamfpro_category" "standard_categories" {
 # ✅ Good - count with conditional creation
 resource "jamfpro_building" "headquarters" {
   count = var.create_headquarters ? 1 : 0
-  
+
   name = "Headquarters"
   city = "San Francisco"
 }
@@ -793,7 +814,7 @@ resource "jamfpro_building" "headquarters" {
 # ❌ Bad - Overcomplicating simple resources
 resource "jamfpro_category" "simple" {
   count = 1
-  
+
   name     = "Security Tools"
   priority = 10
 }
@@ -806,6 +827,7 @@ resource "jamfpro_category" "simple" {
 ### Terraform Format and Validation
 
 **Always run these commands before committing:**
+
 ```bash
 # Format code to follow style conventions
 terraform fmt -recursive
@@ -820,6 +842,7 @@ terraform plan
 ### Pre-commit Hooks
 
 **Example pre-commit configuration for Terraform:**
+
 ```yaml
 # .pre-commit-config.yaml
 repos:
@@ -837,11 +860,13 @@ repos:
 ## 🧪 Hands-on Exercises
 
 ### Exercise 1: Fix Formatting Issues
+
 **Duration**: 5 minutes
 
 **Task**: Fix the formatting in this poorly formatted configuration
 
 **Step 1**: Create a poorly formatted file
+
 ```hcl
 # Poorly formatted Terraform code - Exercise 1
 resource "jamfpro_category"     "security_tools"{
@@ -889,15 +914,19 @@ category_id=jamfpro_category.security_tools.id
 ```
 
 **Step 2**: Run terraform fmt
+
 ```bash
 terraform fmt
 ```
+
 **Expected Output:**
+
 ```
 poorly_formatted.tf
 ```
 
 **Step 3**: View the formatted result
+
 ```hcl
 # Poorly formatted Terraform code - Exercise 1
 resource "jamfpro_category" "security_tools" {
@@ -945,6 +974,7 @@ resource "jamfpro_policy" "security_policy" {
 ```
 
 **Key improvements:**
+
 - ✅ Proper 2-space indentation
 - ✅ Aligned equals signs for consecutive arguments
 - ✅ Meta-arguments (depends_on, count) appear first
@@ -954,11 +984,13 @@ resource "jamfpro_policy" "security_policy" {
 ---
 
 ### Exercise 2: Improve Naming Conventions
-**Duration**: 10 minutes  
+
+**Duration**: 10 minutes
 
 **Task**: Refactor resource names to follow best practices
 
 **Step 1**: Review bad naming examples
+
 ```hcl
 # ❌ Bad naming conventions
 resource "jamfpro_category" "SecurityCategory" {  # CamelCase
@@ -987,6 +1019,7 @@ resource "jamfpro_department" "dept1" {  # Too generic
 ```
 
 **Step 2**: Apply good naming conventions
+
 ```hcl
 # ✅ Good naming conventions
 resource "jamfpro_category" "security_tools" {  # Descriptive noun, underscores
@@ -1015,6 +1048,7 @@ resource "jamfpro_department" "information_technology" {  # Specific and clear
 ```
 
 **Naming Rules Applied:**
+
 - ✅ Use descriptive nouns for resource names
 - ✅ Avoid including resource type in the name
 - ✅ Use underscores to separate multiple words
@@ -1024,11 +1058,13 @@ resource "jamfpro_department" "information_technology" {  # Specific and clear
 ---
 
 ### Exercise 3: Organize File Structure
+
 **Duration**: 15 minutes
 
 **Task**: Split a monolithic configuration into properly organized files
 
 **Step 1**: Start with monolithic configuration
+
 ```hcl
 # monolithic_config.tf - Everything in one file
 terraform {
@@ -1083,17 +1119,19 @@ output "building_details" {
 ```
 
 **Step 2**: Create organized file structure
+
 ```bash
 mkdir organized_config
 cd organized_config
 ```
 
 **terraform.tf**
+
 ```hcl
 # Terraform and provider version requirements
 terraform {
   required_version = ">= 1.5"
-  
+
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
@@ -1104,6 +1142,7 @@ terraform {
 ```
 
 **backend.tf**
+
 ```hcl
 # Backend configuration for state management
 terraform {
@@ -1116,6 +1155,7 @@ terraform {
 ```
 
 **providers.tf**
+
 ```hcl
 # Provider configurations
 provider "jamfpro" {
@@ -1125,6 +1165,7 @@ provider "jamfpro" {
 ```
 
 **variables.tf**
+
 ```hcl
 # Input variable declarations
 variable "jamfpro_instance_url" {
@@ -1144,11 +1185,12 @@ variable "environment" {
 ```
 
 **locals.tf**
+
 ```hcl
 # Local value definitions
 locals {
   name_prefix = "${var.organization_name}-${var.environment}"
-  
+
   common_tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
@@ -1157,6 +1199,7 @@ locals {
 ```
 
 **data.tf**
+
 ```hcl
 # Data source declarations
 data "jamfpro_site" "default" {
@@ -1165,6 +1208,7 @@ data "jamfpro_site" "default" {
 ```
 
 **main.tf**
+
 ```hcl
 # Primary resource definitions
 resource "jamfpro_building" "headquarters" {
@@ -1174,6 +1218,7 @@ resource "jamfpro_building" "headquarters" {
 ```
 
 **outputs.tf**
+
 ```hcl
 # Output value declarations
 output "building_details" {
@@ -1186,6 +1231,7 @@ output "building_details" {
 ```
 
 **Benefits of organized structure:**
+
 - ✅ Clear separation of concerns
 - ✅ Easy to navigate and maintain
 - ✅ Consistent with HashiCorp recommendations
@@ -1195,11 +1241,13 @@ output "building_details" {
 ---
 
 ### Exercise 4: Implement Local Values
+
 **Duration**: 10 minutes
 
 **Task**: Replace repeated expressions with local values
 
 **Step 1**: Identify repeated expressions
+
 ```hcl
 # ❌ Bad - Repeated expressions throughout
 variable "organization" {
@@ -1248,6 +1296,7 @@ resource "jamfpro_policy" "software_installation" {
 ```
 
 **Step 2**: Implement local values
+
 ```hcl
 # ✅ Good - Using local values to eliminate repetition
 variable "organization" {
@@ -1260,7 +1309,7 @@ variable "environment" {
 
 locals {
   name_prefix = "${var.organization}-${var.environment}"
-  
+
   default_policy_settings = {
     frequency       = "Ongoing"
     retry_event     = "none"
@@ -1268,7 +1317,7 @@ locals {
     enabled         = true
     trigger_checkin = true
   }
-  
+
   standard_categories = {
     security = {
       name     = "Security Tools"
@@ -1291,7 +1340,7 @@ resource "jamfpro_building" "branch_office" {
 
 resource "jamfpro_category" "standard" {
   for_each = local.standard_categories
-  
+
   name     = "${local.name_prefix}-${each.value.name}"
   priority = each.value.priority
 }
@@ -1316,6 +1365,7 @@ resource "jamfpro_policy" "software_installation" {
 ```
 
 **Benefits of using locals:**
+
 - ✅ Eliminates code duplication
 - ✅ Single source of truth for computed values
 - ✅ Easier maintenance and updates
@@ -1325,11 +1375,13 @@ resource "jamfpro_policy" "software_installation" {
 ---
 
 ### Exercise 5: Add Variable Validation
+
 **Duration**: 8 minutes
 
 **Task**: Add proper validation rules to variables
 
 **Step 1**: Variables without validation
+
 ```hcl
 # ❌ Bad - No validation
 variable "jamfpro_instance_url" {
@@ -1354,12 +1406,13 @@ variable "admin_email" {
 ```
 
 **Step 2**: Add comprehensive validation
+
 ```hcl
 # ✅ Good - Proper validation rules
 variable "jamfpro_instance_url" {
   description = "JamfPro instance URL (must be HTTPS)"
   type        = string
-  
+
   validation {
     condition     = can(regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.jamfpro_instance_url))
     error_message = "JamfPro instance URL must be a valid HTTPS URL (e.g., https://company.jamfcloud.com)."
@@ -1369,7 +1422,7 @@ variable "jamfpro_instance_url" {
 variable "environment" {
   description = "Environment name (development, staging, or production)"
   type        = string
-  
+
   validation {
     condition     = contains(["development", "staging", "production"], var.environment)
     error_message = "Environment must be one of: development, staging, production."
@@ -1379,7 +1432,7 @@ variable "environment" {
 variable "category_priority" {
   description = "Category priority (1-20, where 1 is highest priority)"
   type        = number
-  
+
   validation {
     condition     = var.category_priority >= 1 && var.category_priority <= 20
     error_message = "Category priority must be between 1 and 20 (inclusive)."
@@ -1389,7 +1442,7 @@ variable "category_priority" {
 variable "admin_email" {
   description = "Administrator email address"
   type        = string
-  
+
   validation {
     condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.admin_email))
     error_message = "Admin email must be a valid email address format."
@@ -1399,12 +1452,12 @@ variable "admin_email" {
 variable "department_names" {
   description = "List of department names (minimum 1, maximum 50)"
   type        = list(string)
-  
+
   validation {
     condition     = length(var.department_names) >= 1 && length(var.department_names) <= 50
     error_message = "Department names list must contain between 1 and 50 departments."
   }
-  
+
   validation {
     condition = alltrue([
       for dept in var.department_names : can(regex("^[a-zA-Z0-9 .-]+$", dept))
@@ -1415,24 +1468,28 @@ variable "department_names" {
 ```
 
 **Step 3**: Test validation
+
 ```bash
 terraform plan -var="environment=invalid"
 ```
+
 **Expected Output:**
+
 ```
 ╷
 │ Error: Invalid value for variable
-│ 
+│
 │   on variables.tf line 15:
 │   15: variable "environment" {
 │      ├────────────────
 │      │ var.environment is "invalid"
-│ 
+│
 │ Environment must be one of: development, staging, production.
 ╵
 ```
 
 **Validation benefits:**
+
 - ✅ Prevents invalid configurations
 - ✅ Provides clear error messages
 - ✅ Catches errors early in the workflow
@@ -1442,11 +1499,13 @@ terraform plan -var="environment=invalid"
 ---
 
 ### Exercise 6: Create Comprehensive Outputs
+
 **Duration**: 7 minutes
 
 **Task**: Add meaningful outputs with descriptions
 
 **Step 1**: Poor output examples
+
 ```hcl
 # ❌ Bad outputs - No descriptions, unclear names
 output "id" {
@@ -1463,6 +1522,7 @@ output "building" {
 ```
 
 **Step 2**: Create comprehensive outputs
+
 ```hcl
 # ✅ Good outputs - Clear descriptions and meaningful names
 
@@ -1502,7 +1562,7 @@ output "infrastructure_summary" {
     categories_created = length(jamfpro_category.standard)
     buildings_created  = 1
     policies_created   = 2
-    
+
     active_policies = [
       for policy in [
         jamfpro_policy.security_updates,
@@ -1546,10 +1606,13 @@ output "policy_summary_json" {
 ```
 
 **Step 3**: View outputs
+
 ```bash
 terraform output
 ```
+
 **Expected Output:**
+
 ```
 headquarters_info = {
   "address" = {
@@ -1579,6 +1642,7 @@ resource_references = {
 ```
 
 **Output best practices:**
+
 - ✅ Always include meaningful descriptions
 - ✅ Use descriptive output names
 - ✅ Structure complex outputs as objects
@@ -1592,6 +1656,7 @@ resource_references = {
 Use this checklist to ensure your Terraform code follows best practices:
 
 ### Formatting
+
 - [ ] Code uses 2-space indentation
 - [ ] Consecutive arguments are aligned
 - [ ] Meta-arguments appear first in blocks
@@ -1599,19 +1664,22 @@ Use this checklist to ensure your Terraform code follows best practices:
 - [ ] Run `terraform fmt` before committing
 
 ### Naming
+
 - [ ] Resource names use descriptive nouns
 - [ ] Resource names use underscores (not hyphens or camelCase)
 - [ ] Resource names don't include resource type
 - [ ] Variables have type and description
 - [ ] Outputs have descriptions
 
-### Organization  
+### Organization
+
 - [ ] Files follow recommended structure
 - [ ] Related resources are grouped together
 - [ ] Dependencies are clearly defined
 - [ ] Provider configuration is complete
 
 ### Quality
+
 - [ ] Variables aren't overused
 - [ ] Local values reduce duplication
 - [ ] Validation rules are present where needed
@@ -1635,7 +1703,7 @@ Use this checklist to ensure your Terraform code follows best practices:
 
 Ready to continue your Terraform journey with Jamf Pro? Proceed to the next module:
 
-**➡️ [Module 9: Variables and Data](./module_09_variables_and_data.md)**
+**➡️ [Module 10: Variables and Data](./module_10_variables_and_data.md)**
 
 Understand Terraform variables, data sources.
 
