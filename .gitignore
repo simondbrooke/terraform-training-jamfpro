@@ -9,3 +9,11 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Terraform
+secrets.tfvars
+terraform.tfvars
+*.terraform
+*.hcl
+
+
