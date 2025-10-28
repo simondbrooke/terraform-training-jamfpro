@@ -5,3 +5,6 @@ priority = "9"
 
 }
 
+resource "scott" "name" {
+  
+}
