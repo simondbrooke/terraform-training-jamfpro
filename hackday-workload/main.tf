@@ -2,13 +2,13 @@ terraform {
   required_providers {
     jamfpro = {
       source  = "deploymenttheory/jamfpro"
-      version = ">=0.26.0"
+      version = "0.26.0"
     }
   }
 
   backend "s3" {
     bucket = "tf-hackday"
-    key = "team1/main.tfstate"
+    key = "team1/single_device_2.tfstate"
     region = "eu-west-2"
     use_lockfile = true
     encrypt = true

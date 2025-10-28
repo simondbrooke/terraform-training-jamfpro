@@ -4,7 +4,3 @@ name = "Simon Category"
 priority = "9"
 
 }
-
-resource "scott" "name" {
-  hello = "world"
-}
